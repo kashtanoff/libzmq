@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fxconf3", "fxconf3\fxconf3.vcxproj", "{D78486B3-C5D8-4670-8D9C-DB25865D83E3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{C07D701E-8E2F-4C17-8400-9CEB7E77B7EE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D78486B3-C5D8-4670-8D9C-DB25865D83E3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D78486B3-C5D8-4670-8D9C-DB25865D83E3}.Debug|Win32.Build.0 = Debug|Win32
+		{D78486B3-C5D8-4670-8D9C-DB25865D83E3}.Release|Win32.ActiveCfg = Release|Win32
+		{D78486B3-C5D8-4670-8D9C-DB25865D83E3}.Release|Win32.Build.0 = Release|Win32
+		{C07D701E-8E2F-4C17-8400-9CEB7E77B7EE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C07D701E-8E2F-4C17-8400-9CEB7E77B7EE}.Debug|Win32.Build.0 = Debug|Win32
+		{C07D701E-8E2F-4C17-8400-9CEB7E77B7EE}.Release|Win32.ActiveCfg = Release|Win32
+		{C07D701E-8E2F-4C17-8400-9CEB7E77B7EE}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
