@@ -1,8 +1,8 @@
 #pragma once
 
-#define	DEBUG 0
+#define DEBUG 0
 
-#define	NUM_ORDERS   100
+#define NUM_ORDERS   100
 #define OP_BUY       0
 #define OP_SELL      1
 #define OP_BUYLIMIT  2
