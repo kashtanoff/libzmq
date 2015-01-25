@@ -1,0 +1,1 @@
+D:\work\olsen\fxconf3\FxcBuilder\bin\Release\FxcBuilder.exe.config
