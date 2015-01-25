@@ -1,11 +1,12 @@
-// fxconf.cpp: определяет экспортированные функции для приложения DLL.
-#define _CRT_SECURE_NO_WARNINGS
+#pragma once
+#ifndef FXCONF3_CPP
+#define FXCONF3_CPP
 
-#include "stdafx.h"
+// fxconf.cpp: определяет экспортированные функции для приложения DLL.
 
 #include "Defines.h"
-#include "fxc.cpp"
-#include "Simbiot.cpp"
+#include "fxc/fxc.h"
+#include "fxc/Simbiot.cpp"
 
 using namespace fxc;
 
@@ -22,6 +23,7 @@ _DLLAPI int __stdcall c_init(char* symbol)
 		memset(pool, 0, POOL_SIZE);
 		first_run = false;
 		console   = false;
+
 		if (DEBUG == 1)
 		{
 			/*RedirectIOToConsole();
@@ -42,6 +44,7 @@ _DLLAPI int __stdcall c_init(char* symbol)
 				MessageBoxA(NULL, "console dont alloc", "fxconf3.dll ", MB_OK);
 		}
 	}
+
 	for (int h=0; h<POOL_SIZE; h++)
 	{
 		if (pool[h] == nullptr)
@@ -53,6 +56,7 @@ _DLLAPI int __stdcall c_init(char* symbol)
 			return(h);
 		}
 	}
+
 	bp = true;
 	msg << "Pool position not found" << msg_box;
 	mutex.unlock();
@@ -466,3 +470,5 @@ _DLLAPI void __stdcall fcostransform(double a[], int tnn, int inversefct)
 }
 
 #pragma endregion
+
+#endif
