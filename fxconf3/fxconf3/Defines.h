@@ -2,7 +2,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#define DEBUG 0
+#define DEBUG 1
 
 #define NUM_ORDERS   100
 #define OP_BUY       0

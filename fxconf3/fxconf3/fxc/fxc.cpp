@@ -3,6 +3,7 @@
 #include <io.h>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include <windows.h>
 #include <fcntl.h>
@@ -17,7 +18,6 @@ double fxc::maxmin[2] = { 1000000.0, 0.0 };
 
 bool   fxc::bp;
 bool   fxc::console;
-int    fxc::curH;
 time_t fxc::rawtime;
 
 void fxc::RedirectIOToConsole()
@@ -70,8 +70,12 @@ ostream& fxc::msg_box(ostream& s)
 		bp = false;
 	}
 	if (console) {
+		char buffer[32];
+
 		time(&rawtime);
-		std::cout << asctime(localtime(&rawtime)) << " - (" << curH << ")\r\n" << os.str().c_str() << "\r\n";
+		strftime(buffer, 32, "%H:%M:%S", localtime(&rawtime));
+
+		std::cout << buffer << " [" << std::this_thread::get_id() << "]: " << os.str().c_str();
 	}
 	os.swap(ostringstream());
 	return s;

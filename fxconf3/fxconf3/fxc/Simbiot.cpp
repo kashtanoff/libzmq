@@ -3,11 +3,13 @@
 #define SIMBIOT_CPP
 
 #include <algorithm>
+#include <unordered_map>
 
 #include "math.h"
 
 #include "../stdafx.h"
 #include "../Defines.h"
+#include "../Property.h"
 
 #include "fxc.h"
 #include "Order.cpp"
@@ -17,7 +19,9 @@
 namespace fxc {
 
 	//Структура описывающая все данные одного экземпляра советника
-	class Simbiot : public Parameters
+	class Simbiot : 
+		public Parameters, 
+		public CPropertyList
 	{
 		public:
 #pragma region Переменные и ссылки
@@ -79,14 +83,13 @@ namespace fxc {
 				dillers[1] = new Diller(this, 1);
 				dillers[0]->opposite = dillers[1];  //Обмен ссылками друг на друга
 				dillers[1]->opposite = dillers[0];
-				curdil = dillers[0];
+				curdil      = dillers[0];
 				total_count = 0;
-				p_high = 0;
-				p_low = 1000000;
-				p_buy = 0;
-				p_sell = 0;
-				counted = 0;
-
+				p_high      = 0;
+				p_low       = 1000000;
+				p_buy       = 0;
+				p_sell      = 0;
+				counted     = 0;
 
 				k = 0;
 				m_index = 0;
@@ -94,11 +97,15 @@ namespace fxc {
 				c_all = false;
 				showend = true;
 
+				registerProps();
+
 				//msg << "Simbiot OK" << msg_box;
 			}
 
 			void PostInit()
 			{
+				printRedisteredProps();
+
 				//bp = true;
 				//msg << "tp_mult=" << _tp_mult << "\r\n";
 				for (int i = 0; i < 50; i++)
@@ -106,13 +113,15 @@ namespace fxc {
 					profits[i] = _takeprofit * pow(_pips_mult, i);
 					//msg << "steps[" << i << "]=" << steps[i] << ", tps = " << tps[i] << "\r\n";
 				}
-				*indicator = 0;
-				prev_indicator = -50;
-				first_calc = true;
+				
+				*indicator            = 0;
+				prev_indicator        = -50;
+				first_calc            = true;
 				dillers[0]->_base_lot = _buy_lot;
 				dillers[1]->_base_lot = _sell_lot;
-				curdil->cur_av_lvl = _av_lvl;
-				base_lot = curdil->_base_lot;
+				curdil->cur_av_lvl    = _av_lvl;
+				base_lot              = curdil->_base_lot;
+				
 				//msg << msg_box;
 				//bp = false;
 				//msg << "trailing step: " << _tr_step << "\r\n";
@@ -1208,6 +1217,128 @@ namespace fxc {
 				delete dillers[0];
 				delete dillers[1];
 			}*/
+
+		private:
+			void registerProps() {
+				Register("point",              &point);              //1 значение минимального шага цены
+				Register("lot_step",           &lot_step);           //4 минимальный шаг приращения лота
+				Register("lot_min",            &lot_min);            //5 минимальный лот
+				Register("lot_max",            &lot_max);            //6 максимальный лот
+				Register("min_sl_tp",          &min_sl_tp);          //7 минимальное расстояние до стоплосса или тейкпрофита
+				Register("freeze",             &freeze);             //8 расстояние заморозки ордеров
+				Register("_step",              &_step);              //55 базовый шаг, минимальный шаг (для трейлинг степа)
+				Register("_takeprofit",        &_takeprofit);        //57 базовый тейкпрофит, минимальный (для трейлинг стопа)
+				Register("_av_lot",            &_av_lot);            //65 лот с которого начинается уменьшаться ступень усреднения
+				Register("_pips_mult",         &_pips_mult);         //67 множитель прибыли
+				Register("_sell_lot",          &_sell_lot);          //69 начальный лот на продажу
+				Register("_buy_lot",           &_buy_lot);           //97 начальный лот на покупку
+				Register("_maxlot",            &_maxlot);            //70 максимальный лот
+				Register("_lot_hadge_mult",    &_lot_hadge_mult);    //71 процент хэджирования
+				Register("_regres_mult",       &_regres_mult);       //72 процент затухания
+				Register("_trend_lot_mult",    &_trend_lot_mult);    //74
+				Register("_trend_progress",    &_trend_progress);    //75
+				Register("_repeat_lot_mult",   &_repeat_lot_mult);   //77
+				Register("_repeat_progress",   &_repeat_progress);   //78
+				Register("_deviation",         &_deviation);         //80
+				Register("_stoploss",          &_stoploss);          //81 стоплосс
+				Register("_basket_hadge_mult", &_basket_hadge_mult); //85 хэдж множитель корзины
+				Register("_forward_step_mult", &_forward_step_mult); //86 множитель шага при форварде
+				Register("_delta",             &_delta);             //87
+				Register("_multf",             &_multf);             //91
+				Register("_rollback",          &_rollback);          //95
+				Register("_weighthadge",       &_weighthadge);       //96
+
+				Register("open_dd",     &open_dd);     // 102
+				Register("total_lots",  &total_lots);  // 103
+				Register("max_lvl",     &max_lvl);     // 104
+				Register("max_dd",      &max_dd);      // 105
+				Register("indicator",   &indicator);   // 106
+				Register("count_p",     &count_p);     // 107
+				Register("o_ticket",    &o_ticket);    // 110
+				Register("o_type",      &o_type);      // 111
+				Register("o_lots",      &o_lots);      // 112
+				Register("o_openprice", &o_openprice); // 113
+				Register("o_slprice",   &o_slprice);   // 114
+				Register("o_tpprice",   &o_tpprice);   // 115
+				Register("indicator2",  &indicator2);  // 116
+				Register("intret",      &intret);      // 200
+
+				Register("digits",          &digits);          //2 количество десятичных знаков для инструмента
+				Register("is_optimization", &is_optimization); //9 флаг оптимизации
+				Register("is_visual",       &is_visual);       //10 флаг визуального режима
+				Register("is_testing",      &is_testing);      //11 флаг тестирования
+				Register("_stop_new[0]",    &_stop_new[0]);    //50, 51 Остановить открытие новой сетки
+				Register("_stop_new[1]",    &_stop_new[1]);    //50, 51 Остановить открытие новой сетки
+				Register("_stop_avr[0]",    &_stop_avr[0]);    //52, 53 Остановить открытие новой ступени
+				Register("_stop_avr[1]",    &_stop_avr[1]);    //52, 53 Остановить открытие новой ступени
+				Register("_max_grid_lvl",   &_max_grid_lvl);   //54 Максимальный уровень сетки
+				Register("_forward_lvl",    &_forward_lvl);    //59 с какого уровня выставлять форвардные сделки
+				Register("_av_lvl",         &_av_lvl);         //64 ступень усреднения
+				Register("_op_av_lvl",      &_op_av_lvl);      //66 уровень начала противоположного усреднения
+				Register("_safe_copy",      &_safe_copy);      //68 вести расчет прибыли с базового лота а не с начального
+				Register("_trend_lvl",      &_trend_lvl);      //73
+				Register("_repeat_lvl",     &_repeat_lvl);     //76
+				Register("_period",         &_period);         //79
+				Register("_attemts",        &_attemts);        //82
+				Register("_auto_mm",        &_auto_mm);        //83
+				Register("_mm_equ",         &_mm_equ);         //84
+				Register("_first_free",     &_first_free);     //88
+				Register("_new_bar",        &_new_bar);        //89
+				Register("_free_lvl",       &_free_lvl);       //90
+				Register("_periodf2",       &_periodf2);       //92
+				Register("_periodf3",       &_periodf3);       //93
+				Register("_buf_len",        &_buf_len);        //94
+				Register("_opp_close",      &_opp_close);      //97 OppositeCLose;
+			}
+
+			void printRedisteredProps() {
+				for (auto pair : PropertyList)
+				{
+					switch (pair.second.Type)
+					{
+						case PropBool : 
+							msg << pair.first << ": " << *(pair.second.Bool) << "\r\n" << msg_box;
+							break;
+						case PropInt : 
+							msg << pair.first << ": " << *(pair.second.Int) << "\r\n" << msg_box;
+							break;
+						case PropDouble : 
+							msg << pair.first << ": " << *(pair.second.Double) << "\r\n" << msg_box;
+							break;
+						case PropBoolPtr :
+							if (pair.second.BoolPtr == nullptr) {
+								msg << pair.first << ": " << "n/a [0x" << pair.second.BoolPtr << "]\r\n" << msg_box;
+							} else {
+								msg << pair.first << ": "
+									<< **(pair.second.BoolPtr)
+									<< " [0x" << *(pair.second.BoolPtr) << "]"
+									<< "\r\n" << msg_box;
+							}
+							break;
+						case PropIntPtr :
+							if (pair.second.IntPtr == nullptr) {
+								msg << pair.first << ": " << "n/a [0x" << pair.second.IntPtr << "]\r\n" << msg_box;
+							} else {
+								msg << pair.first << ": "
+									<< **(pair.second.IntPtr)
+									<< " [0x" << *(pair.second.IntPtr) << "]"
+									<< "\r\n" << msg_box;
+							}
+							break;
+						case PropDoublePtr :
+							if (pair.second.DoublePtr == nullptr) {
+								msg << pair.first << ": " << "n/a [0x" << pair.second.DoublePtr << "]\r\n" << msg_box;
+							} else {
+								msg << pair.first << ": "
+									<< **(pair.second.DoublePtr)
+									<< " [0x" << *(pair.second.DoublePtr) << "]"
+									<< "\r\n" << msg_box;
+							}
+							break;
+					}
+				}
+			}
+
 	};
 
 }

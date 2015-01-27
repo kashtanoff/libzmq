@@ -21,7 +21,6 @@ namespace fxc
 
 	extern bool   bp;
 	extern bool   console;
-	extern int    curH;
 	extern time_t rawtime;
 
 	const WORD MAX_CONSOLE_LINES = 500;

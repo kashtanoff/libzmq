@@ -92,6 +92,7 @@
   <ItemGroup>
     <ClInclude Include="Defines.h" />
     <ClInclude Include="fxc\fxc.h" />
+    <ClInclude Include="Property.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -116,7 +117,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="mq4\Errors.mq4" />
     <None Include="mq4\Expert.mq4" />
+    <None Include="mq4\Graph.mq4" />
+    <None Include="mq4\Inputs.mq4" />
+    <None Include="mq4\Look.mq4" />
+    <None Include="mq4\Order.mq4" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
