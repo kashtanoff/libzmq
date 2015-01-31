@@ -11,15 +11,16 @@
 #include "Inputs.mq4"
 
 #import "fxc{{build}}.dll"
-	bool   c_init(string symbol);
+	bool   c_init(int number, string server, string symbol);
 	void   c_deinit();
 	void   c_postInit();
 
 	void   c_setint(string prop, int value);
 	void   c_setdouble(string prop, double value);
+	void   c_setvar(string prop, bool& var);
 	void   c_setvar(string prop, int& var);
-	void   c_setvar(string prop, double& var);
 	void   c_setvar(string prop, int& var[]);
+	void   c_setvar(string prop, double& var);
 	void   c_setvar(string prop, double& var[]);
 
 	void   c_refresh_init(double ask, double bid, double equity);
@@ -351,13 +352,13 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 
 bool DllInit()
 {
-	bool isInit = c_init(Symbol());
-	if (isInit) {
+	
+	run_allowed = c_init(AccountNumber(), AccountServer(), Symbol());
+	if (run_allowed) {
 		info.Set("handler", "DLL init OK");
 		Print("DLL init OK");
 	} else {
 		reason = "Dll init failed";
-		run_allowed = false;
 		return (false);
 	}
 
@@ -422,20 +423,22 @@ bool DllInit()
 	c_setdouble("_weighthadge",       WeightHadgeMult);
 	c_setint(   "_opp_close",         CloseMode);
 
-	c_setvar("open_dd",     open_dd);
-	c_setvar("total_lots",  total_lots);
-	c_setvar("max_lvl",     max_lvl);
-	c_setvar("max_dd",      max_dd);
-	c_setvar("indicator",   indicator);
-	c_setvar("count_p",     count);
-	c_setvar("o_ticket",    o_ticket);
-	c_setvar("o_type",      o_type);
-	c_setvar("o_lots",      o_lots);
-	c_setvar("o_openprice", o_openprice);
-	c_setvar("o_slprice",   o_slprice);
-	c_setvar("o_tpprice",   o_tpprice);
-	c_setvar("indicator2",  indicator2);
-	c_setvar("intret",      intret);
+	c_setvar("open_dd",      open_dd);
+	c_setvar("total_lots",   total_lots);
+	c_setvar("max_lvl",      max_lvl);
+	c_setvar("max_dd",       max_dd);
+	c_setvar("indicator",    indicator);
+	c_setvar("count_p",      count);
+	c_setvar("o_ticket",     o_ticket);
+	c_setvar("o_type",       o_type);
+	c_setvar("o_lots",       o_lots);
+	c_setvar("o_openprice",  o_openprice);
+	c_setvar("o_slprice",    o_slprice);
+	c_setvar("o_tpprice",    o_tpprice);
+	c_setvar("indicator2",   indicator2);
+	c_setvar("intret",       intret);
+
+	c_setvar("isRunAllowed", run_allowed);
 
 	//Запуск постинициализации
 	c_postInit();

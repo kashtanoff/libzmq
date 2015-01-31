@@ -91,6 +91,8 @@ namespace fxc {
 			double   c_weight;
 			int      c_index;
 			bool     c_all;
+
+			bool*    isRunAllowed;
 	};
 
 }

@@ -1289,6 +1289,8 @@ namespace fxc {
 				Register("_periodf3",       &_periodf3);       //93
 				Register("_buf_len",        &_buf_len);        //94
 				Register("_opp_close",      &_opp_close);      //97 OppositeCLose;
+
+				Register("isRunAllowed",    &isRunAllowed);
 			}
 
 			void printRedisteredProps() {

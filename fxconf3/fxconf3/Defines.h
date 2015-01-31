@@ -1,6 +1,4 @@
 #pragma once
-#ifndef DEFINES_H
-#define DEFINES_H
 
 #define DEBUG 1
 
@@ -14,5 +12,3 @@
 #define POOL_SIZE    40
 #define MAX_BARS     100
 #define PI           3.14159265358979323846
-
-#endif

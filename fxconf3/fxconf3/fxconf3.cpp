@@ -1,8 +1,8 @@
 #pragma once
-#ifndef FXCONF3_CPP
-#define FXCONF3_CPP
 
 // fxconf.cpp: определ€ет экспортированные функции дл€ приложени€ DLL.
+
+#include "zmq.h"
 
 #include <thread>
 #include <unordered_map>
@@ -14,6 +14,92 @@
 using namespace fxc;
 
 std::unordered_map<std::thread::id, Simbiot*> pool;
+bool isRunAllowed = true;
+
+int         accNumber = 0;
+std::string accServer;
+
+bool isWorkerAllowed = true;
+bool isWorkerActive  = false;
+void checkAccessWorker()
+{
+	isWorkerActive = true;
+	while (isWorkerAllowed) {
+		msg << "-> checkAccessWorker()\r\n" << msg_box;
+
+		auto isBlock    = false;
+		auto context    = zmq_ctx_new();
+		auto socket     = zmq_socket(context, ZMQ_REQ);
+		auto connectErr = zmq_connect(socket, "tcp://localhost:13857");
+
+		std::string message("");
+		message
+			.append(std::to_string(accNumber))
+			.append("@")
+			.append(accServer);
+
+		auto linger     = 2000;
+		auto sndTimeout = 4000;
+		auto rcvTimeout = 4000;
+		auto correlate  = true;
+		zmq_setsockopt(socket, ZMQ_LINGER,        &linger,     sizeof(linger));
+		zmq_setsockopt(socket, ZMQ_SNDTIMEO,      &sndTimeout, sizeof(sndTimeout));
+		zmq_setsockopt(socket, ZMQ_RCVTIMEO,      &rcvTimeout, sizeof(rcvTimeout));
+		zmq_setsockopt(socket, ZMQ_REQ_CORRELATE, &correlate,  sizeof(correlate));
+
+		if (0 == connectErr) {
+			if (-1 == zmq_send(socket, message.c_str(), strlen(message.c_str()), 0)) {
+				msg << "-> send error: " << zmq_errno() << "\r\n" << msg_box;
+				isBlock = true;
+			}
+
+			char buffer[64];
+			auto recvSize = zmq_recv(socket, &buffer, sizeof(buffer), 0);
+			if (-1 == recvSize) {
+				msg << "-> receive error: " << zmq_errno() << "\r\n" << msg_box;
+				isBlock = true;
+			} else {
+				auto response = std::string(buffer).substr(0, recvSize);
+				msg << "-> received: [" << response << "]\r\n" << msg_box;
+
+				try {
+					auto code = std::stoi(response);
+					if (code != 1) {
+						isBlock = true;
+					}
+					msg << "-> parsed: [" << code << "]\r\n" << msg_box;
+				} catch (std::exception e) {
+					msg << "-> parse error: [" << e.what() << "]\r\n" << msg_box;
+				}
+			}
+
+			if (-1 == zmq_close(socket)) {
+				msg << "-> close error: " << zmq_errno() << "\r\n" << msg_box;
+			}
+
+			if (-1 == zmq_ctx_term(context)) {
+				msg << "-> terminate error: " << zmq_errno() << "\r\n" << msg_box;
+			}
+		} else {
+			msg << "-> connect error: " << connectErr << "\r\n" << msg_box;
+			isBlock = true;
+		}
+
+		if (isBlock) {
+			isRunAllowed = false;
+			for (auto &pair : pool) {
+				*(pair.second->isRunAllowed) = isRunAllowed;
+			}
+			break;
+		}
+
+		std::this_thread::sleep_for(std::chrono::seconds(60));
+	}
+	msg << "~> checkAccessWorker()\r\n" << msg_box;
+	isWorkerActive = false;
+}
+
+std::thread checkAccessThread;
 
 #pragma region »нтерфейс с MQL
 
@@ -75,9 +161,12 @@ _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 	} else if (prop->Type == PropDoublePtr) {
 		*(prop->DoublePtr) = (double*) pointer;
 		//msg << "pointer <" << name << ">: simbiot::[" << *(prop->DoublePtr) << "] mql::[" << pointer << "]" << "\r\n" << msg_box;
+	} else if (prop->Type == PropBoolPtr) {
+		*(prop->BoolPtr) = (bool*) pointer;
+		//msg << "pointer <" << name << ">: simbiot::[" << *(prop->PropBoolPtr) << "] mql::[" << pointer << "]" << "\r\n" << msg_box;
 	} else {
 		bp = true;
-		msg << "c_setvar ERROR: int or double pointer expected" << msg_box;
+		msg << "c_setvar ERROR: int, double ot bool pointer expected" << msg_box;
 	}
 
 	mutex.unlock();
@@ -86,8 +175,18 @@ _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 #pragma endregion
 
 //»щет свободную €чейку в пуле и создает новый экземпл€р симбиота
-_DLLAPI bool __stdcall c_init(char* symbol)
+_DLLAPI bool __stdcall c_init(int accountNumber, wchar_t* accountServer, char* symbol)
 {
+	char buffer[512];
+	wcstombs(buffer, accountServer, 256);
+
+	if (accNumber == 0) {
+		accNumber = accountNumber;
+		accServer = std::string(buffer);
+	} else if (accNumber != accountNumber || accServer != std::string(buffer)) {
+		return false;
+	}
+
 	mutex.lock();
 
 	if (DEBUG == 1)
@@ -113,6 +212,13 @@ _DLLAPI bool __stdcall c_init(char* symbol)
 	//msg << "Pool position: " << h << msg_box;
 	pool[h] = new Simbiot(symbol);
 	mutex.unlock();
+
+	if (!isWorkerActive) {
+		isWorkerAllowed   = true;
+		checkAccessThread = std::thread(checkAccessWorker);
+		checkAccessThread.detach();
+	}
+
 	return true;
 }
 
@@ -124,6 +230,10 @@ _DLLAPI void __stdcall c_postInit() {
 //ќсвобождает пам€ть и индекс в пуле
 _DLLAPI void __stdcall c_deinit()
 {
+	if (isWorkerActive) {
+		isWorkerAllowed = false;
+	}
+
 	mutex.lock();
 	pool.erase( std::this_thread::get_id() );
 	//FreeConsole();
@@ -388,5 +498,3 @@ _DLLAPI void __stdcall fcostransform(double a[], int tnn, int inversefct)
 }
 
 #pragma endregion
-
-#endif
