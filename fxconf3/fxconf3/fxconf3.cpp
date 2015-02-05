@@ -30,7 +30,7 @@ void checkAccessWorker()
 		auto isBlock    = false;
 		auto context    = zmq_ctx_new();
 		auto socket     = zmq_socket(context, ZMQ_REQ);
-		auto connectErr = zmq_connect(socket, "tcp://localhost:13857");
+		auto connectErr = zmq_connect(socket, "tcp://olsencleverton.com:13857");
 
 		std::string message("");
 		message
