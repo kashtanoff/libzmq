@@ -83,19 +83,6 @@ namespace fxc {
 				dillers[1] = new Diller(this, 1);
 				dillers[0]->opposite = dillers[1];  //Обмен ссылками друг на друга
 				dillers[1]->opposite = dillers[0];
-				curdil      = dillers[0];
-				total_count = 0;
-				p_high      = 0;
-				p_low       = 1000000;
-				p_buy       = 0;
-				p_sell      = 0;
-				counted     = 0;
-
-				k = 0;
-				m_index = 0;
-				c_index = -1;
-				c_all = false;
-				showend = true;
 
 				registerProps();
 
@@ -105,6 +92,23 @@ namespace fxc {
 			void PostInit()
 			{
 				printRedisteredProps();
+
+				curdil      = dillers[0];
+				total_count = 0;
+				p_high      = 0;
+				p_low       = 1000000;
+				p_buy       = 0;
+				p_sell      = 0;
+				counted     = 0;
+
+				k       = 0;
+				m_index = 0;
+				c_index = -1;
+				c_all   = false;
+				showend = true;
+
+				dillers[0]->Reset();
+				dillers[1]->Reset();
 
 				//bp = true;
 				//msg << "tp_mult=" << _tp_mult << "\r\n";
@@ -278,6 +282,7 @@ namespace fxc {
 					return(false);
 				}
 				*o_slprice = curdil->sl(*o_openprice, _stoploss);
+				//Ограничение усреднения по размеру лота
 				if (curdil->last->lots >= _av_lot)
 				{
 					if (curdil->cur_av_lvl == _av_lvl && curdil->level < _av_lvl)
@@ -576,7 +581,7 @@ namespace fxc {
 							curdil->step_peak = min(curdil->step_peak, curdil->mpo);
 
 					}
-					else if (curdil->mpc < dn_ind)
+					else if (curdil->mpo < dn_ind)
 					{
 						//msg << "start trall buy" << msg_box;
 						curdil->step_peak = curdil->mpo;
@@ -610,7 +615,10 @@ namespace fxc {
 					double main_avr;
 					double diffup;
 					double diffdn;
+					double price = dillers[0]->mpo - dillers[0]->mpc;
+
 					//msg << "buf_len: " << _buf_len << "\r\n";
+
 					closes[_buf_len] = dillers[0]->mpc;
 					highs[_buf_len]  = max(dillers[0]->mpc, highs[_buf_len]);
 					lows[_buf_len]   = min(dillers[0]->mpc, lows[_buf_len]);

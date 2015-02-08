@@ -38,17 +38,24 @@ namespace fxc {
 			Diller(Parameters* _params, int _type)
 			{
 				params = _params;
-				type = _type;
-				tp_peak = 0;
-				step_peak = 0;
+				type   = _type;
+				Reset();
+				
+			}
+
+			void Reset()
+			{
+				tp_peak    = 0;
+				step_peak  = 0;
 				orders.clear();
-				prev_lvl = 0;
-				level = 0;
-				sorted = false;
-				last = nullptr;
-				first = nullptr;
-				index = 0;
-				_base_lot = 0;
+				prev_lvl   = 0;
+				level      = 0;
+				sorted     = false;
+				last       = nullptr;
+				first      = nullptr;
+				index      = 0;
+				cur_av_lvl = 100;
+				_base_lot  = 0;
 			}
 
 			void ResetTick()

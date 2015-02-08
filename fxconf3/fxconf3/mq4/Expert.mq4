@@ -180,6 +180,10 @@ void OnTick()
 	if (!is_optimization)
 	{
 		if (showinfo) info.Show();
+
+		if (!is_testing)
+			return;
+
 		if (LogDD > 0) {
 			for (int i = 0; i < 2; i++)
 			{

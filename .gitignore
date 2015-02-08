@@ -1,3 +1,6 @@
+*.opensdf
+*.sdf
+*.suo
 /fxconf3/ipch
 /fxconf3/Release
 /fxconf3/fxconf3/Debug
