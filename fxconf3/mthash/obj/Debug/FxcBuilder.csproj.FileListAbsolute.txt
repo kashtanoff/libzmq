@@ -1,0 +1,5 @@
+D:\work\olsen\fxconf3\FxcBuilder\bin\Debug\FxcBuilder.exe.config
+D:\work\olsen\fxconf3\FxcBuilder\bin\Debug\FxcBuilder.exe
+D:\work\olsen\fxconf3\FxcBuilder\bin\Debug\FxcBuilder.pdb
+D:\work\olsen\fxconf3\FxcBuilder\obj\Debug\FxcBuilder.exe
+D:\work\olsen\fxconf3\FxcBuilder\obj\Debug\FxcBuilder.pdb

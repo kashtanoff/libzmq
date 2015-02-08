@@ -1,0 +1,6 @@
+D:\work\olsen\fxconf3\fxconf3\build\FxcBuilder.exe.config
+D:\work\olsen\fxconf3\mthash\bin\Release\MtHash.exe.config
+D:\work\olsen\fxconf3\mthash\bin\Release\mthash.exe
+D:\work\olsen\fxconf3\mthash\bin\Release\mthash.pdb
+D:\work\olsen\fxconf3\mthash\obj\Release\mthash.exe
+D:\work\olsen\fxconf3\mthash\obj\Release\mthash.pdb
