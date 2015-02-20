@@ -9,8 +9,7 @@
 #include <windows.h>
 #include <mutex>
 
-namespace fxc
-{
+namespace fxc {
 
 	extern std::mutex mutex;
 
@@ -19,11 +18,10 @@ namespace fxc
 	extern double minmax[2]; //дает начальное число для сортировки цен на покупку и продажу
 	extern double maxmin[2]; //тоже, но наоборот
 
-	extern bool   bp;
 	extern bool   console;
 	extern time_t rawtime;
 
-	const WORD MAX_CONSOLE_LINES = 500;
+	const WORD MAX_CONSOLE_LINES = 10000;
 
 	void RedirectIOToConsole();
 

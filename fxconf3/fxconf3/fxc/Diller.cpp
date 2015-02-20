@@ -35,16 +35,13 @@ namespace fxc {
 			double		_base_lot;
 
 
-			Diller(Parameters* _params, int _type)
-			{
+			Diller(Parameters* _params, int _type) {
 				params = _params;
 				type   = _type;
 				Reset();
-				
 			}
 
-			void Reset()
-			{
+			void Reset() {
 				tp_peak    = 0;
 				step_peak  = 0;
 				orders.clear();
@@ -58,26 +55,24 @@ namespace fxc {
 				_base_lot  = 0;
 			}
 
-			void ResetTick()
-			{
-				prev_lvl = level ? level : prev_lvl;
+			void ResetTick() {
+				prev_lvl  = level ? level : prev_lvl;
 				prev_lots = last ? last->lots : prev_lots;
+
 				level = 0;
 				orders.clear();
-				*(params->open_dd + type) = 0.0;
-				*(params->total_lots + type) = 0.0;
-				//*(params->count_p + type)		= level;
-				ord_limit = ord_stop = nullptr;
-				//c_index = 0;
+
+				*(params->ext_open_dd    + type) = 0.0;
+				*(params->ext_total_lots + type) = 0.0;
+				ord_limit = nullptr;
+				ord_stop  = nullptr;
 			}
 
-			void AddOrder(Order* order)
-			{
+			void AddOrder(Order* order) {
 				orders.push_back(order);
 			}
 
-			bool GetOrder(int _num = 0)
-			{
+			bool GetOrder(int _num = 0) {
 				if (_num >= level) return false;
 				params->cur_order = *orders[_num];
 				return true;
@@ -100,14 +95,14 @@ namespace fxc {
 					//msg << "opp_partial close\r\n";
 					//msg << "opp_с_weight=" << c_weight * 10000 << "\r\n";
 					//msg << "opp_order weight=" << weight * 10000 << "\r\n";
-					double min_weight = order_weight(params->cur_order.openprice, mpc, params->lot_min);
+					double min_weight = order_weight(params->cur_order.openprice, mpc, params->input_lot_min);
 					//msg << "opp_min weight=" << min_weight * 10000 << "\r\n";
 					if (params->c_weight + min_weight > 0.0)  //Если можно усреднить хотябы минимальный лот
 					{
-						*(params->o_ticket) = params->cur_order.ticket;
-						*(params->o_openprice) = mpc;
-						*(params->o_lots) = floor(params->c_weight / abs(min_weight)) * params->lot_step;
-						params->c_weight += order_weight(params->cur_order.openprice, mpc, *params->o_lots);
+						*(params->ext_o_ticket) = params->cur_order.ticket;
+						*(params->ext_o_openprice) = mpc;
+						*(params->ext_o_lots) = floor(params->c_weight / abs(min_weight)) * params->input_lot_step;
+						params->c_weight += order_weight(params->cur_order.openprice, mpc, *params->ext_o_lots);
 						//msg << "opp_full lots=" << cur_order.lots << "\r\n";
 						//msg << "opp_part lots=" << *o_lots << "\r\n";
 						//msg << "opp_last c_weight=" << c_weight * 10000 << "\r\n";
@@ -119,9 +114,9 @@ namespace fxc {
 					return(false);
 				}
 				params->c_weight += weight;
-				*(params->o_ticket) = params->cur_order.ticket;
-				*(params->o_openprice) = mpc;
-				*(params->o_lots) = params->cur_order.lots;
+				*(params->ext_o_ticket) = params->cur_order.ticket;
+				*(params->ext_o_openprice) = mpc;
+				*(params->ext_o_lots) = params->cur_order.lots;
 				//msg << "opp_end weight2=" << c_weight * 10000 << "\r\n";
 				//msg << "opp_close_one" << "\r\n";
 				params->c_index++;
@@ -129,55 +124,48 @@ namespace fxc {
 				return(true);
 			}
 
-			double BasketCost()
-			{
+			double BasketCost() {
 				double res;
+				
 				for (int i = 0; i < level; i++)
 					res += 1;
+
 				return res;
 			}
 
 #pragma region Простые сервисные функции
 
 			//"Лучшая цена" для типа
-			double best_price(double a, double b)
-			{
+			double best_price(double a, double b) {
 				return type ? fmax(a, b) : fmin(a, b);
 			}
 
 			//Расчитывает цену тейкпрофита
-			double tp(double _open_price, double _tp)
-			{
+			double tp(double _open_price, double _tp) {
 				return type ? _open_price - _tp : _open_price + _tp;
 			}
 
 			//Расчитывает цену стоплосса
-			double sl(double _open_price, double _sl)
-			{
+			double sl(double _open_price, double _sl) {
 				return type ? _open_price + _sl : _open_price - _sl;
 			}
 
 			//Расчет веса ордера 
-			double order_weight(double open_price, double close_price, double _lots)
-			{
+			double order_weight(double open_price, double close_price, double _lots) {
 				return (type ? open_price - close_price : close_price - open_price) * _lots;
 			}
 
 			//Выдает дельту цены с учетом типа операции
-			double delta(double low_price, double high_price)
-			{
+			double delta(double low_price, double high_price) {
 				return type ? low_price - high_price : high_price - low_price;
 			}
 
 			//Расчитывает вес корзины
-			double basket_weight(double _close_price, int _av_lvl = 100)
-			{
+			double basket_weight(double _close_price, int _av_lvl = 100) {
 				double weight = 0.0;
-				for (int i = 0; i < level; i++)
-				{
+				for (int i = 0; i < level; i++) {
 					weight += order_weight(orders[i]->openprice, _close_price, orders[i]->lots);
-					if (i + 1 >= _av_lvl)
-					{
+					if (i + 1 >= _av_lvl) {
 						return weight;
 					}
 				}
@@ -185,14 +173,12 @@ namespace fxc {
 			}
 
 			//Цена корзины на настоящий момент
-			double basket_cost()
-			{
+			double basket_cost() {
 				double cost = 0.0;
-				for (int i = 0; i < level; i++)
-				{
+				for (int i = 0; i < level; i++) {
 					cost += orders[i]->profit;
 				}
-				return(cost);
+				return cost;
 			}
 
 #pragma endregion

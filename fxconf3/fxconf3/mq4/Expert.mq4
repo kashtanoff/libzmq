@@ -62,7 +62,7 @@ double highs[];
 double lows[];
 int    buf_len;
 bool   run_allowed;
-bool   run;
+int    current_job;
 
 
 int    o_ticket;
@@ -158,18 +158,16 @@ void OnTick()
 	if (!run_allowed)
 		return;
 
-	run = true;
-	int r;
-	//ticks++;
-	Refresh();  //Обновляем информацию об ордерах
-	while (run) //Пока есть работа, выполняем ее
+	current_job = -1;
+	InitTick(); //Обновляем информацию об ордерах
+	while (current_job != 0) //Пока есть работа, выполняем ее
 	{
-		r = c_getjob();
+		current_job = c_getjob();
 		//Print("Tick: ", ticks, ", Ask: ", Ask, ", Bid: ", Bid); 
 		//Print("GetJob: ", r, ", ticket=", o_ticket, ", type=", o_type, ", lots=", o_lots, ", openprice=", o_openprice, ", sl=", o_slprice, ", tp=", o_tpprice);
-		switch (r)
+		switch (current_job)
 		{
-			case 0: run = false; Sleep(timeout); break;  //Больше работы нет, выход
+			case 0: Sleep(timeout); break;  //Больше работы нет, выход
 			case 1: Order::Create(); break;
 			case 2: Order::Modify(); break;
 			case 3: Order::Delete(); break;
@@ -490,10 +488,8 @@ void InitLook()
 	info.DrawHistory();
 }
 
-void Refresh()
-{
-	if (lastbar != Time[1])
-	{
+void InitTick() {
+	if (lastbar != Time[1]) {
 		if (
 			(CopyClose(symbol, tfs[TimeFrame], 0, buf_len, closes) >= buf_len) &&
 			(CopyHigh(symbol, tfs[TimeFrame], 0, buf_len, highs) >= buf_len) &&
@@ -510,16 +506,17 @@ void Refresh()
 
 	int orders_total = OrdersTotal();
 	int _type;
-	for (int pos=0; pos<orders_total; pos++)
-	{
-		if (!OrderSelect(pos, SELECT_BY_POS)) continue;   //Обрабатываем только успешные выборки
+	for (int pos = 0; pos < orders_total; pos++) {
+		if (!OrderSelect(pos, SELECT_BY_POS))
+			continue; // Обрабатываем только успешные выборки
+
 		if (
 			!is_optimization &&
 			(
-				(!AverageAll && OrderMagicNumber() != Magic) ||  //В зависимости от настройки обрабатываем либо все, либо только наши
-				(OrderSymbol() != symbol)
+				(!AverageAll && OrderMagicNumber() != Magic) || // В зависимости от настройки обрабатываем либо все, либо только наши
+				(OrderSymbol() != symbol)                       // Обрабатываем ордера только для текущего символа
 			)
-		) continue; //Обрабатываем ордера только для текущего символа
+		) continue;
 
 		_type = OrderType();
 		c_refresh_order(

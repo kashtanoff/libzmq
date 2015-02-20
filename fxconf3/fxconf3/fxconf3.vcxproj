@@ -76,6 +76,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalIncludeDirectories>D:\work\zeromq-4.0.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeTypeInfo>
+      </RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -111,9 +113,12 @@
     </ClCompile>
     <ClCompile Include="fxc\fxc.cpp" />
     <ClCompile Include="fxconf3.cpp" />
+    <ClCompile Include="fxc\strat\AbstractStrategy.cpp" />
+    <ClCompile Include="fxc\strat\DefaultStrategy.cpp" />
     <ClCompile Include="fxc\Order.cpp" />
     <ClCompile Include="fxc\Parameters.cpp" />
     <ClCompile Include="fxc\Simbiot.cpp" />
+    <ClCompile Include="fxc\strat\OldStrategy.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

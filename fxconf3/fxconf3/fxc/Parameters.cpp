@@ -8,91 +8,91 @@ namespace fxc {
 	{
 		public:
 			//Константы рынка
-			double   point;			    //1 значение минимального шага цены
-			int      digits;				//2 количество десятичных знаков для инструмента
+			double   input_point;			    //1 значение минимального шага цены
+			int      input_digits;				//2 количество десятичных знаков для инструмента #unused
 			char     symbol[10];			//3 название символа
-			double   lot_step;			//4 минимальный шаг приращения лота
-			double   lot_min;				//5 минимальный лот
-			double   lot_max;				//6 максимальный лот
-			double   min_sl_tp;			//7 минимальное расстояние до стоплосса или тейкпрофита
-			double   freeze;				//8 расстояние заморозки ордеров
-			int      is_optimization;		//9 флаг оптимизации
-			int      is_visual;			//10 флаг визуального режима
-			int      is_testing;			//11 флаг тестирования
+			double   input_lot_step;			//4 минимальный шаг приращения лота #unused
+			double   input_lot_min;				//5 минимальный лот
+			double   input_lot_max;				//6 максимальный лот
+			double   input_min_sl_tp;			//7 минимальное расстояние до стоплосса или тейкпрофита
+			double   input_freeze;				//8 расстояние заморозки ордеров
+			int      input_is_optimization;		//9 флаг оптимизации
+			int      input_is_visual;			//10 флаг визуального режима
+			int      input_is_testing;			//11 флаг тестирования #unused
 			//Параметры советника
-			int		_stop_new[2];		//50, 51 Остановить открытие новой сетки
-			int		_stop_avr[2];		//52, 53 Остановить открытие новой ступени
-			int		_max_grid_lvl;		//54 Максимальный уровень сетки
-			double	_step;				//55 базовый шаг, минимальный шаг (для трейлинг степа)
+			int		input_stop_new[2];		//50, 51 Остановить открытие новой сетки
+			int		input_stop_avr[2];		//52, 53 Остановить открытие новой ступени
+			int		input_max_grid_lvl;		//54 Максимальный уровень сетки
+			double	input_step;				//55 базовый шаг, минимальный шаг (для трейлинг степа)
 			//double	_step_mult;			//56 множитель шага
-			double	_takeprofit;        //57 базовый тейкпрофит, минимальный (для трейлинг стопа)
+			double	input_takeprofit;        //57 базовый тейкпрофит, минимальный (для трейлинг стопа)
 			//double	_tp_mult;			//58 множитель тейкпрофита
-			int		_forward_lvl;		//59 с какого уровня выставлять форвардные сделки
+			int		input_forward_lvl;		//59 с какого уровня выставлять форвардные сделки
 			//double	_tr_stop;			//60 величина трейлинг стопа
 			//double	_tr_stop_mult;		//61 множитель трейлинг стопа
 			//double  _tr_step;			//62 величина трейлинга шага
 			//double  _tr_step_mult;		//63 множитель трейлинга шага
-			int		_av_lvl;			//64 ступень усреднения
-			double	_av_lot;			//65 лот с которого начинается уменьшаться ступень усреднения
-			int		_op_av_lvl;			//66 уровень начала противоположного усреднения
-			double	_pips_mult;			//67 множитель прибыли
-			int		_safe_copy;			//68 вести расчет прибыли с базового лота а не с начального
-			double	_sell_lot;			//69 начальный лот на продажу
-			double	_buy_lot;			//97 начальный лот на покупку
-			double  _maxlot;			//70 максимальный лот
-			double	_lot_hadge_mult;	//71 процент хэджирования
-			double	_regres_mult;		//72 процент затухания
-			int		_trend_lvl;			//73
-			double	_trend_lot_mult;	//74
-			double	_trend_progress;	//75
-			int		_repeat_lvl;		//76
-			double	_repeat_lot_mult;	//77
-			double	_repeat_progress;	//78
-			int		_period;			//79
-			double	_deviation;			//80
-			double	_stoploss;          //81 стоплосс
-			int		_attemts;			//82
-			int		_auto_mm;			//83
-			int		_mm_equ;			//84
-			double	_basket_hadge_mult; //85
-			double	_forward_step_mult;	//86
-			double	_delta;				//87
-			int		_first_free;		//88
-			int		_new_bar;			//89
-			int		_free_lvl;			//90
-			double  _multf;				//91
-			int		_periodf2;			//92
-			int		_periodf3;			//93
-			int		_buf_len;			//94
-			double	_rollback;			//95
-			double	_weighthadge;		//96
-			int     _opp_close;			//97
+			int		input_av_lvl;			//64 ступень усреднения
+			double	input_av_lot;			//65 лот с которого начинается уменьшаться ступень усреднения
+			int		input_op_av_lvl;			//66 уровень начала противоположного усреднения
+			double	input_pips_mult;			//67 множитель прибыли
+			int		input_safe_copy;			//68 вести расчет прибыли с базового лота а не с начального
+			double	input_sell_lot;			//69 начальный лот на продажу
+			double	input_buy_lot;			//97 начальный лот на покупку
+			double  input_maxlot;			//70 максимальный лот
+			double	input_lot_hadge_mult;	//71 процент хэджирования
+			double	input_regres_mult;		//72 процент затухания
+			int		input_trend_lvl;			//73
+			double	input_trend_lot_mult;	//74
+			double	input_trend_progress;	//75
+			int		input_repeat_lvl;		//76
+			double	input_repeat_lot_mult;	//77
+			double	input_repeat_progress;	//78
+			int		input_period;			//79
+			double	input_deviation;			//80
+			double	input_stoploss;          //81 стоплосс
+			int		input_attemts;			//82 #unused
+			int		input_auto_mm;			//83
+			int		input_mm_equ;			//84
+			double	input_basket_hadge_mult; //85
+			double	input_forward_step_mult;	//86
+			double	input_delta;				//87
+			int		input_first_free;		//88
+			int		input_new_bar;			//89
+			int		input_free_lvl;			//90
+			double  input_multf;				//91
+			int		input_periodf2;			//92
+			int		input_periodf3;			//93
+			int		input_buf_len;			//94
+			double	input_rollback;			//95
+			double	input_weighthadge;		//96
+			int     input_opp_close;			//97
 			//Общие переменные
 			//double  ask;				//100
 			//double  bid;				//101
-			double*	 open_dd;			//102 подсчет открытой просадки по каждому типу отдельно
-			double*	 total_lots;		//103 суммарный объем лотов по каждому типу
-			int*	 max_lvl;			//104
-			double*	 max_dd;			//105
-			double*	 indicator;			//106
-			int*	 count_p;			//107
+			double*	 ext_open_dd;			//102 подсчет открытой просадки по каждому типу отдельно
+			double*	 ext_total_lots;		//103 суммарный объем лотов по каждому типу
+			int*	 ext_max_lvl;			//104 #unused
+			double*	 ext_max_dd;			//105 #unused
+			double*	 ext_indicator;			//106
+			int*	 ext_count_p;			//107
 
-			int*	 o_ticket;			//110
-			int*	 o_type;			//111
-			double*  o_lots;			//112
-			double*	 o_openprice;		//113
-			double*	 o_slprice;			//114
-			double*	 o_tpprice;			//115
-			double*	 indicator2;		//116
+			int*	 ext_o_ticket;			//110
+			int*	 ext_o_type;			//111
+			double*  ext_o_lots;			//112
+			double*	 ext_o_openprice;		//113
+			double*	 ext_o_slprice;			//114
+			double*	 ext_o_tpprice;			//115
+			double*	 ext_indicator2;		//116 #unused
 			double	 prev_indicator;
-			int*     intret;            //200 для отладки
+			int*     ext_intret;            //200 для отладки
 
 			Order    cur_order;
 			double   c_weight;
 			int      c_index;
 			bool     c_all;
 
-			bool*    isRunAllowed;
+			bool*    ext_isRunAllowed;
 	};
 
 }

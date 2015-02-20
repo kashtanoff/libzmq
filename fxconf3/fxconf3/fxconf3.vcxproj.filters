@@ -63,6 +63,15 @@
     <ClCompile Include="fxc\fxc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fxc\strat\DefaultStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\strat\AbstractStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\strat\OldStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mq4\Errors.mq4">

@@ -138,15 +138,6 @@ public:
 			Change("max_lvl", max_lvl);
 		}
 
-		/*
-		double curlot;
-		for (int t=OP_BUY; t==OP_SELL; t++)
-		{
-		curlot = c_normlot((takeprofit * MinLot - c_basket_weight(t, c_tp(t, mpo[t], takeprofit), av_lvl[t])) / takeprofit);
-		ObjectSetString(0, lotnames[t], OBJPROP_TEXT, dts(curlot, 2));
-		}
-		*/
-
 		int _ticket;
 		bool erase = false;
 		while (true)

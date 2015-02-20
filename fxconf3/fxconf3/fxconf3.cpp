@@ -7,13 +7,17 @@
 #include <thread>
 #include <unordered_map>
 
+#include "stdafx.h"
 #include "Defines.h"
+
 #include "fxc/fxc.h"
-#include "fxc/Simbiot.cpp"
+#include INCLUDE_FILE(STRAT_PATH)
 
-using namespace fxc;
+#if DEBUG
+#include <chrono>
+#endif
 
-std::unordered_map<std::thread::id, Simbiot*> pool;
+std::unordered_map<std::thread::id, STRAT_CLASS*> pool;
 bool isRunAllowed = true;
 
 int         accNumber = 0;
@@ -25,12 +29,19 @@ void checkAccessWorker()
 {
 	isWorkerActive = true;
 	while (isWorkerAllowed) {
-		msg << "-> checkAccessWorker()\r\n" << msg_box;
+		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
 
+#if CHECK_ACCESS
 		auto isBlock    = false;
 		auto context    = zmq_ctx_new();
 		auto socket     = zmq_socket(context, ZMQ_REQ);
-		auto connectErr = zmq_connect(socket, "tcp://olsencleverton.com:13857");
+		auto connectErr = zmq_connect(socket, 
+#if LOCAL
+			"tcp://localhost:13857"
+#else
+			"tcp://olsencleverton.com:13857"
+#endif
+		);
 
 		std::string message("");
 		message
@@ -49,53 +60,55 @@ void checkAccessWorker()
 
 		if (0 == connectErr) {
 			if (-1 == zmq_send(socket, message.c_str(), strlen(message.c_str()), 0)) {
-				msg << "-> send error: " << zmq_errno() << "\r\n" << msg_box;
+				fxc::msg << "-> send error: " << zmq_errno() << "\r\n" << fxc::msg_box;
 				isBlock = true;
 			}
 
 			char buffer[64];
 			auto recvSize = zmq_recv(socket, &buffer, sizeof(buffer), 0);
 			if (-1 == recvSize) {
-				msg << "-> receive error: " << zmq_errno() << "\r\n" << msg_box;
+				fxc::msg << "-> receive error: " << zmq_errno() << "\r\n" << fxc::msg_box;
 				isBlock = true;
 			} else {
 				auto response = std::string(buffer).substr(0, recvSize);
-				msg << "-> received: [" << response << "]\r\n" << msg_box;
+				fxc::msg << "-> received: [" << response << "]\r\n" << fxc::msg_box;
 
 				try {
 					auto code = std::stoi(response);
 					if (code != 1) {
 						isBlock = true;
 					}
-					msg << "-> parsed: [" << code << "]\r\n" << msg_box;
+					fxc::msg << "-> parsed: [" << code << "]\r\n" << fxc::msg_box;
 				} catch (std::exception e) {
-					msg << "-> parse error: [" << e.what() << "]\r\n" << msg_box;
+					fxc::msg << "-> parse error: [" << e.what() << "]\r\n" << fxc::msg_box;
 				}
 			}
 
 			if (-1 == zmq_close(socket)) {
-				msg << "-> close error: " << zmq_errno() << "\r\n" << msg_box;
+				fxc::msg << "-> close error: " << zmq_errno() << "\r\n" << fxc::msg_box;
 			}
 
 			if (-1 == zmq_ctx_term(context)) {
-				msg << "-> terminate error: " << zmq_errno() << "\r\n" << msg_box;
+				fxc::msg << "-> terminate error: " << zmq_errno() << "\r\n" << fxc::msg_box;
 			}
 		} else {
-			msg << "-> connect error: " << connectErr << "\r\n" << msg_box;
+			fxc::msg << "-> connect error: " << connectErr << "\r\n" << fxc::msg_box;
 			isBlock = true;
 		}
 
 		if (isBlock) {
 			isRunAllowed = false;
 			for (auto &pair : pool) {
-				*(pair.second->isRunAllowed) = isRunAllowed;
+				*(pair.second->ext_isRunAllowed) = isRunAllowed;
 			}
 			break;
 		}
 
+#endif
+
 		std::this_thread::sleep_for(std::chrono::seconds(60));
 	}
-	msg << "~> checkAccessWorker()\r\n" << msg_box;
+	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
 	isWorkerActive = false;
 }
 
@@ -107,7 +120,7 @@ std::thread checkAccessThread;
 
 _DLLAPI void __stdcall c_setint(wchar_t* propName, int propValue)
 {
-	mutex.lock();
+	fxc::mutex.lock();
 
 	char name[64];
 	wcstombs(name, propName, 32);
@@ -118,16 +131,15 @@ _DLLAPI void __stdcall c_setint(wchar_t* propName, int propValue)
 	if (prop->Type == PropInt) {
 		*(prop->Int) = propValue;
 	} else {
-		bp = true;
-		msg << "c_setint ERROR: int expected" << msg_box;
+		fxc::msg << "c_setint ERROR: int expected" << fxc::msg_box;
 	}
 
-	mutex.unlock();
+	fxc::mutex.unlock();
 }
 
 _DLLAPI void __stdcall c_setdouble(wchar_t* propName, double propValue)
 {
-	mutex.lock();
+	fxc::mutex.lock();
 
 	char name[64];
 	wcstombs(name, propName, 32);
@@ -138,16 +150,15 @@ _DLLAPI void __stdcall c_setdouble(wchar_t* propName, double propValue)
 	if (prop->Type == PropDouble) {
 		*(prop->Double) = propValue;
 	} else {
-		bp = true;
-		msg << "c_setdouble ERROR: double expected" << msg_box;
+		fxc::msg << "c_setdouble ERROR: double expected" << fxc::msg_box;
 	}
 
-	mutex.unlock();
+	fxc::mutex.unlock();
 }
 
 _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 {
-	mutex.lock();
+	fxc::mutex.lock();
 
 	char name[64];
 	wcstombs(name, propName, 32);
@@ -165,11 +176,10 @@ _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 		*(prop->BoolPtr) = (bool*) pointer;
 		//msg << "pointer <" << name << ">: simbiot::[" << *(prop->PropBoolPtr) << "] mql::[" << pointer << "]" << "\r\n" << msg_box;
 	} else {
-		bp = true;
-		msg << "c_setvar ERROR: int, double ot bool pointer expected" << msg_box;
+		fxc::msg << "c_setvar ERROR: int, double ot bool pointer expected" << fxc::msg_box;
 	}
 
-	mutex.unlock();
+	fxc::mutex.unlock();
 }
 
 #pragma endregion
@@ -187,7 +197,7 @@ _DLLAPI bool __stdcall c_init(int accountNumber, wchar_t* accountServer, char* s
 		return false;
 	}
 
-	mutex.lock();
+	fxc::mutex.lock();
 
 	if (DEBUG == 1)
 	{
@@ -202,16 +212,16 @@ _DLLAPI bool __stdcall c_init(int accountNumber, wchar_t* accountServer, char* s
 			freopen("conin$", "r", stdin);
 			freopen("CONOUT$", "w", stdout);
 			freopen("conout$", "w", stderr);
-			console = true;
-			msg << "Debug logging activated\r\n" << msg_box;
+			fxc::console = true;
+			fxc::msg << "Debug logging activated\r\n" << fxc::msg_box;
 		}
 	}
 
 	auto h = std::this_thread::get_id();
 	//bp = true;
 	//msg << "Pool position: " << h << msg_box;
-	pool[h] = new Simbiot(symbol);
-	mutex.unlock();
+	pool[h] = new STRAT_CLASS (symbol);
+	fxc::mutex.unlock();
 
 	if (!isWorkerActive) {
 		isWorkerAllowed   = true;
@@ -224,7 +234,7 @@ _DLLAPI bool __stdcall c_init(int accountNumber, wchar_t* accountServer, char* s
 
 _DLLAPI void __stdcall c_postInit() {
 	auto h = std::this_thread::get_id();
-	pool[h]->PostInit();
+	pool[h]->postInit();
 }
 
 //ќсвобождает пам€ть и индекс в пуле
@@ -234,20 +244,49 @@ _DLLAPI void __stdcall c_deinit()
 		isWorkerAllowed = false;
 	}
 
-	mutex.lock();
+	fxc::mutex.lock();
 	pool.erase( std::this_thread::get_id() );
 	//FreeConsole();
-	mutex.unlock();
+	fxc::mutex.unlock();
 }
 
 //¬ыполн€ет этап алгоритма, возвращает индекс необходимого действи€
 _DLLAPI int __stdcall c_getjob()
 {
-	mutex.lock();
-	//curSymbol = pool[curH]->symbol;
+#if PROFILE
+	auto t1 = std::chrono::high_resolution_clock::now();
+#endif
+
+	auto res = 0;
 	auto   h = std::this_thread::get_id();
-	auto res = pool[h]->getjob();
-	mutex.unlock();
+
+#if DEBUG
+	try {
+#endif
+		fxc::mutex.lock();
+		res = pool[h]->getJob();
+		fxc::mutex.unlock();
+#if DEBUG
+	}
+	catch (const std::exception& ex) {
+		fxc::msg << "!> ERROR @ c_getjob(): " << ex.what() << "\r\n" << fxc::msg_box;
+	}
+	catch (const std::string& ex) {
+		fxc::msg << "!> ERROR @ c_getjob(): " << ex << "\r\n" << fxc::msg_box;
+	}
+	catch (...) {
+		fxc::msg << "!> ERROR @ c_getjob(): [undefined type]\r\n" << fxc::msg_box;
+	}
+#endif
+
+#if PROFILE
+	auto t2 = std::chrono::high_resolution_clock::now();
+	auto  d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+
+	if (d > 0) {
+		fxc::msg << "$> duration @ c_getjob(): " << d << "\r\n" << fxc::msg_box;
+	}
+#endif
 
 	return res;
 }
@@ -262,8 +301,7 @@ _DLLAPI int __stdcall c_getdpi()
 		ReleaseDC(nullptr, hDC);
 		return nDPI;
 	} __except(EXCEPTION_EXECUTE_HANDLER) {
-		bp = true;
-		msg << "c_getdpi ERROR: " << GetExceptionCode() << msg_box;
+		fxc::msg << "c_getdpi ERROR: " << GetExceptionCode() << fxc::msg_box;
 	};
 
 	return 1;
@@ -273,19 +311,19 @@ _DLLAPI int __stdcall c_getdpi()
 //нельз€ пользовать€ результатами в MQL программе до завершени€ цикла
 _DLLAPI void __stdcall c_refresh_init(double ask, double bid, double equity)   
 {
-	mutex.lock();
+	fxc::mutex.lock();
 	auto h = std::this_thread::get_id();
 	pool[h]->refresh_init(ask, bid, equity);
-	mutex.unlock();
+	fxc::mutex.unlock();
 }
 
 //ƒобавл€ет новый ордер в цикле скана ордеров, в будущем возвращает код изменени€
 _DLLAPI int __stdcall c_refresh_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0)
 {
-	mutex.lock();
+	fxc::mutex.lock();
 	auto   h = std::this_thread::get_id();
 	auto res = pool[h]->refresh_order(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
-	mutex.unlock();
+	fxc::mutex.unlock();
 
 	return res;
 }
@@ -293,30 +331,30 @@ _DLLAPI int __stdcall c_refresh_order(int _ticket, int _type, double _lots, doub
 //Ќормализаци€ лота дл€ ручных операций
 _DLLAPI double __stdcall c_norm_lot(double _lots)
 {
-	//mutex.lock();	
+	//fxc::mutex.lock();	
 	auto   h = std::this_thread::get_id();
 	auto res = pool[h]->normlot(_lots);
-	//mutex.unlock();
+	//fxc::mutex.unlock();
 
 	return res;
 }
 
 _DLLAPI int __stdcall c_get_closed()
 {
-	//mutex.lock();
+	//fxc::mutex.lock();
 	auto   h = std::this_thread::get_id();
 	auto res = pool[h]->getclosed();
-	//mutex.unlock();
+	//fxc::mutex.unlock();
 
 	return res;
 }
 
 _DLLAPI void __stdcall c_refresh_prices(double *_closes, double *_highs, double *_lows, int _bars)
 {
-	//mutex.lock();
+	//fxc::mutex.lock();
 	auto h = std::this_thread::get_id();
 	pool[h]->refresh_prices(_closes, _highs, _lows, _bars);
-	//mutex.unlock();
+	//fxc::mutex.unlock();
 }
 
 _DLLAPI void __stdcall fcostransform(double a[], int tnn, int inversefct)

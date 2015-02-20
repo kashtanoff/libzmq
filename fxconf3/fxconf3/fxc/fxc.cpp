@@ -16,7 +16,6 @@ int    fxc::sign[6]   = { 1, -1, 1, -1, 1, -1 };
 double fxc::minmax[2] = { 0.0, 1000000.0 };
 double fxc::maxmin[2] = { 1000000.0, 0.0 };
 
-bool   fxc::bp;
 bool   fxc::console;
 time_t fxc::rawtime;
 
@@ -65,10 +64,7 @@ using std::ostream;
 ostream& fxc::msg_box(ostream& s)
 {
 	ostringstream& os = dynamic_cast<ostringstream&>(s);
-	if (bp) {
-		MessageBoxA(NULL, os.str().c_str(), "fxconf3.dll ", MB_OK);
-		bp = false;
-	}
+
 	if (console) {
 		char buffer[32];
 
@@ -77,6 +73,7 @@ ostream& fxc::msg_box(ostream& s)
 
 		std::cout << buffer << " [" << std::this_thread::get_id() << "]: " << os.str().c_str();
 	}
+	
 	os.swap(ostringstream());
 	return s;
 }
