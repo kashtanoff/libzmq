@@ -2,6 +2,7 @@
 
 #include "vector"
 
+#include "../Debug.h"
 #include "../MqlUtils.cpp"
 #include "Order.cpp"
 

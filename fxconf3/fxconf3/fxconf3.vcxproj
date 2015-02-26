@@ -78,6 +78,7 @@
       <AdditionalIncludeDirectories>D:\work\zeromq-4.0.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>
       </RuntimeTypeInfo>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -95,6 +96,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Debug.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="fxc\fxc.h" />
     <ClInclude Include="Property.h" />
@@ -102,6 +104,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Debug.cpp" />
     <ClCompile Include="fxc\Diller.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>

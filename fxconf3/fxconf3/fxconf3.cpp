@@ -324,12 +324,15 @@ _DLLAPI int __stdcall c_getjob()
 	}
 	catch (const std::exception& ex) {
 		fxc::msg << "!> ERROR @ c_getjob(): " << ex.what() << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
 	}
 	catch (const std::string& ex) {
 		fxc::msg << "!> ERROR @ c_getjob(): " << ex << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
 	}
 	catch (...) {
 		fxc::msg << "!> ERROR @ c_getjob(): [undefined type]\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
 	}
 #endif
 
@@ -356,7 +359,7 @@ _DLLAPI int __stdcall c_getdpi()
 		return nDPI;
 	} __except(EXCEPTION_EXECUTE_HANDLER) {
 		fxc::msg << "c_getdpi ERROR: " << GetExceptionCode() << fxc::msg_box;
-	};
+	}
 
 	return 1;
 }
