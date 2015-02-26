@@ -10,6 +10,18 @@
 
 #include "Inputs.mq4"
 
+struct TradeAction {
+	double o_lots;      // 8 bytes
+	double o_openprice; // 8 bytes
+	double o_tpprice;   // 8 bytes
+	double o_slprice;   // 8 bytes
+	int    o_ticket;    // 4 bytes
+	int    o_type;      // 4 bytes
+	int    intret;      // 4 bytes
+	int    actionId;    // 4 bytes
+	string comment;     // 12 bytes
+};
+
 #import "fxc{{build}}.dll"
 	bool   c_init(int number, string server, string symbol);
 	void   c_deinit();
@@ -20,8 +32,11 @@
 	void   c_setvar(string prop, bool& var);
 	void   c_setvar(string prop, int& var);
 	void   c_setvar(string prop, int& var[]);
+	void   c_setvar(string prop, long& var);
 	void   c_setvar(string prop, double& var);
 	void   c_setvar(string prop, double& var[]);
+
+	void   c_actions(TradeAction& var[], int length);
 
 	void   c_refresh_init(double ask, double bid, double equity);
 	int    c_refresh_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0);
@@ -62,16 +77,8 @@ double highs[];
 double lows[];
 int    buf_len;
 bool   run_allowed;
-int    current_job;
 
-
-int    o_ticket;
-int    o_type;
-double o_lots;
-double o_openprice;
-double o_tpprice;
-double o_slprice;
-int    intret;
+TradeAction actList[64];
 
 int    timeout;
 
@@ -158,22 +165,31 @@ void OnTick()
 	if (!run_allowed)
 		return;
 
-	current_job = -1;
 	InitTick(); //Обновляем информацию об ордерах
-	while (current_job != 0) //Пока есть работа, выполняем ее
-	{
-		current_job = c_getjob();
-		//Print("Tick: ", ticks, ", Ask: ", Ask, ", Bid: ", Bid); 
-		//Print("GetJob: ", r, ", ticket=", o_ticket, ", type=", o_type, ", lots=", o_lots, ", openprice=", o_openprice, ", sl=", o_slprice, ", tp=", o_tpprice);
-		switch (current_job)
-		{
-			case 0: Sleep(timeout); break;  //Больше работы нет, выход
-			case 1: Order::Create(); break;
-			case 2: Order::Modify(); break;
-			case 3: Order::Delete(); break;
-			case 4: Order::Close(); break;
+	int i;
+	int l = c_getjob();
+
+	for (i = 0; i < l; i++) {
+		//Print("-> Job {", 
+		//	"o_lots: ",      actList[i].o_lots,      ", ",
+		//	"o_openprice: ", actList[i].o_openprice, ", ",
+		//	"o_tpprice: ",   actList[i].o_tpprice,   ", ",
+		//	"o_slprice: ",   actList[i].o_slprice,   ", ",
+		//	"o_ticket: ",    actList[i].o_ticket,    ", ",
+		//	"o_type: ",      actList[i].o_type,      ", ",
+		//	"intret: ",      actList[i].intret,      ", ",
+		//	"actionId: ",    actList[i].actionId, 
+		//"}");
+
+		switch (actList[i].actionId) {
+			case 1: Order::Create(actList[i]); break;
+			case 2: Order::Modify(actList[i]); break;
+			case 3: Order::Delete(actList[i]); break;
+			case 4: Order::Close(actList[i]); break;
 		}
 	}
+
+	Sleep(timeout);
 
 	if (!is_optimization)
 	{
@@ -183,7 +199,7 @@ void OnTick()
 			return;
 
 		if (LogDD > 0) {
-			for (int i = 0; i < 2; i++)
+			for (i = 0; i < 2; i++)
 			{
 				if (lastlevel[i] > 0 && count[i] == 0 && netdd[i] > LogDD) { //Сброс пирамиды
 					FileWrite(herror, "===============-> ", TimeToStr(startdate[i], TIME_DATE), " - ", TimeToStr(TimeCurrent(), TIME_DATE), "   [", netlevel[i], "] - (", netdd[i], ")");
@@ -308,22 +324,28 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 			curlots = selllot;
 		}
 		else if (sparam == "BtnBuy") {
-			o_type      = OP_BUY;
-			o_lots      = c_norm_lot(curlots);
-			o_openprice = Ask;
-			o_slprice   = Ask - StopLoss * k * Point;
-			o_tpprice   = Ask + TakeProfit * k * Point;
-			intret      = 100;
-			Order::Create();
+			TradeAction action;
+
+			action.o_type      = OP_BUY;
+			action.o_lots      = c_norm_lot(curlots);
+			action.o_openprice = Ask;
+			action.o_slprice   = Ask - StopLoss * k * Point;
+			action.o_tpprice   = Ask + TakeProfit * k * Point;
+			action.intret      = 100;
+
+			Order::Create(action);
 		}
 		else if (sparam == "BtnSell") {
-			o_type      = OP_SELL;
-			o_lots      = c_norm_lot(curlots);
-			o_openprice = Bid;
-			o_slprice   = Bid + StopLoss * k * Point;
-			o_tpprice   = Bid - TakeProfit * k * Point;
-			intret      = 100;
-			Order::Create();
+			TradeAction action;
+
+			action.o_type      = OP_SELL;
+			action.o_lots      = c_norm_lot(curlots);
+			action.o_openprice = Bid;
+			action.o_slprice   = Bid + StopLoss * k * Point;
+			action.o_tpprice   = Bid - TakeProfit * k * Point;
+			action.intret      = 100;
+			
+			Order::Create(action);
 		}
 		else if (sparam == "BtnClsB") {
 			//CloseAllProfit(OP_BUY);
@@ -339,12 +361,12 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 			}
 		}
 
-		if (show_cpanel)
-		{
-			ObjectSetString(0, "EdtLot", OBJPROP_TEXT, DoubleToStr(o_lots, 2));
-			Sleep(100);
-			ObjectSetInteger(0, sparam, OBJPROP_STATE, false);
-		}
+		//if (show_cpanel)
+		//{
+		//	ObjectSetString(0, "EdtLot", OBJPROP_TEXT, DoubleToStr(o_lots, 2));
+		//	Sleep(100);
+		//	ObjectSetInteger(0, sparam, OBJPROP_STATE, false);
+		//}
 	}
 }
 
@@ -431,16 +453,10 @@ bool DllInit()
 	c_setvar("max_dd",       max_dd);
 	c_setvar("indicator",    indicator);
 	c_setvar("count_p",      count);
-	c_setvar("o_ticket",     o_ticket);
-	c_setvar("o_type",       o_type);
-	c_setvar("o_lots",       o_lots);
-	c_setvar("o_openprice",  o_openprice);
-	c_setvar("o_slprice",    o_slprice);
-	c_setvar("o_tpprice",    o_tpprice);
 	c_setvar("indicator2",   indicator2);
-	c_setvar("intret",       intret);
 
-	c_setvar("isRunAllowed", run_allowed);
+	c_setvar("isRunAllowed",   run_allowed);
+	c_actions(actList, ArraySize(actList));
 
 	//Запуск постинициализации
 	c_postInit();

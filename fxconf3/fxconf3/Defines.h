@@ -26,5 +26,5 @@
 #define QUOTEME(s)       #s
 #define INCLUDE_FILE(f)  QUOTEME(f)
 
-#define STRAT_PATH  fxc/strat/OldStrategy.cpp
-#define STRAT_CLASS fxc::strategy::OldStrategy
+#define STRAT_PATH  fxc/strat/DefaultStrategy.cpp
+#define STRAT_CLASS fxc::strategy::DefaultStrategy

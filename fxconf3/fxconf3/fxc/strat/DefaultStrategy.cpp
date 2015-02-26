@@ -13,193 +13,101 @@ namespace strategy {
 			DefaultStrategy(char* _symbol) : AbstractStrategy(_symbol) {}
 
 			virtual int getJob() {
-#if TRACE_STRATEGY
-				fxc::msg << "-> DefaultModule::getJob()\r\n" << fxc::msg_box;
-#endif
-				return start();
+				actionsLen = 0;
+				execJob();
+				return actionsLen;
+			}
+
+			inline void execJob() {
+				sortOrders();
+
+				for (int i = 0; i < 2; i++) {
+					curdil = dillers[i];
+
+					// Если нет ордеров в рынке
+					if (!curdil->level) {
+						// Если не запрещено открытие новой сетки и есть сигнал
+						if (!input_stop_new[curdil->type] && (signal() || curdil->opposite->level >= input_forward_lvl)) {
+							CreateOrder(
+								curdil->type, 
+								calc_first_lot(curdil->tp(curdil->mpo, input_takeprofit)), 
+								curdil->mpo,
+								curdil->sl(curdil->mpo, input_stoploss),
+								curdil->tp(curdil->mpo, input_takeprofit)
+							);
+
+							if (input_opp_close) {
+								AutoClose();
+							}
+						}
+					}
+					else {
+						move_tp();
+
+						// Если есть базовый ордер и разрешено усреднять и максимальный уровень не достигнут
+						if (!input_stop_avr[curdil->type] && curdil->level < input_max_grid_lvl) {
+
+							// Если разрешены форварды и его можно поставить
+							if (curdil->opposite->level >= input_forward_lvl && !curdil->ord_stop) {
+								TryOpenForward();
+			
+							}
+							if (signal()) {
+								OpenNextOrder();
+
+								if (input_opp_close == 2) {
+									AutoClose();
+								}
+							}
+						}
+						// Если есть ордера, но не разрешено усреднять -> удалить отложки
+						else {
+							DelStopLimitOrders();
+						}
+					}
+				}
 			}
 
 		protected:
 
-			int start() {
-#if TRACE_STRATEGY
-				fxc::msg << "-> DefaultModule::start()\r\n" << fxc::msg_box;
-#endif
+			int actionsLen;
 
-				sortOrders();
-				if (!curdil->level) { //Если нет ордеров в рынке
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::start() [1]\r\n" << fxc::msg_box;
-#endif
-					if (!input_stop_new[curdil->type] && (signal() || curdil->opposite->level >= input_forward_lvl)) { //Если не запрещено открытие новой сетки и есть сигнал, открываем первый ордер
-#if TRACE_STRATEGY
-						fxc::msg << "-> DefaultModule::start() [1.1]\r\n" << fxc::msg_box;
-#endif
-						calc_first_lot();
 
-						if (calc_oposite()) { //Отрабатываем обратное усреднение
-#if TRACE_STRATEGY
-							fxc::msg << "-> DefaultModule::start() [1.1.1]\r\n" << fxc::msg_box;
-#endif
-							return JOB_MODIFY;
-						}
-						else {
-#if TRACE_STRATEGY
-							fxc::msg << "-> DefaultModule::start() [1.1.2]\r\n" << fxc::msg_box;
-#endif
-							return openOrder();
-						}
+			inline void move_tp() {
+				//fxc::msg << " -> move_tp()\r\n" << fxc::msg_box;
+
+				double last_tpprice = curdil->tp(curdil->last->openprice, input_takeprofit);
+
+				if (curdil->last->tpprice != last_tpprice) { //Если у последнего ордера еще не установлен тейкпрофит, то ставим его
+					ModOrder(
+						curdil->last->ticket, 
+						curdil->last->openprice, 
+						curdil->sl(curdil->last->openprice, input_stoploss), 
+						last_tpprice
+					);
+				}
+
+				if (curdil->level < 2) //Если в рынке один ордер, то нечего и двигать
+					return;
+
+				double last_weigth = curdil->order_weight(curdil->last->openprice, last_tpprice, curdil->last->lots);
+				double total_weight = curdil->basket_weight(last_tpprice);
+
+				if (total_weight > 0) { //Если вес всей сетки положителен, то удесятеряем вес последнего ордера для гарантированного закрытия всей сетки
+					last_weigth *= 10;
+				}
+
+				for (int i = 0; i < curdil->level - 1; i++) {
+					last_weigth -= curdil->order_weight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots);
+
+					if (last_weigth > 0 && curdil->orders[i]->tpprice != last_tpprice) {
+						ModOrder(
+							curdil->orders[i]->ticket, 
+							curdil->orders[i]->openprice, 
+							curdil->sl(curdil->orders[i]->openprice, input_stoploss), 
+							last_tpprice
+						);
 					}
-						
-					return deleteOpposite();
-				}
-				else if (!input_stop_avr[curdil->type] && curdil->level < input_max_grid_lvl) { //Если есть базовый ордер и разрешено усреднять и максимальный уровень не достигнут
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::start() [2]\r\n" << fxc::msg_box;
-#endif
-					if (curdil->opposite->level >= input_forward_lvl && !curdil->ord_stop && calc_forward()) { //Если разрешены форварды и его можно поставить
-#if TRACE_STRATEGY
-						fxc::msg << "-> DefaultModule::start() [2.1]\r\n" << fxc::msg_box;
-#endif
-						return JOB_CREATE;
-					}
-					else {
-#if TRACE_STRATEGY
-						fxc::msg << "-> DefaultModule::start() [2.2]\r\n" << fxc::msg_box;
-#endif
-						return move(); //Наращивание ступеней сетки
-					}
-				}
-				else { //Если есть ордера, но не разрешено усреднять -> удалить отложки
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::start() [3]\r\n" << fxc::msg_box;
-#endif
-					return deleteSelf();
-				}
-			}
-
-			int openOrder() {
-#if TRACE_STRATEGY
-				fxc::msg << "-> DefaultModule::openOrder()\r\n" << fxc::msg_box;
-#endif
-				if (input_opp_close && close_profit()) {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::openOrder() [1]\r\n" << fxc::msg_box;
-#endif
-					return JOB_CLOSE;
-				}
-				else if (calc_first()) {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::openOrder() [2]\r\n" << fxc::msg_box;
-#endif
-					return JOB_CREATE; //Открыть первый ордер
-				}
-				else {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::openOrder() [3]\r\n" << fxc::msg_box;
-#endif
-					return deleteOpposite();
-				}
-			}
-
-			int deleteOpposite() {
-#if TRACE_STRATEGY
-				fxc::msg << "-> DefaultModule::deleteOpposite()\r\n" << fxc::msg_box;
-#endif
-				if (curdil->opposite->ord_stop) {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::deleteOpposite() [1]\r\n" << fxc::msg_box;
-#endif
-					*ext_o_ticket = curdil->opposite->ord_stop->ticket;
-					return JOB_DELETE; //Удалить стоп ордер
-				}
-				else {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::deleteOpposite() [2]\r\n" << fxc::msg_box;
-#endif
-					return deleteSelf();
-				}
-			}
-
-			int deleteSelf() {
-#if TRACE_STRATEGY
-				fxc::msg << "-> DefaultModule::deleteSelf()\r\n" << fxc::msg_box;
-#endif
-				if (curdil->ord_stop) {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::deleteSelf() [1]\r\n" << fxc::msg_box;
-#endif
-					*ext_o_ticket = curdil->ord_stop->ticket;
-					return JOB_DELETE; //Удалить стоп ордер
-				}
-				else {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::deleteSelf() [2]\r\n" << fxc::msg_box;
-#endif
-					return finalize();
-				}
-			}
-
-			int move() {
-#if TRACE_STRATEGY
-				fxc::msg << "-> DefaultModule::move()\r\n" << fxc::msg_box;
-#endif
-				if (move_tp()) { //Если есть что двигать, двигаем
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::move() [1]\r\n" << fxc::msg_box;
-#endif
-					return JOB_MODIFY;
-				}
-				else if (signal() && calc_next()) { //Если можно выставить отложку или по рынку, выставляем
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::move() [2]\r\n" << fxc::msg_box;
-#endif
-					return JOB_CREATE;
-				}
-				else {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::move() [3]\r\n" << fxc::msg_box;
-#endif
-					return finalize();
-				}
-			}
-
-			int preFinalize() {
-#if TRACE_STRATEGY
-				fxc::msg << "-> DefaultModule::preFinalize()\r\n" << fxc::msg_box;
-#endif
-				if (input_opp_close == 2 && close_profit()) {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::preFinalize() [1]\r\n" << fxc::msg_box;
-#endif
-					return JOB_CLOSE;
-				}
-				else {
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::preFinalize() [2]\r\n" << fxc::msg_box;
-#endif
-					return finalize();
-				}
-			}
-
-			int finalize() {
-#if TRACE_STRATEGY
-				fxc::msg << "-> DefaultModule::finalize()\r\n" << fxc::msg_box;
-#endif
-				if (curdil->type == OP_BUY) { //Все сначала только для продажи
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::finalize() [1]\r\n" << fxc::msg_box;
-#endif
-					curdil = dillers[1];
-					return start();
-				}
-				else { //Отрабатываем таймауты и завершаем алгоритм
-#if TRACE_STRATEGY
-					fxc::msg << "-> DefaultModule::finalize() [2]\r\n" << fxc::msg_box;
-#endif
-					curdil = dillers[0];
-					prev_indicator = *ext_indicator;
-					return JOB_EXIT;
 				}
 			}
 
@@ -252,8 +160,9 @@ namespace strategy {
 				return false;
 			}
 
-			void calc_first_lot() {
+			double calc_first_lot(double tpprice) {
 				curdil->cur_av_lvl = input_av_lvl; //Восстанавливаем текущий уровень усреднения на максимум
+
 				if (input_auto_mm > 0) { //Если включен манименеджмент
 					base_lot = normlot(floor(equity / input_mm_equ) * input_lot_step);
 					curdil->_base_lot = base_lot;
@@ -262,89 +171,72 @@ namespace strategy {
 					base_lot = curdil->_base_lot;
 				}
 
-				*ext_o_lots = base_lot;
-				if (curdil->opposite->level >= input_trend_lvl) { //Отрабатываем увеличение при тренде
-					*ext_o_lots = max(*ext_o_lots, base_lot * input_trend_lot_mult * pow(input_trend_progress, curdil->opposite->level - input_trend_lvl));
+				double result = base_lot;
+
+				//Отрабатываем увеличение при тренде
+				if (curdil->opposite->level >= input_trend_lvl) {
+					result = max(result, base_lot * input_trend_lot_mult * pow(input_trend_progress, curdil->opposite->level - input_trend_lvl));
 				}
-				else if (curdil->prev_lvl >= input_repeat_lvl) { //Отрабатываем увеличение при повторе
-					*ext_o_lots = max(*ext_o_lots, base_lot * input_repeat_lot_mult * pow(input_repeat_progress, curdil->prev_lvl - input_repeat_lvl));
+				//Отрабатываем увеличение при повторе
+				else if (curdil->prev_lvl >= input_repeat_lvl) {
+					result = max(result, base_lot * input_repeat_lot_mult * pow(input_repeat_progress, curdil->prev_lvl - input_repeat_lvl));
 				}
 
+				//Отрабатываем простое хэджирование
 				if (curdil->opposite->last)
-					*ext_o_lots = max(*ext_o_lots, curdil->opposite->last->lots * input_lot_hadge_mult); //Отрабатываем простое хэджирование
+					result = max(result, curdil->opposite->last->lots * input_lot_hadge_mult);
 
 				if (input_weighthadge)
-					*ext_o_lots = max(*ext_o_lots, (input_takeprofit * base_lot - curdil->opposite->basket_weight(*ext_o_tpprice, 100)*input_weighthadge) / input_takeprofit);
+					result = max(result, (input_takeprofit * base_lot - curdil->opposite->basket_weight(tpprice, 100) * input_weighthadge) / input_takeprofit);
+				
+				result = max(result, *(ext_total_lots + curdil->opposite->type) * input_basket_hadge_mult);
+				result = max(result, curdil->prev_lots * input_regres_mult);  //Затухание
+				result = min(result, input_maxlot);
 
-				*ext_o_lots = max(*ext_o_lots, *(ext_total_lots + curdil->opposite->type) * input_basket_hadge_mult);
-				*ext_o_lots = max(*ext_o_lots, curdil->prev_lots * input_regres_mult); //Затухание
-				*ext_o_lots = min(*ext_o_lots, input_maxlot);
+				return result;
 			}
-			
-			bool calc_first() {
-				*ext_o_openprice = curdil->mpo;
-				if (curdil->level == 0) {
-					*ext_o_tpprice = curdil->tp(*ext_o_openprice, input_takeprofit);
-				}
-				else {
-					*ext_o_tpprice = curdil->tp(*ext_o_openprice, input_takeprofit);
-				}
 
-				*ext_o_type    = curdil->type;
-				*ext_o_slprice = curdil->sl(*ext_o_openprice, input_stoploss);
-				*ext_intret    = check_new();
 
-				if (*ext_intret > 0) {
-					ShowInfo("*** calc_first check error", *ext_intret);
-					return false;
+			inline void TryOpenForward() {
+				if (curdil->opposite->level >= input_forward_lvl && !curdil->ord_stop) {
+					int    o_type;
+					double openprice = curdil->tp(curdil->first->openprice, input_step * input_forward_step_mult);
+					double d = curdil->delta(curdil->mpo, openprice);
+					
+					// если можно выставить отложку
+					if (d > input_min_sl_tp) {
+						o_type = curdil->type + 4;
+					}
+					// если нельзя отложку, но можно по рынку
+					else if (d <= 0) {
+						openprice = curdil->mpo;
+						o_type    = curdil->type;
+					}
+					// Пока не можем выставить не отложку не по рынку
+					else {
+						return;
+					}
+
+					CreateOrder(
+						o_type, 
+						calc_first_lot(curdil->tp(curdil->mpo, input_takeprofit)),
+						openprice, 
+						curdil->sl(openprice, input_stoploss), 
+						curdil->tp(openprice, input_takeprofit)
+					);
 				}
-
-				*ext_intret = 1;
-				return true;
 			}
-			
-			bool calc_forward() {
-				*ext_o_openprice = curdil->tp(curdil->first->openprice, input_step * input_forward_step_mult);
-				double d = curdil->delta(curdil->mpo, *ext_o_openprice);
 
-				if (d > input_min_sl_tp) {   //если можно выставить отложку
-					*ext_o_type = curdil->type + 4;
-				}
-				else if (d <= 0) { //если нельзя отложку, но можно по рынку
-					*ext_o_openprice = curdil->mpo;
-					*ext_o_type      = curdil->type;
-				}
-				else { //Пока не можем выставить не отложку не по рынку
-					return false;
-				}
+			inline void OpenNextOrder() {
+				double openprice  = curdil->mpo;
 
-				calc_first_lot();
-				*ext_o_tpprice = curdil->tp(*ext_o_openprice, input_takeprofit);
-				*ext_o_slprice = curdil->sl(*ext_o_openprice, input_stoploss);
-				*ext_intret    = check_new();
-
-				if (*ext_intret > 0) {
-					ShowInfo("*** calc_forward check error", *ext_intret);
-					return false;
-				}
-
-				return true;
-			}
-			
-			bool calc_next() {
-				*ext_o_openprice = curdil->sl(curdil->last->openprice, input_step);
-				double d = curdil->delta(*ext_o_openprice, curdil->mpo);  //Расстояние до будущего ордера, если отрицательное, то проехали, надо ставить по рынку
-
-				if (d <= 0) { //Выставляем по рынку
-					*ext_o_openprice = curdil->mpo;
-					*ext_o_type      = curdil->type;
-				}
-				else { //Пока не можем выставить не отложку не по рынку
+				//Расстояние до будущего ордера, если отрицательное, то проехали
+				if (curdil->delta(curdil->sl(curdil->last->openprice, input_step), openprice) < 0) {
+					//Пока не можем выставить не отложку не по рынку
 					curdil->step_peak = 0;
-					return false;
+					return;
 				}
 
-				*ext_o_slprice = curdil->sl(*ext_o_openprice, input_stoploss);
 				//Ограничение усреднения по размеру лота
 				if (curdil->last->lots >= input_av_lot) {
 					if (curdil->cur_av_lvl == input_av_lvl && curdil->level < input_av_lvl) {
@@ -355,46 +247,69 @@ namespace strategy {
 					}
 				}
 
-				*ext_o_tpprice = curdil->tp(*ext_o_openprice, input_takeprofit);
+				double slprice    = curdil->sl(openprice, input_stoploss);
+				double tpprice    = curdil->tp(openprice, input_takeprofit);
 				double nextProfit = profits[curdil->level - 1];
-				*ext_o_lots = (nextProfit * curdil->_base_lot - curdil->basket_weight(*ext_o_tpprice, curdil->cur_av_lvl)) / input_takeprofit;
+				double lots       = (nextProfit * curdil->_base_lot - curdil->basket_weight(tpprice, curdil->cur_av_lvl)) / input_takeprofit;
 
 				if (input_safe_copy) {
-					*ext_o_lots = max(*ext_o_lots, curdil->_base_lot);
+					lots = max(lots, curdil->_base_lot);
 				}
 
-				*ext_o_lots = min(*ext_o_lots, input_maxlot);
-				*ext_intret = check_new();
-				if (*ext_intret > 0) {
-					ShowInfo("*** calc_next check error", *ext_intret);
-					return false;
-				}
+				lots = min(lots, input_maxlot);
 
-				*ext_intret = curdil->level + 1;
-				return true;
+				if (0 == check_new(curdil->type, &lots, &openprice, &slprice, &tpprice)) {
+					CreateOrder(curdil->type, lots, openprice, slprice, tpprice);
+				}
 			}
-			
-			bool calc_oposite() {
-				if (curdil->opposite->GetOrder() && abs(cur_order.openprice - curdil->mpo) > input_step * input_op_av_lvl) {
-					double tp_price = curdil->tp(curdil->mpo, input_takeprofit);
-					double oplots   = (input_takeprofit * base_lot - curdil->opposite->order_weight(cur_order.openprice, tp_price, cur_order.lots)) / input_takeprofit;
-					
-					if (oplots > input_maxlot)  //Если лот превышает максимум, то обратку не усредняем
-						return false;
 
-					*ext_o_lots      = max(base_lot, oplots); //Вместо base_lot было *ext_o_lots незнаю почему
-					*ext_o_ticket    = cur_order.ticket;
-					*ext_o_openprice = cur_order.openprice;
-					*ext_o_slprice   = tp_price;
-					*ext_o_tpprice   = cur_order.tpprice;
-					*ext_intret      = check_mod();
-					
-					if (*ext_intret > 0)
-						return false;
-
-					return true;
+			inline void AutoClose() {
+				if (curdil->opposite->basket_cost() > 0) {
+					for (int i = 0; i < curdil->opposite->level; i++) {
+						CloseOrder(curdil->opposite->orders[i]->ticket, curdil->opposite->mpc, curdil->opposite->orders[c_index]->lots);
+					}
 				}
-				return false;
+			}
+
+			inline void DelStopLimitOrders() {
+				if (curdil->ord_stop) {
+					DeleteOrder(curdil->ord_stop->ticket);
+				}
+			}
+
+			
+			inline void CreateOrder(int type, double lots, double openprice, double slprice, double tpprice, std::string comment = "") {
+				auto action         = ext_tradeActions[actionsLen++];
+				action->o_type      = type;
+				action->o_lots      = lots;
+				action->o_openprice = openprice;
+				action->o_slprice   = slprice;
+				action->o_tpprice   = tpprice;
+				action->actionId    = JOB_CREATE;
+			}
+
+			inline void ModOrder(int ticket, double openprice, double slprice, double tpprice) {
+				//fxc::msg << " -> ModOrder(" << ticket << ", " << openprice << ", " << slprice << ", " << tpprice << ")\r\n" << fxc::msg_box;
+				auto action         = ext_tradeActions[actionsLen++];
+				action->o_ticket    = ticket;
+				action->o_openprice = openprice;
+				action->o_slprice   = slprice;
+				action->o_tpprice   = tpprice;
+				action->actionId    = JOB_MODIFY;
+			}
+
+			inline void DeleteOrder(int ticket) {
+				auto action      = ext_tradeActions[actionsLen++];
+				action->o_ticket = ticket;
+				action->actionId = JOB_DELETE;
+			}
+
+			inline void CloseOrder(int ticket, double lots, double openprice) {
+				auto action         = ext_tradeActions[actionsLen++];
+				action->o_ticket    = ticket;
+				action->o_lots      = lots;
+				action->o_openprice = openprice;
+				action->actionId    = JOB_CLOSE;
 			}
 
 	};

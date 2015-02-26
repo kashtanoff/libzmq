@@ -168,19 +168,73 @@ _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 
 	if (prop->Type == PropIntPtr) {
 		*(prop->IntPtr)   = (int*) pointer;
-		//msg << "pointer <" << name << ">: simbiot::[" << *(prop->IntPtr) << "] mql::[" << pointer << "]" << "\r\n" << msg_box;
+		//fxc::msg << "pointer <" << name << ">: simbiot::[" << *(prop->IntPtr) << "] mql::[" << pointer << "]" << "\r\n" << fxc::msg_box;
+	} else if (prop->Type == PropLongPtr) {
+		*(prop->LongPtr) = (long*) pointer;
+		//fxc::msg << "pointer <" << name << ">: simbiot::[" << *(prop->LongPtr) << "] mql::[" << pointer << "]" << "\r\n" << fxc::msg_box;
 	} else if (prop->Type == PropDoublePtr) {
 		*(prop->DoublePtr) = (double*) pointer;
-		//msg << "pointer <" << name << ">: simbiot::[" << *(prop->DoublePtr) << "] mql::[" << pointer << "]" << "\r\n" << msg_box;
+		//fxc::msg << "pointer <" << name << ">: simbiot::[" << *(prop->DoublePtr) << "] mql::[" << pointer << "]" << "\r\n" << fxc::msg_box;
 	} else if (prop->Type == PropBoolPtr) {
 		*(prop->BoolPtr) = (bool*) pointer;
-		//msg << "pointer <" << name << ">: simbiot::[" << *(prop->PropBoolPtr) << "] mql::[" << pointer << "]" << "\r\n" << msg_box;
+		//fxc::msg << "pointer <" << name << ">: simbiot::[" << *(prop->BoolPtr) << "] mql::[" << pointer << "]" << "\r\n" << fxc::msg_box;
 	} else {
-		fxc::msg << "c_setvar ERROR: int, double ot bool pointer expected" << fxc::msg_box;
+		fxc::msg << "c_setvar ERROR: int, double or bool pointer expected" << fxc::msg_box;
 	}
 
 	fxc::mutex.unlock();
 }
+
+_DLLAPI void __stdcall c_actions(void* pointer, int length) {
+	fxc::mutex.lock();
+	
+	fxc::msg << "-> c_actions([0x" << pointer << "], " << length << ")\r\n" << fxc::msg_box;
+
+	auto h   = std::this_thread::get_id();
+	auto ptr = (fxc::TradeAction*) pointer;
+	auto vec = &pool[h]->ext_tradeActions;
+
+	for (auto i = 0; i < length; ++i) {
+		//fxc::msg << "vector[" << i << "] [0x" << ptr + i << "]\r\n" << fxc::msg_box;
+		vec->push_back(ptr + i);
+	}
+
+	//fxc::msg << "array  mql::[0x" << pointer << "][" << length << "]\r\n" << fxc::msg_box;
+	//fxc::msg << "vector [" << vec->size() << "] / [" << vec->capacity() << "]\r\n" << fxc::msg_box;
+
+	//for (auto i = 0; i < length; ++i) {
+	//	vec->at(i)->o_lots      = i + 0; // 8 bytes
+	//	vec->at(i)->o_openprice = i + 1; // 8 bytes
+	//	vec->at(i)->o_tpprice   = i + 2; // 8 bytes
+	//	vec->at(i)->o_slprice   = i + 3; // 8 bytes
+	//	vec->at(i)->o_ticket    = i + 4; // 4 bytes
+	//	vec->at(i)->o_type      = i + 5; // 4 bytes
+	//	vec->at(i)->intret      = i + 6; // 4 bytes
+
+	//	std::stringstream ss;
+	//	ss << "~> cmnt[" << i*i << "]";
+
+	//	Mql::write2str(&vec->at(i)->comment, ss.str().c_str());
+
+	//	fxc::msg 
+	//		<< "vector[" << i << "] " 
+	//		<< "[0x" << vec->at(i) << "] "
+	//		//<< vec->at(i)->o_lots << ", "
+	//		//<< vec->at(i)->o_openprice << ", "
+	//		//<< vec->at(i)->o_tpprice << ", "
+	//		//<< vec->at(i)->o_slprice << ", "
+	//		//<< vec->at(i)->o_ticket << ", "
+	//		//<< vec->at(i)->o_type << ", "
+	//		//<< vec->at(i)->intret << ", "
+	//		<< "["
+	//		<< vec->at(i)->comment.size << ", "
+	//		<< vec->at(i)->comment.buffer 
+	//		<< "] : \"" << Mql::str2chars(&vec->at(i)->comment) << "\""
+	//		<< "\r\n" << fxc::msg_box;
+	//}
+	fxc::mutex.unlock();
+}
+
 
 #pragma endregion
 

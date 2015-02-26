@@ -140,105 +140,106 @@ namespace fxc {
 			}
 			
 			//Проверка на правильность параметров при открытии ордера
-			int check_new() {
-				int t = *ext_o_type % 2;
+			int check_new(int type, double* lots, double* openprice, double* slprice, double* tpprice) {
+				type = type % 2;
 				if (
-					*ext_o_type < 2 && //Для немедленного исполнения
+					type < 2 && // Для немедленного исполнения
 					(
-						!check_sl(t, *ext_o_slprice, dillers[t]->mpc) ||
-						!check_sl(t, dillers[t]->mpc, *ext_o_tpprice)
+						!check_sl(type, *slprice, dillers[type]->mpc) ||
+						!check_sl(type, dillers[type]->mpc, *tpprice)
 					)
 				) {
-					ShowInfo("chk_new tp", *ext_o_tpprice);
-					ShowInfo("chk_new sl", *ext_o_tpprice);
+					ShowInfo("chk_new tp", *tpprice);
+					ShowInfo("chk_new sl", *tpprice);
 					ShowInfo("chk_new min", input_min_sl_tp);
 					return 201;
 				}
 				
 				if (
-					*ext_o_type > 1 &&  //Для отложенных ордеров
+					type > 1 &&  // Для отложенных ордеров
 					(
-						!check_sl(t, *ext_o_openprice, *ext_o_tpprice) ||
-						!check_sl(t, *ext_o_slprice, *ext_o_openprice)
+						!check_sl(type, *openprice, *tpprice) ||
+						!check_sl(type, *slprice, *openprice)
 					)
 				) {
 					return 201;
 				}
 				
 				if (
-					(*ext_o_type == OP_BUYLIMIT || *ext_o_type == OP_SELLLIMIT) &&
-					!check_sl(t, *ext_o_openprice, dillers[t]->mpo)
+					(type == OP_BUYLIMIT || type == OP_SELLLIMIT) &&
+					!check_sl(type, *openprice, dillers[type]->mpo)
 				) {
 					return 202;
 				}
 				
 				if (
-					(*ext_o_type == OP_BUYSTOP || *ext_o_type == OP_SELLSTOP) &&
-					!check_sl(t, dillers[t]->mpo, *ext_o_openprice)
+					(type == OP_BUYSTOP || type == OP_SELLSTOP) &&
+					!check_sl(type, dillers[type]->mpo, *openprice)
 				) {
 					return 202;
 				}
 
-				*ext_o_lots      = normlot(*ext_o_lots);
-				*ext_o_openprice = norm(*ext_o_openprice);
-				*ext_o_tpprice   = norm(*ext_o_tpprice);
-				*ext_o_slprice   = norm(*ext_o_slprice);
+				*lots      = normlot(*lots);
+				*openprice = norm(*openprice);
+				*tpprice   = norm(*tpprice);
+				*slprice   = norm(*slprice);
+
 				return 0;
 			}
 			
 			//Проверка на правильность параметров при модификации ордера
-			int check_mod() {
-				if (get_order(*ext_o_ticket) == 0) {
-					return 200;
-				}
-
-				*ext_o_openprice = norm(*ext_o_openprice);
-				*ext_o_tpprice   = norm(*ext_o_tpprice);
-				*ext_o_slprice   = norm(*ext_o_slprice);
-
-				int   _type = cur_order.type;
-				double _mpc = dillers[_type]->mpc;
-				double _mpo = dillers[_type]->mpo;
-
-				if (
-					_type < 2 &&   //Для открытых ордеров
-					(
-						!check_freeze(cur_order.slprice, _mpc) ||
-						!check_freeze(cur_order.tpprice, _mpc) ||
-						!check_sl(_type, *ext_o_slprice, _mpc) ||
-						!check_sl(_type, _mpc, *ext_o_tpprice)
-					)
-				) {
-					return 201;
-				}
-
-				if (
-					_type > 1 &&  //Для отложенных ордеров
-					(
-						!check_freeze(cur_order.openprice, _mpo) ||
-						!check_sl(_type, *ext_o_slprice, *ext_o_openprice) ||
-						!check_sl(_type, *ext_o_openprice, *ext_o_tpprice)
-					)
-				) {
-					return 201;
-				}
-
-				if (
-					(_type == OP_BUYLIMIT || _type == OP_SELLLIMIT) &&
-					!check_sl(_type, cur_order.openprice, _mpo)
-				) {
-					return 202;
-				}
-
-				if (
-					(_type == OP_BUYSTOP || _type == OP_SELLSTOP) &&
-					!check_sl(_type, _mpo, cur_order.openprice)
-				) {
-					return 202;
-				}
-
-				return 0;
-			}
+			//int check_mod() {
+			//	if (get_order(*ext_o_ticket) == 0) {
+			//		return 200;
+			//	}
+			//
+			//	*ext_o_openprice = norm(*ext_o_openprice);
+			//	*ext_o_tpprice   = norm(*ext_o_tpprice);
+			//	*ext_o_slprice   = norm(*ext_o_slprice);
+			//
+			//	int   _type = cur_order.type;
+			//	double _mpc = dillers[_type]->mpc;
+			//	double _mpo = dillers[_type]->mpo;
+			//
+			//	if (
+			//		_type < 2 &&   //Для открытых ордеров
+			//		(
+			//			!check_freeze(cur_order.slprice, _mpc) ||
+			//			!check_freeze(cur_order.tpprice, _mpc) ||
+			//			!check_sl(_type, *ext_o_slprice, _mpc) ||
+			//			!check_sl(_type, _mpc, *ext_o_tpprice)
+			//		)
+			//	) {
+			//		return 201;
+			//	}
+			//
+			//	if (
+			//		_type > 1 &&  //Для отложенных ордеров
+			//		(
+			//			!check_freeze(cur_order.openprice, _mpo) ||
+			//			!check_sl(_type, *ext_o_slprice, *ext_o_openprice) ||
+			//			!check_sl(_type, *ext_o_openprice, *ext_o_tpprice)
+			//		)
+			//	) {
+			//		return 201;
+			//	}
+			//
+			//	if (
+			//		(_type == OP_BUYLIMIT || _type == OP_SELLLIMIT) &&
+			//		!check_sl(_type, cur_order.openprice, _mpo)
+			//	) {
+			//		return 202;
+			//	}
+			//
+			//	if (
+			//		(_type == OP_BUYSTOP || _type == OP_SELLSTOP) &&
+			//		!check_sl(_type, _mpo, cur_order.openprice)
+			//	) {
+			//		return 202;
+			//	}
+			//
+			//	return 0;
+			//}
 
 #pragma endregion
 
@@ -252,9 +253,8 @@ namespace fxc {
 
 			//3.1 Инициализация цикла обновления ордеров, поскольку цикл получается рваным (каждая итерация вызывается из MQL), нельзя пользоватья результатами в MQL программе до завершения цикла
 			virtual void refresh_init(double ask, double bid, double equity_) {
-				_isSorted   = false;
-				*ext_o_lots = 0;
-				equity      = equity_;
+				_isSorted       = false;
+				equity          = equity_;
 				dillers[0]->mpo = dillers[1]->mpc = ask;
 				dillers[1]->mpo = dillers[0]->mpc = bid;
 				current_index   = 0; // Обнуляем общий счетчик ордеров
@@ -370,8 +370,8 @@ namespace fxc {
 					fxc::msg << "Type: " << curdil->type << s << " sorted=" << _isSorted << "\r\n";
 					fxc::msg << "Count Buy: " << dillers[0]->level << " (" << dillers[0]->orders.size() << "), Sell: " << dillers[1]->level << "\r\n";
 					//msg << "k=" << __step << " total: " << current_count << "\r\n";
-					fxc::msg << "o_type=" << *ext_o_type << ", o_lot=" << *ext_o_lots << "\r\n";
-					fxc::msg << "o_price=" << *ext_o_openprice << ", o_tp=" << *ext_o_tpprice << "\r\n";
+					//fxc::msg << "o_type=" << *ext_o_type << ", o_lot=" << *ext_o_lots << "\r\n";
+					//fxc::msg << "o_price=" << *ext_o_openprice << ", o_tp=" << *ext_o_tpprice << "\r\n";
 					showend = false;
 				}
 
@@ -423,14 +423,7 @@ namespace fxc {
 				Register("max_dd",      &ext_max_dd);      // 105
 				Register("indicator",   &ext_indicator);   // 106
 				Register("count_p",     &ext_count_p);     // 107
-				Register("o_ticket",    &ext_o_ticket);    // 110
-				Register("o_type",      &ext_o_type);      // 111
-				Register("o_lots",      &ext_o_lots);      // 112
-				Register("o_openprice", &ext_o_openprice); // 113
-				Register("o_slprice",   &ext_o_slprice);   // 114
-				Register("o_tpprice",   &ext_o_tpprice);   // 115
 				Register("indicator2",  &ext_indicator2);  // 116
-				Register("intret",      &ext_intret);      // 200
 
 				Register("digits",          &input_digits);          //2 количество десятичных знаков для инструмента
 				Register("is_optimization", &input_is_optimization); //9 флаг оптимизации
@@ -601,5 +594,3 @@ namespace fxc {
 	};
 
 }
-
-

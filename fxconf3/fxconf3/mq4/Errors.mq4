@@ -7,7 +7,22 @@ void CriticalError(string msg)
 }
 
 //Обработать ошибку
-void ShowError(string message, int err = -1, bool critical = false)
+void ShowError(string message, int err = -1, bool critical = false) {
+	if (is_optimization)
+		return;
+
+	if (critical || ShowDebug)
+	{
+		Print(message, Error(err));
+		FileWrite(herror, "-<[ ", TimeCurrent(), " ]>-----------------------------------------------------------");
+		FileWrite(herror, message);
+		FileWrite(herror, "Ask/Bid: ", Ask, "/", Bid);
+	}
+
+	timeout = fmax(timeout, 1000);  //При любой ошибке минимум секунду задержки
+}
+
+void ShowActionError(TradeAction& action, string message, int err = -1, bool critical = false)
 {
 	if (is_optimization)
 		return;
@@ -19,12 +34,12 @@ void ShowError(string message, int err = -1, bool critical = false)
 		FileWrite(herror, message);
 		FileWrite(herror, "Ask/Bid: ", Ask, "/", Bid);
 		FileWrite(herror, 
-			"Next type: ",    o_type, 
-			", ticket: ",     o_ticket, 
-			", lots: ",       o_lots, 
-			", open price: ", o_openprice, 
-			", tp price: ",   o_tpprice, 
-			", sl price: ",   o_slprice
+			"Next type: ",    action.o_type, 
+			", ticket: ",     action.o_ticket, 
+			", lots: ",       action.o_lots, 
+			", open price: ", action.o_openprice,
+			", tp price: ",   action.o_tpprice, 
+			", sl price: ",   action.o_slprice
 		);
 	}
 

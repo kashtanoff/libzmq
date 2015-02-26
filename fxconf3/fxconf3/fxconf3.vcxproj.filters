@@ -69,7 +69,7 @@
     <ClCompile Include="fxc\strat\AbstractStrategy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fxc\strat\OldStrategy.cpp">
+    <ClCompile Include="MqlUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

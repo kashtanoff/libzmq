@@ -1,8 +1,24 @@
 #pragma once
 
+#include "vector"
+
+#include "../MqlUtils.cpp"
 #include "Order.cpp"
 
 namespace fxc {
+
+	#pragma pack(1)
+	struct TradeAction {
+		double o_lots;      // 8 bytes
+		double o_openprice; // 8 bytes
+		double o_tpprice;   // 8 bytes
+		double o_slprice;   // 8 bytes
+		int    o_ticket;    // 4 bytes
+		int    o_type;      // 4 bytes
+		int    intret;      // 4 bytes
+		int    actionId;    // 4 bytes
+		MqlString comment;  // 12 bytes
+	};
 
 	class Parameters
 	{
@@ -77,22 +93,16 @@ namespace fxc {
 			double*	 ext_indicator;			//106
 			int*	 ext_count_p;			//107
 
-			int*	 ext_o_ticket;			//110
-			int*	 ext_o_type;			//111
-			double*  ext_o_lots;			//112
-			double*	 ext_o_openprice;		//113
-			double*	 ext_o_slprice;			//114
-			double*	 ext_o_tpprice;			//115
 			double*	 ext_indicator2;		//116 #unused
 			double	 prev_indicator;
-			int*     ext_intret;            //200 для отладки
 
 			Order    cur_order;
 			double   c_weight;
 			int      c_index;
 			bool     c_all;
 
-			bool*    ext_isRunAllowed;
+			bool*                     ext_isRunAllowed;
+			std::vector<TradeAction*> ext_tradeActions;
 	};
 
 }

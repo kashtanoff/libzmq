@@ -1,16 +1,17 @@
 class Order
 {
+
 public:
-	static void Create()
+
+	static void Create(TradeAction& action)
 	{
-		if (!is_optimization && (!CheckConnect() || !CheckMargin(o_lots)))
+		if (!is_optimization && (!CheckConnect() || !CheckMargin(action.o_lots)))
 			return;
 
-		if (o_lots >= ConfirmLot)
-		{
-			Print("Открытие большим лотом: ", o_lots);
+		if (action.o_lots >= ConfirmLot) {
+			Print("Открытие большим лотом: ", action.o_lots);
 			int ret = MessageBox(
-				"Советник пытается открыть ордер объемом: " + DoubleToStr(o_lots, 2),
+				"Советник пытается открыть ордер объемом: " + DoubleToStr(action.o_lots, 2),
 				"Открыть ордер?", 
 				MB_YESNO | MB_ICONQUESTION | MB_TOPMOST
 			);
@@ -18,81 +19,66 @@ public:
 				return;
 		}
 	
-		if (ECN_Safe)// && showinfo)
-		{
-			o_slprice = 0;
-			o_tpprice = 0;
-		}
-	
 		if (
 			OrderSend(
 				symbol, 
-				o_type, 
-				o_lots, 
-				o_openprice, 
-				Slippage, 
-				o_slprice, 
-				o_tpprice, 
-				StringConcatenate(intret, "-", CommentText), 
-				Magic, 
-				0, 
-				colors[o_type]
+				action.o_type, action.o_lots, action.o_openprice, 
+				Slippage, 0, 0,
+				StringConcatenate(action.intret, "-", CommentText),
+				Magic, 0, colors[action.o_type]
 			) < 0
 		) {
 			int err = GetLastError();
-			ShowError("NewOrder critical: ", err, true);
+			ShowActionError(action, "NewOrder critical: ", err, true);
 			Err(err);
 		}
 	}
 
-	static void Modify()
+	static void Modify(TradeAction& action)
 	{
 		if (!is_optimization && !CheckConnect())
 			return;
 
-		if (!OrderModify(o_ticket, o_openprice, o_slprice, o_tpprice, 0, clrNONE))
-		{
+		if (!OrderModify(action.o_ticket, action.o_openprice, action.o_slprice, action.o_tpprice, 0, clrNONE)) {
 			int err = GetLastError();
 			if (err == 1) //Убираем часто встречающуюся ошибку - "Нет ошибки" =)
 				return;
 
-			ShowError("ModOrder critical: ", err, true);
+			ShowActionError(action, "ModOrder critical: ", err, true);
 			Err(err);
 		}
 	}
 
-	static void Close()
+	static void Delete(TradeAction& action)
 	{
 		if (!is_optimization && !CheckConnect())
 			return;
 
-		if (!OrderClose(o_ticket, o_lots, o_openprice, Slippage, clrGreen))
-		{
+		if (!OrderDelete(action.o_ticket)) {
 			int err = GetLastError();
-			ShowError("CloseOrder critical: ", err, true);
+			ShowActionError(action, "DelOrder critical: ", err, true);
 			Err(err);
 		}
 	}
 
-	static void Delete()
+	static void Close(TradeAction& action)
 	{
 		if (!is_optimization && !CheckConnect())
 			return;
 
-		if (!OrderDelete(o_ticket))
-		{
+		if (!OrderClose(action.o_ticket, action.o_lots, action.o_openprice, Slippage, clrGreen)) {
 			int err = GetLastError();
-			ShowError("DelOrder critical: ", err, true);
+			ShowActionError(action, "CloseOrder critical: ", err, true);
 			Err(err);
 		}
 	}
 
 private:
+
 	// Проверяем свободную маржу
 	static bool CheckMargin(double lot)
 	{
-		if (lot * req_margin > AccountFreeMargin())
-		{
+		if (lot * req_margin > AccountFreeMargin()) {
 			ShowError("CheckMargin: Недостаточно средств для открытия позиции");
 			return (false);
 		}
@@ -103,22 +89,19 @@ private:
 	// Проверяем проблемы со связью или с каналом
 	static bool CheckConnect()
 	{
-		if (!IsConnected())
-		{
+		if (!IsConnected()) {
 			ShowError("CheckConnect: Cвязь с сервером отсутствует или прервана");
 			timeout = fmax(timeout, 5000);
 			return (false);
 		}
 
-		if (IsTradeContextBusy())
-		{
+		if (IsTradeContextBusy()) {
 			ShowError("CheckConnect: Поток для выполнения торговых операций занят");
 			timeout = fmax(timeout, 10000);
 			return (false);
 		}
 		
-		if (!IsTradeAllowed())
-		{
+		if (!IsTradeAllowed()) {
 			ShowError("CheckConnect: Эксперту запрещено торговать или поток занят");
 			timeout = fmax(timeout, 10000);
 			return (false);
@@ -126,4 +109,5 @@ private:
 
 		return (true);
 	}
+
 };

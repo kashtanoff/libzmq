@@ -78,51 +78,51 @@ namespace fxc {
 				return true;
 			}
 
-			bool CloseByWeight()
-			{
-				//msg << "opposite index: " << c_index << "\r\n";
-				if (params->c_index >= level)  //≈сли ордеров больше нет, то усреднение закончено
-				{
-					//c_index = -1;
-					//c_weight = 0.0;
-					params->c_weight = -1;
-					//msg << "no order opp" << "\r\n";
-					return(false);
-				}
-				double weight = order_weight(params->cur_order.openprice, mpc, params->cur_order.lots);
-				if (params->c_weight + weight < 0.0)  //≈сли нельз€ усреднить целый ордер
-				{
-					//msg << "opp_partial close\r\n";
-					//msg << "opp_с_weight=" << c_weight * 10000 << "\r\n";
-					//msg << "opp_order weight=" << weight * 10000 << "\r\n";
-					double min_weight = order_weight(params->cur_order.openprice, mpc, params->input_lot_min);
-					//msg << "opp_min weight=" << min_weight * 10000 << "\r\n";
-					if (params->c_weight + min_weight > 0.0)  //≈сли можно усреднить хот€бы минимальный лот
-					{
-						*(params->ext_o_ticket) = params->cur_order.ticket;
-						*(params->ext_o_openprice) = mpc;
-						*(params->ext_o_lots) = floor(params->c_weight / abs(min_weight)) * params->input_lot_step;
-						params->c_weight += order_weight(params->cur_order.openprice, mpc, *params->ext_o_lots);
-						//msg << "opp_full lots=" << cur_order.lots << "\r\n";
-						//msg << "opp_part lots=" << *o_lots << "\r\n";
-						//msg << "opp_last c_weight=" << c_weight * 10000 << "\r\n";
-						return(true);
-					}
-					//”среднили все что можно
-					//c_index = -1;
-					params->c_weight = -1;
-					return(false);
-				}
-				params->c_weight += weight;
-				*(params->ext_o_ticket) = params->cur_order.ticket;
-				*(params->ext_o_openprice) = mpc;
-				*(params->ext_o_lots) = params->cur_order.lots;
-				//msg << "opp_end weight2=" << c_weight * 10000 << "\r\n";
-				//msg << "opp_close_one" << "\r\n";
-				params->c_index++;
-
-				return(true);
-			}
+			//bool CloseByWeight()
+			//{
+			//	//msg << "opposite index: " << c_index << "\r\n";
+			//	if (params->c_index >= level)  //≈сли ордеров больше нет, то усреднение закончено
+			//	{
+			//		//c_index = -1;
+			//		//c_weight = 0.0;
+			//		params->c_weight = -1;
+			//		//msg << "no order opp" << "\r\n";
+			//		return(false);
+			//	}
+			//	double weight = order_weight(params->cur_order.openprice, mpc, params->cur_order.lots);
+			//	if (params->c_weight + weight < 0.0)  //≈сли нельз€ усреднить целый ордер
+			//	{
+			//		//msg << "opp_partial close\r\n";
+			//		//msg << "opp_с_weight=" << c_weight * 10000 << "\r\n";
+			//		//msg << "opp_order weight=" << weight * 10000 << "\r\n";
+			//		double min_weight = order_weight(params->cur_order.openprice, mpc, params->input_lot_min);
+			//		//msg << "opp_min weight=" << min_weight * 10000 << "\r\n";
+			//		if (params->c_weight + min_weight > 0.0)  //≈сли можно усреднить хот€бы минимальный лот
+			//		{
+			//			*(params->ext_o_ticket) = params->cur_order.ticket;
+			//			*(params->ext_o_openprice) = mpc;
+			//			*(params->ext_o_lots) = floor(params->c_weight / abs(min_weight)) * params->input_lot_step;
+			//			params->c_weight += order_weight(params->cur_order.openprice, mpc, *params->ext_o_lots);
+			//			//msg << "opp_full lots=" << cur_order.lots << "\r\n";
+			//			//msg << "opp_part lots=" << *o_lots << "\r\n";
+			//			//msg << "opp_last c_weight=" << c_weight * 10000 << "\r\n";
+			//			return(true);
+			//		}
+			//		//”среднили все что можно
+			//		//c_index = -1;
+			//		params->c_weight = -1;
+			//		return(false);
+			//	}
+			//	params->c_weight += weight;
+			//	*(params->ext_o_ticket) = params->cur_order.ticket;
+			//	*(params->ext_o_openprice) = mpc;
+			//	*(params->ext_o_lots) = params->cur_order.lots;
+			//	//msg << "opp_end weight2=" << c_weight * 10000 << "\r\n";
+			//	//msg << "opp_close_one" << "\r\n";
+			//	params->c_index++;
+			//
+			//	return(true);
+			//}
 
 			double BasketCost() {
 				double res;
