@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 #include <unordered_map>
 
 #include "../stdafx.h"
@@ -72,7 +73,6 @@ namespace fxc {
 #pragma endregion
 
 			Simbiot(char* _symbol) {
-				fxc::msg << "-> Simbiot::Simbiot()\r\n" << fxc::msg_box;
 				strcpy(symbol, _symbol);
 
 				dillers[0] = new Diller(this, 0);
@@ -95,8 +95,6 @@ namespace fxc {
 				counted     = 0;
 
 				m_index = 0;
-				c_index = -1;
-				c_all   = false;
 				showend = true;
 
 				dillers[0]->Reset();
@@ -116,15 +114,22 @@ namespace fxc {
 			}
 
 			void sortOrders() {
-				if (_isSorted) return;
+				MARK_FUNC_IN
 
-				sortDillerOrders(dillers[0]);
-				sortDillerOrders(dillers[1]);
+				if (_isSorted) {
+					MARK_FUNC_OUT
+					return;
+				}
 
-				_isSorted      = true;
-				curdil         = dillers[0];
+				sortDillerOrders(dillers[0], [](const Order* a, const Order* b) { return a->openprice > b->openprice; });
+				sortDillerOrders(dillers[1], [](const Order* a, const Order* b) { return a->openprice < b->openprice; });
+
+				curdil             = dillers[0];
 				*ext_count_p       = dillers[0]->level;
 				*(ext_count_p + 1) = dillers[1]->level;
+				_isSorted          = true;
+
+				MARK_FUNC_OUT
 			}
 
 #pragma region Checks
@@ -267,8 +272,6 @@ namespace fxc {
 
 				dillers[0]->ResetTick(); // —брасываем сортировочные показатели по типам
 				dillers[1]->ResetTick();
-
-				c_index = -1;
 
 				if (!input_new_bar)
 					calc_indicator();
@@ -575,13 +578,9 @@ namespace fxc {
 				return(floor(value / input_point + 0.5) * input_point);
 			}
 
-			inline void sortDillerOrders(fxc::Diller* diller) {
+			inline void sortDillerOrders(fxc::Diller* diller, std::function<bool (const Order* a, const Order* b)> comparer) {
 				if (diller->level = diller->orders.size()) {
-					std::sort(
-						diller->orders.begin(),
-						diller->orders.end(),
-						[](const Order* a, const Order* b) { return a->openprice > b->openprice; }
-					);
+					std::sort(diller->orders.begin(), diller->orders.end(), comparer);
 					diller->first = diller->orders[0];
 					diller->last  = diller->orders.back();
 				}

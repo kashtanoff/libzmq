@@ -1,7 +1,7 @@
 #pragma once
 
 #include "vector"
-#include "Defines.h"
+#include "../../Defines.h"
 
 #if DEBUG
 

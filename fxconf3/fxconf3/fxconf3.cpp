@@ -235,7 +235,6 @@ _DLLAPI void __stdcall c_actions(void* pointer, int length) {
 	fxc::mutex.unlock();
 }
 
-
 #pragma endregion
 
 //»щет свободную €чейку в пуле и создает новый экземпл€р симбиота

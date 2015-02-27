@@ -31,8 +31,40 @@ void ShowActionError(TradeAction& action, string message, int err = -1, bool cri
 	{
 		Print(message, Error(err));
 		FileWrite(herror, "-<[ ", TimeCurrent(), " ]>-----------------------------------------------------------");
-		FileWrite(herror, message);
+		FileWrite(herror, StringConcatenate("Error ", err, ": ", message));
 		FileWrite(herror, "Ask/Bid: ", Ask, "/", Bid);
+		FileWrite(herror, 
+			"Next type: ",    action.o_type, 
+			", ticket: ",     action.o_ticket, 
+			", lots: ",       action.o_lots, 
+			", open price: ", action.o_openprice,
+			", tp price: ",   action.o_tpprice, 
+			", sl price: ",   action.o_slprice
+		);
+	}
+
+	timeout = fmax(timeout, 1000);  //При любой ошибке минимум секунду задержки
+}
+void ShowActionError2(TradeAction& oldaction, TradeAction& action, string message, int err = -1, bool critical = false)
+{
+	if (is_optimization)
+		return;
+
+	if (critical || ShowDebug)
+	{
+		Print(message, Error(err));
+		FileWrite(herror, "-<[ ", TimeCurrent(), " ]>-----------------------------------------------------------");
+		FileWrite(herror, StringConcatenate("Error ", err, ": ", message));
+		FileWrite(herror, "Ask/Bid: ", Ask, "/", Bid);
+		FileWrite(herror, 
+			"Next type: ",    oldaction.o_type, 
+			", ticket: ",     oldaction.o_ticket, 
+			", lots: ",       oldaction.o_lots, 
+			", open price: ", oldaction.o_openprice,
+			", tp price: ",   oldaction.o_tpprice, 
+			", sl price: ",   oldaction.o_slprice,
+			" =>"
+		);
 		FileWrite(herror, 
 			"Next type: ",    action.o_type, 
 			", ticket: ",     action.o_ticket, 

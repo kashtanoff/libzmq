@@ -23,7 +23,8 @@ public:
 			OrderSend(
 				symbol, 
 				action.o_type, action.o_lots, action.o_openprice, 
-				Slippage, 0, 0,
+				Slippage, 
+				action.o_slprice, action.o_tpprice,
 				StringConcatenate(action.intret, "-", CommentText),
 				Magic, 0, colors[action.o_type]
 			) < 0
@@ -39,12 +40,22 @@ public:
 		if (!is_optimization && !CheckConnect())
 			return;
 
+		TradeAction a;
+		if (true == OrderSelect(action.o_ticket, SELECT_BY_TICKET)) {
+			a.o_ticket    = OrderTicket();
+			a.o_type      = OrderType();
+			a.o_lots      = OrderLots();
+			a.o_openprice = OrderOpenPrice();
+			a.o_slprice   = OrderStopLoss();
+			a.o_tpprice   = OrderTakeProfit();
+		}
+
 		if (!OrderModify(action.o_ticket, action.o_openprice, action.o_slprice, action.o_tpprice, 0, clrNONE)) {
 			int err = GetLastError();
 			if (err == 1) //Убираем часто встречающуюся ошибку - "Нет ошибки" =)
 				return;
 
-			ShowActionError(action, "ModOrder critical: ", err, true);
+			ShowActionError2(a, action, "ModOrder critical: ", err, true);
 			Err(err);
 		}
 	}

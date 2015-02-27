@@ -2,7 +2,7 @@
 
 #include "vector"
 
-#include "../Debug.h"
+#include "debug/Debug.h"
 #include "../MqlUtils.cpp"
 #include "Order.cpp"
 
@@ -98,9 +98,6 @@ namespace fxc {
 			double	 prev_indicator;
 
 			Order    cur_order;
-			double   c_weight;
-			int      c_index;
-			bool     c_all;
 
 			bool*                     ext_isRunAllowed;
 			std::vector<TradeAction*> ext_tradeActions;
