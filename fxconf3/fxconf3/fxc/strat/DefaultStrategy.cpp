@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AbstractStrategy.cpp"
+#include "../indicators/DefaultIndicator.cpp"
 
 namespace fxc {
 
@@ -10,18 +11,14 @@ namespace strategy {
 
 		public:
 
-			DefaultStrategy(char* _symbol) : AbstractStrategy(_symbol) {}
+			DefaultStrategy(char* _symbol) : AbstractStrategy(_symbol) {
+				indicator = new fxc::indicator::DefaultIndicator(this, this);
+			}
 
 			virtual int getJob() {
 				MARK_FUNC_IN
-				actionsLen = 0;
-				execJob();
-				MARK_FUNC_OUT
-				return actionsLen;
-			}
 
-			inline void execJob() {
-				MARK_FUNC_IN
+				((TradeManager*) this)->reset();
 				sortOrders();
 
 				for (int i = 0; i < 2; i++) {
@@ -30,59 +27,72 @@ namespace strategy {
 					// Если нет ордеров в рынке
 					if (!curdil->level) {
 						// Если не запрещено открытие новой сетки и есть сигнал
-						if (!input_stop_new[curdil->type] && (signal() || curdil->opposite->level >= input_forward_lvl)) {
-							CreateOrder(
+						if (!input_stop_new[curdil->type] && (compSignal() || curdil->opposite->level >= input_forward_lvl)) {
+							createOrder(
 								curdil->type, 
-								calc_first_lot(curdil->tp(curdil->mpo, input_takeprofit)), 
+								compFirstLot(curdil->tp(curdil->mpo, input_takeprofit)),
 								curdil->mpo,
 								curdil->sl(curdil->mpo, input_stoploss),
 								curdil->tp(curdil->mpo, input_takeprofit)
 							);
 
 							if (input_opp_close) {
-								AutoClose();
+								autoClose();
 							}
 						}
 					}
 					else {
-						move_tp();
+						moveTP();
 
 						// Если есть базовый ордер и разрешено усреднять и максимальный уровень не достигнут
 						if (!input_stop_avr[curdil->type] && curdil->level < input_max_grid_lvl) {
 
 							// Если разрешены форварды и его можно поставить
 							if (curdil->opposite->level >= input_forward_lvl && !curdil->ord_stop) {
-								TryOpenForward();
+								tryOpenForward();
 							}
-							if (signal()) {
-								OpenNextOrder();
+							if (compSignal()) {
+								openNextOrder();
 
 								if (input_opp_close == 2) {
-									AutoClose();
+									autoClose();
 								}
 							}
 						}
 						// Если есть ордера, но не разрешено усреднять -> удалить отложки
 						else {
-							DelStopLimitOrders();
+							delStopLimitOrders();
 						}
 					}
 				}
 
 				MARK_FUNC_OUT
+				return getActionsStackSize();
+			}
+
+			virtual void refresh_init(double _ask, double _bid, double _equity) {
+				equity = _equity;
+				AbstractStrategy::refresh_init(_ask, _bid, _equity);
+
+				if (!input_new_bar) {
+					indicator->compute();
+				}
+			}
+
+			virtual void refresh_prices(double *closes, double *highs, double *lows, int bars) {
+				AbstractStrategy::refresh_prices(closes, highs, lows, bars);
+				indicator->compute();
 			}
 
 		protected:
 
-			int actionsLen;
-
-			inline void move_tp() {
+			inline void moveTP() {
 				MARK_FUNC_IN
 				double last_tpprice = curdil->tp(curdil->last->openprice, input_takeprofit);
 
 				// Если у последнего ордера еще не установлен тейкпрофит, то ставим его
 				if (abs(curdil->last->tpprice - last_tpprice) > input_point) {
-					ModOrder(
+					modOrder(
 						curdil->last->ticket, 
 						curdil->last->openprice, 
 						curdil->sl(curdil->last->openprice, input_stoploss), 
@@ -96,8 +106,8 @@ namespace strategy {
 					return;
 				}
 
-				double last_weigth  = curdil->order_weight(curdil->last->openprice, last_tpprice, curdil->last->lots);
-				double total_weight = curdil->basket_weight(last_tpprice);
+				double last_weigth  = curdil->orderWeight(curdil->last->openprice, last_tpprice, curdil->last->lots);
+				double total_weight = curdil->basketWeight(last_tpprice);
 
 				// Если вес всей сетки положителен, то удесятеряем вес последнего ордера для гарантированного закрытия всей сетки
 				if (total_weight > 0) {
@@ -105,10 +115,10 @@ namespace strategy {
 				}
 
 				for (int i = 0; i < curdil->level - 1; i++) {
-					last_weigth -= curdil->order_weight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots);
+					last_weigth -= curdil->orderWeight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots);
 
 					if (last_weigth > 0 && abs(curdil->orders[i]->tpprice - last_tpprice) > input_point) {
-						ModOrder(
+						modOrder(
 							curdil->orders[i]->ticket, 
 							curdil->orders[i]->openprice, 
 							curdil->sl(curdil->orders[i]->openprice, input_stoploss), 
@@ -119,72 +129,16 @@ namespace strategy {
 				MARK_FUNC_OUT
 			}
 
-
-			bool signal() {
-				MARK_FUNC_IN
-
-				//Первый ордер открываем в любом случае
-				if (input_first_free && curdil->level == 0) {
-					MARK_FUNC_OUT
-					return true;
-				}
-
-				if (curdil->level >= input_free_lvl) {
-					MARK_FUNC_OUT
-					return true;
-				}
-
-				if (curdil->type) { //Продажи
-					if (curdil->step_peak) {
-						if (
-							(input_periodf3 && maBuffer[0] < maBuffer[1]) ||
-							(input_periodf3 == 0 && curdil->step_peak - curdil->mpo >= input_rollback) ||
-							(input_periodf3 == 0 && input_rollback == 0)
-						) {
-							curdil->step_peak = 0;
-							MARK_FUNC_OUT
-							return true;
-						}
-						else {
-							curdil->step_peak = max(curdil->step_peak, curdil->mpo);
-						}
-
-					}
-					else if (curdil->mpo > up_ind) {
-						curdil->step_peak = curdil->mpo;
-					}
-				}
-				else { //Покупки
-					if (curdil->step_peak) {
-						if (
-							(input_periodf3 && maBuffer[0] > maBuffer[1]) ||
-							(input_periodf3 == 0 && curdil->mpo - curdil->step_peak >= input_rollback) ||
-							(input_periodf3 == 0 && input_rollback == 0)
-						) {
-							curdil->step_peak = 0;
-							MARK_FUNC_OUT
-							return true;
-						}
-						else {
-							curdil->step_peak = min(curdil->step_peak, curdil->mpo);
-						}
-					}
-					else if (curdil->mpo < dn_ind) {
-						curdil->step_peak = curdil->mpo;
-					}
-				}
-
-				MARK_FUNC_OUT
-				return false;
-			}
-			double calc_first_lot(double tpprice) {
+			double compFirstLot(double tpprice) {
 				MARK_FUNC_IN
 				//Восстанавливаем текущий уровень усреднения на максимум
 				curdil->cur_av_lvl = input_av_lvl;
+				
+				double base_lot;
 
 				//Если включен манименеджмент
 				if (input_auto_mm > 0) {
-					base_lot = normlot(floor(equity / input_mm_equ) * input_lot_step);
+					base_lot = normLot(floor(equity / input_mm_equ) * input_lot_step);
 					curdil->_base_lot = base_lot;
 				}
 				else {
@@ -207,16 +161,83 @@ namespace strategy {
 					result = max(result, curdil->opposite->last->lots * input_lot_hadge_mult);
 
 				if (input_weighthadge)
-					result = max(result, (input_takeprofit * base_lot - curdil->opposite->basket_weight(tpprice, 100) * input_weighthadge) / input_takeprofit);
-				
+					result = max(result, (input_takeprofit * base_lot - curdil->opposite->basketWeight(tpprice, 100) * input_weighthadge) / input_takeprofit);
+
 				result = max(result, *(ext_total_lots + curdil->opposite->type) * input_basket_hadge_mult);
-				result = max(result, curdil->prev_lots * input_regres_mult);  //Затухание
+				result = max(result, curdil->prev_lots * input_regres_mult); //Затухание
 				result = min(result, input_maxlot);
 
 				MARK_FUNC_OUT
 				return result;
 			}
-			inline void TryOpenForward() {
+
+			bool compSignal() {
+				MARK_FUNC_IN
+
+				//Первый ордер открываем в любом случае
+				if (input_first_free && curdil->level == 0) {
+					MARK_FUNC_OUT
+					return true;
+				}
+
+				if (curdil->level >= input_free_lvl) {
+					MARK_FUNC_OUT
+					return true;
+				}
+
+				auto buffer = indicator->getMaBuffer();
+
+				if (curdil->type) { //Продажи
+					if (curdil->step_peak) {
+						if (
+							(input_periodf3 && *buffer < *(buffer+1)) ||
+							(input_periodf3 == 0 && curdil->step_peak - curdil->mpo >= input_rollback) ||
+							(input_periodf3 == 0 && input_rollback == 0)
+						) {
+							curdil->step_peak = 0;
+							MARK_FUNC_OUT
+							return true;
+						}
+						else {
+							curdil->step_peak = max(curdil->step_peak, curdil->mpo);
+						}
+
+					}
+					else if (curdil->mpo > *indicator->getUp()) {
+						curdil->step_peak = curdil->mpo;
+					}
+				}
+				else { //Покупки
+					if (curdil->step_peak) {
+						if (
+							(input_periodf3 && *buffer > *(buffer+1)) ||
+							(input_periodf3 == 0 && curdil->mpo - curdil->step_peak >= input_rollback) ||
+							(input_periodf3 == 0 && input_rollback == 0)
+						) {
+							curdil->step_peak = 0;
+							MARK_FUNC_OUT
+							return true;
+						}
+						else {
+							curdil->step_peak = min(curdil->step_peak, curdil->mpo);
+						}
+					}
+					else if (curdil->mpo < *indicator->getDown()) {
+						curdil->step_peak = curdil->mpo;
+					}
+				}
+
+				MARK_FUNC_OUT
+				return false;
+			}
+
+		private:
+
+			double	equity;
+			Diller* curdil;
+			fxc::indicator::DefaultIndicator* indicator;
+
+			inline void tryOpenForward() {
 				MARK_FUNC_IN
 				if (curdil->opposite->level >= input_forward_lvl && !curdil->ord_stop) {
 					int    o_type;
@@ -238,9 +259,9 @@ namespace strategy {
 						return;
 					}
 
-					CreateOrder(
+					createOrder(
 						o_type, 
-						calc_first_lot(curdil->tp(curdil->mpo, input_takeprofit)),
+						compFirstLot(curdil->tp(curdil->mpo, input_takeprofit)),
 						openprice, 
 						curdil->sl(openprice, input_stoploss), 
 						curdil->tp(openprice, input_takeprofit)
@@ -249,7 +270,7 @@ namespace strategy {
 				MARK_FUNC_OUT
 			}
 
-			inline void OpenNextOrder() {
+			inline void openNextOrder() {
 				MARK_FUNC_IN
 				double openprice = curdil->mpo;
 
@@ -274,7 +295,7 @@ namespace strategy {
 				double slprice    = curdil->sl(openprice, input_stoploss);
 				double tpprice    = curdil->tp(openprice, input_takeprofit);
 				double nextProfit = profits[curdil->level - 1];
-				double lots       = (nextProfit * curdil->_base_lot - curdil->basket_weight(tpprice, curdil->cur_av_lvl)) / input_takeprofit;
+				double lots       = (nextProfit * curdil->_base_lot - curdil->basketWeight(tpprice, curdil->cur_av_lvl)) / input_takeprofit;
 
 				if (input_safe_copy) {
 					lots = max(lots, curdil->_base_lot);
@@ -283,16 +304,17 @@ namespace strategy {
 				lots = min(lots, input_maxlot);
 
 				if (0 == check_new(curdil->type, &lots, &openprice, &slprice, &tpprice)) {
-					CreateOrder(curdil->type, lots, openprice, slprice, tpprice);
+					createOrder(curdil->type, lots, openprice, slprice, tpprice);
 				}
 				MARK_FUNC_OUT
 			}
 
-			inline void AutoClose() {
+			inline void autoClose() {
 				MARK_FUNC_IN
-				if (curdil->opposite->basket_cost() > 0) {
+
+				if (curdil->opposite->basketCost() > 0) {
 					for (int i = 0; i < curdil->opposite->level; i++) {
-						CloseOrder(
+						closeOrder(
 							curdil->opposite->orders[i]->ticket,
 							curdil->opposite->orders[i]->lots,
 							curdil->opposite->mpc
@@ -302,92 +324,11 @@ namespace strategy {
 				MARK_FUNC_OUT
 			}
 
-			inline void DelStopLimitOrders() {
+			inline void delStopLimitOrders() {
 				MARK_FUNC_IN
 				if (curdil->ord_stop) {
-					DeleteOrder(curdil->ord_stop->ticket);
+					deleteOrder(curdil->ord_stop->ticket);
 				}
-				MARK_FUNC_OUT
-			}
-
-			
-			inline void CreateOrder(int type, double lots, double openprice, double slprice, double tpprice, std::string comment = "") {
-				MARK_FUNC_IN
-				if (actionsLen + 1 >= ext_tradeActions.size()) {
-					fxc::msg << " -> CreateOrder(): actions limit exceeded\r\n" << fxc::msg_box;
-				}
-				auto action         = ext_tradeActions[actionsLen++];
-
-#if DEBUG
-				action->o_ticket = 0;
-				action->intret   = 0;
-#endif
-				action->o_type      = type;
-				action->o_lots      = lots;
-				action->o_openprice = openprice;
-				action->o_slprice   = slprice;
-				action->o_tpprice   = tpprice;
-				action->actionId    = JOB_CREATE;
-				MARK_FUNC_OUT
-			}
-
-			inline void ModOrder(int ticket, double openprice, double slprice, double tpprice) {
-				MARK_FUNC_IN
-				if (actionsLen + 1 >= ext_tradeActions.size()) {
-					fxc::msg << " -> ModOrder(): actions limit exceeded\r\n" << fxc::msg_box;
-				}
-				auto action         = ext_tradeActions[actionsLen++];
-
-#if DEBUG
-				action->o_type = 0;
-				action->o_lots = 0;
-				action->intret = 0;
-#endif
-				action->o_ticket = ticket;
-				action->o_openprice = openprice;
-				action->o_slprice   = slprice;
-				action->o_tpprice   = tpprice;
-				action->actionId    = JOB_MODIFY;
-				MARK_FUNC_OUT
-			}
-
-			inline void DeleteOrder(int ticket) {
-				MARK_FUNC_IN
-				if (actionsLen + 1 >= ext_tradeActions.size()) {
-					fxc::msg << " -> DeleteOrder(): actions limit exceeded\r\n" << fxc::msg_box;
-				}
-				auto action      = ext_tradeActions[actionsLen++];
-
-#if DEBUG
-				action->o_type      = 0;
-				action->o_lots      = 0;
-				action->o_openprice = 0;
-				action->o_slprice   = 0;
-				action->o_tpprice   = 0;
-				action->intret      = 0;
-#endif
-				action->o_ticket = ticket;
-				action->actionId = JOB_DELETE;
-				MARK_FUNC_OUT
-			}
-
-			inline void CloseOrder(int ticket, double lots, double openprice) {
-				MARK_FUNC_IN
-				if (actionsLen + 1 >= ext_tradeActions.size()) {
-					fxc::msg << " -> CloseOrder(): actions limit exceeded\r\n" << fxc::msg_box;
-				}
-				auto action         = ext_tradeActions[actionsLen++];
-
-#if DEBUG
-				action->o_type      = 0;
-				action->o_slprice   = 0;
-				action->o_tpprice   = 0;
-				action->intret      = 0;
-#endif
-				action->o_ticket    = ticket;
-				action->o_lots      = lots;
-				action->o_openprice = openprice;
-				action->actionId    = JOB_CLOSE;
 				MARK_FUNC_OUT
 			}
 

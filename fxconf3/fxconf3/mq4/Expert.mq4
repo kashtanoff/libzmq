@@ -36,14 +36,14 @@ struct TradeAction {
 	void   c_setvar(string prop, double& var);
 	void   c_setvar(string prop, double& var[]);
 
-	void   c_actions(TradeAction& var[], int length);
+	void   c_setactions(TradeAction& var[], int length);
 
 	void   c_refresh_init(double ask, double bid, double equity);
-	int    c_refresh_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0);
+	int    c_add_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0);
 	double c_norm_lot(double _lots);
 	int    c_getjob();
 	int    c_getdpi();
-	int    c_get_closed();
+	int    c_get_next_closed();
 	void   c_refresh_prices(double& _closes[], double& _highs[], double& _lows[], int bars);
 #import
 
@@ -449,14 +449,12 @@ bool DllInit()
 
 	c_setvar("open_dd",      open_dd);
 	c_setvar("total_lots",   total_lots);
-	c_setvar("max_lvl",      max_lvl);
-	c_setvar("max_dd",       max_dd);
-	c_setvar("indicator",    indicator);
+	//c_setvar("indicator",    indicator);
 	c_setvar("count_p",      count);
-	c_setvar("indicator2",   indicator2);
+	//c_setvar("indicator2",   indicator2);
 
 	c_setvar("isRunAllowed",   run_allowed);
-	c_actions(actList, ArraySize(actList));
+	c_setactions(actList, ArraySize(actList));
 
 	//Запуск постинициализации
 	c_postInit();
@@ -535,7 +533,7 @@ void InitTick() {
 		) continue;
 
 		_type = OrderType();
-		c_refresh_order(
+		c_add_order(
 			OrderTicket(), 
 			_type, 
 			OrderLots(), 

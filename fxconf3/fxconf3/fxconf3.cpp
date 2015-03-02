@@ -185,53 +185,10 @@ _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 	fxc::mutex.unlock();
 }
 
-_DLLAPI void __stdcall c_actions(void* pointer, int length) {
+_DLLAPI void __stdcall c_setactions(void* pointer, int length) {
 	fxc::mutex.lock();
-	
-	fxc::msg << "-> c_actions([0x" << pointer << "], " << length << ")\r\n" << fxc::msg_box;
-
-	auto h   = std::this_thread::get_id();
-	auto ptr = (fxc::TradeAction*) pointer;
-	auto vec = &pool[h]->ext_tradeActions;
-
-	for (auto i = 0; i < length; ++i) {
-		//fxc::msg << "vector[" << i << "] [0x" << ptr + i << "]\r\n" << fxc::msg_box;
-		vec->push_back(ptr + i);
-	}
-
-	//fxc::msg << "array  mql::[0x" << pointer << "][" << length << "]\r\n" << fxc::msg_box;
-	//fxc::msg << "vector [" << vec->size() << "] / [" << vec->capacity() << "]\r\n" << fxc::msg_box;
-
-	//for (auto i = 0; i < length; ++i) {
-	//	vec->at(i)->o_lots      = i + 0; // 8 bytes
-	//	vec->at(i)->o_openprice = i + 1; // 8 bytes
-	//	vec->at(i)->o_tpprice   = i + 2; // 8 bytes
-	//	vec->at(i)->o_slprice   = i + 3; // 8 bytes
-	//	vec->at(i)->o_ticket    = i + 4; // 4 bytes
-	//	vec->at(i)->o_type      = i + 5; // 4 bytes
-	//	vec->at(i)->intret      = i + 6; // 4 bytes
-
-	//	std::stringstream ss;
-	//	ss << "~> cmnt[" << i*i << "]";
-
-	//	Mql::write2str(&vec->at(i)->comment, ss.str().c_str());
-
-	//	fxc::msg 
-	//		<< "vector[" << i << "] " 
-	//		<< "[0x" << vec->at(i) << "] "
-	//		//<< vec->at(i)->o_lots << ", "
-	//		//<< vec->at(i)->o_openprice << ", "
-	//		//<< vec->at(i)->o_tpprice << ", "
-	//		//<< vec->at(i)->o_slprice << ", "
-	//		//<< vec->at(i)->o_ticket << ", "
-	//		//<< vec->at(i)->o_type << ", "
-	//		//<< vec->at(i)->intret << ", "
-	//		<< "["
-	//		<< vec->at(i)->comment.size << ", "
-	//		<< vec->at(i)->comment.buffer 
-	//		<< "] : \"" << Mql::str2chars(&vec->at(i)->comment) << "\""
-	//		<< "\r\n" << fxc::msg_box;
-	//}
+	//fxc::msg << "-> c_actions([0x" << pointer << "], " << length << ")\r\n" << fxc::msg_box;
+	pool[std::this_thread::get_id()]->mapActions(pointer, length);
 	fxc::mutex.unlock();
 }
 
@@ -374,11 +331,11 @@ _DLLAPI void __stdcall c_refresh_init(double ask, double bid, double equity)
 }
 
 //Добавляет новый ордер в цикле скана ордеров, в будущем возвращает код изменения
-_DLLAPI int __stdcall c_refresh_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0)
+_DLLAPI int __stdcall c_add_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0)
 {
 	fxc::mutex.lock();
 	auto   h = std::this_thread::get_id();
-	auto res = pool[h]->refresh_order(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
+	auto res = pool[h]->addOrder(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
 	fxc::mutex.unlock();
 
 	return res;
@@ -389,17 +346,17 @@ _DLLAPI double __stdcall c_norm_lot(double _lots)
 {
 	//fxc::mutex.lock();	
 	auto   h = std::this_thread::get_id();
-	auto res = pool[h]->normlot(_lots);
+	auto res = pool[h]->normLot(_lots);
 	//fxc::mutex.unlock();
 
 	return res;
 }
 
-_DLLAPI int __stdcall c_get_closed()
+_DLLAPI int __stdcall c_get_next_closed()
 {
 	//fxc::mutex.lock();
 	auto   h = std::this_thread::get_id();
-	auto res = pool[h]->getclosed();
+	auto res = pool[h]->getNextClosedTicket();
 	//fxc::mutex.unlock();
 
 	return res;

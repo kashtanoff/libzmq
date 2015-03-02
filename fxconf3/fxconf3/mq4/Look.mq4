@@ -142,7 +142,7 @@ public:
 		bool erase = false;
 		while (true)
 		{
-			_ticket = c_get_closed();
+			_ticket = c_get_next_closed();
 
 			if (_ticket == 0)
 				break;
