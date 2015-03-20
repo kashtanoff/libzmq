@@ -98,7 +98,18 @@ namespace indicator {
 
 				return sum / sumw;
 			}
+			double ma(ChartData* data, int period, int shift) {
+				int j, k;
+				double sum  = (period + 1) * data->close[shift];
+				double sumw = period + 1;
 
+				for (j = 1, k = period; j <= period; j++, k--) {
+					sum  += k * data->close[shift + j];
+					sumw += k;
+				}
+
+				return sum / sumw;
+			}
 	};
 
 }

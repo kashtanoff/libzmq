@@ -15,59 +15,50 @@ namespace strategy {
 				indicator = new fxc::indicator::DefaultIndicator(this, this);
 			}
 
-			virtual int getJob() {
+			virtual void Strategy() {
 				MARK_FUNC_IN
 
-				((TradeManager*) this)->reset();
-				sortOrders();
+				// ≈сли нет ордеров в рынке
+				if (!curdil->level) {
+					// ≈сли не запрещено открытие новой сетки и есть сигнал
+					if (!input_stop_new[curdil->type] && (compSignal() || curdil->opposite->level >= input_forward_lvl)) {
+						createOrder(
+							curdil->type, 
+							compFirstLot(curdil->tp(curdil->mpo, input_takeprofit)),
+							curdil->mpo,
+							curdil->sl(curdil->mpo, input_stoploss),
+							curdil->tp(curdil->mpo, input_takeprofit)
+						);
 
-				for (int i = 0; i < 2; i++) {
-					curdil = dillers[i];
+						if (input_opp_close) {
+							autoClose();
+						}
+					}
+				}
+				else {
+					moveTP();
 
-					// ≈сли нет ордеров в рынке
-					if (!curdil->level) {
-						// ≈сли не запрещено открытие новой сетки и есть сигнал
-						if (!input_stop_new[curdil->type] && (compSignal() || curdil->opposite->level >= input_forward_lvl)) {
-							createOrder(
-								curdil->type, 
-								compFirstLot(curdil->tp(curdil->mpo, input_takeprofit)),
-								curdil->mpo,
-								curdil->sl(curdil->mpo, input_stoploss),
-								curdil->tp(curdil->mpo, input_takeprofit)
-							);
+					// ≈сли есть базовый ордер и разрешено усредн€ть и максимальный уровень не достигнут
+					if (!input_stop_avr[curdil->type] && curdil->level < input_max_grid_lvl) {
 
-							if (input_opp_close) {
+						// ≈сли разрешены форварды и его можно поставить
+						if (curdil->opposite->level >= input_forward_lvl && !curdil->ord_stop) {
+							tryOpenForward();
+						}
+						if (compSignal()) {
+							openNextOrder();
+
+							if (input_opp_close == 2) {
 								autoClose();
 							}
 						}
 					}
+					// ≈сли есть ордера, но не разрешено усредн€ть -> удалить отложки
 					else {
-						moveTP();
-
-						// ≈сли есть базовый ордер и разрешено усредн€ть и максимальный уровень не достигнут
-						if (!input_stop_avr[curdil->type] && curdil->level < input_max_grid_lvl) {
-
-							// ≈сли разрешены форварды и его можно поставить
-							if (curdil->opposite->level >= input_forward_lvl && !curdil->ord_stop) {
-								tryOpenForward();
-							}
-							if (compSignal()) {
-								openNextOrder();
-
-								if (input_opp_close == 2) {
-									autoClose();
-								}
-							}
-						}
-						// ≈сли есть ордера, но не разрешено усредн€ть -> удалить отложки
-						else {
-							delStopLimitOrders();
-						}
+						delStopLimitOrders();
 					}
 				}
-
 				MARK_FUNC_OUT
-				return getActionsStackSize();
 			}
 
 			virtual void refresh_init(double _ask, double _bid, double _equity) {
