@@ -46,6 +46,13 @@ namespace fxc {
 				for (int i = length - 2; i >= 0; --i) {
 					auto data = pointer + i;
 					if (data->time == time[0]) {
+						time.update(data->time);
+						low.update(data->low);
+						high.update(data->high);
+						open.update(data->open);
+						close.update(data->close);
+						volume.update(data->tick_volume);
+
 						newBars = length - ++i;
 
 						for (; i < length; ++i) {
