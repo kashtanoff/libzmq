@@ -1,111 +1,157 @@
 #pragma once
 
+#include <unordered_map>
+#include <algorithm>
+#include "./fxc.h"
+#include "./ChartListener.h"
+#include "./Utils.cpp"
+#include "../MqlUtils.cpp"
+
 namespace fxc {
-	//Реализует кольцевой массив-тайм серию, в стиле mql4
-	template <typename T>
-	class CycloBuffer {
-		public:
-			CycloBuffer() {};
-			alloc(unsigned size) {
-				buffer = new T(buf_size = size);
-				index = 0;
-			}
-			void add(T value) {
-				index = index? index-1: buf_size-1;
-				buffer[index] = value;
-			}
-			void update(T value) {
-				buffer[index] = value;
-			}
-			T& operator[](unsigned i) {
-				return(buffer[(index+i)%buf_size]);
-			}
-			~CycloBuffer() {
-				delete []buffer;
-			}
-		private:
-			T* buffer;
-			int index;
-			unsigned buf_size;
-	};
 
-	/*struct ChartData {
-		double*	closes;
-		double*	highs;
-		double* lows;
-		int		bars;
-	};*/
 	class ChartData {
-	public:
-		CycloBuffer<int> time;
-		CycloBuffer<double> open;
-		CycloBuffer<double> low;
-		CycloBuffer<double> high;
-		CycloBuffer<double> close;
-		CycloBuffer<int> volume;
-	
-		ChartData()
-		{};
-		//Поздняя аллокация, поскольку длину буфера можно вычислить только после передачи параметров
-		//Длина буфера - это количество последних баров, которые мы храним
-		void initChartData(int buffSize) {
-			time.alloc(buffSize);
-			time[0] = 0;  //Для определения начальной инициализации
-			open.alloc(buffSize);
-			low.alloc(buffSize);
-			high.alloc(buffSize);
-			close.alloc(buffSize);
-			volume.alloc(buffSize);
-			counter = 0;
-		};
-		//Добавляет новый бар
-		void addBar(int time_v, double open_v, double low_v, double high_v, double close_v, int volume_v) {
-			time.add(time_v);
-			open.add(open_v);
-			low.add(low_v);
-			high.add(high_v);
-			close.add(close_v);
-			volume.add(volume_v);
-			counter++;
-		};
-		//Обновляет последний бар (бар к примеру, на таймфреме H1 собирается целый час, т.е. целый час он может менятся каждый тик, и нам нужны все эти изменения, а не только финальный образ)
-		int updateBar(int time_v, double open_v, double low_v, double high_v, double close_v, int volume_v) {
-			if (time[0] == time_v) {
-				open.update(open_v);
-				low.update(low_v);
-				high.update(high_v);
-				close.update(close_v);
-				volume.update(volume_v);
-			};
-			return(time[0]);
-		};
-		//Возвращает время последнего бара
-		int getLastTime() {
-			return(time[0]);
-		}
-		int getCounter() {
-			return counter;
-		}
-	private:
-		int counter;
-	};
-}
-/* На стороне mql внутри OnTick();
-int t;
-int price_buffer_length = PeriodF + PeriodF2 + 1;  //Формула может отличаться от индикатора к индикатору, поэтому можно ввести в абстрактный индикатор виртуальную функцию GetBufLen(); для последующего ее переопределения
-if (bypass(ask, bid)) return;  //Тут выполняем препаратор и определяем (в случае оптимизации), нужно ли дальше работать в тике
 
-int lasttime = c_refresh_chartdata(time[0], open[0], low[0], high[0], close[0], volume[0]);  //Обновление последнего бара
-if (lasttime != time[0]) {  //Если это не обновление последнего бара
-	int i = 0;
-	if (!lasttime)  //Первичная инициализация
-		i = price_buffer_length - 1;
-	else
-		while (i < price_buffer_length && lasttime != time[i])  //Поиск индекса последнего известного на стороне с++ бара
-			i++;
-	c_refresh_chartdata(time[i], open[i], low[i], high[i], close[i], volume[i]);  //Обновление предпоследнего бара, который в прошлый раз был последним
-	i++;
-	for (i; i>=0; i--)
-		c_add_chartdata(time[i], open[i], low[i], high[i], close[i], volume[i]);
+		public:
+
+			unsigned newBars = 0;
+
+			utils::CircularBuffer<int>    time;
+			utils::CircularBuffer<double> open;
+			utils::CircularBuffer<double> low;
+			utils::CircularBuffer<double> high;
+			utils::CircularBuffer<double> close;
+			utils::CircularBuffer<int>    volume;
+
+			ChartData() {
+			}
+
+			// Поздняя аллокация, поскольку длину буфера можно вычислить только после передачи параметров
+			// Длина буфера - это количество последних баров, которые мы храним
+			void resize(int buffSize) {
+				time.alloc(buffSize);
+				low.alloc(buffSize);
+				high.alloc(buffSize);
+				open.alloc(buffSize);
+				close.alloc(buffSize);
+				volume.alloc(buffSize);
+			}
+
+			void update(MqlRates* pointer, unsigned length) {
+				newBars = 0;
+
+				if ((pointer + length - 1)->time == time[0]) {
+					return;
+				}
+
+				for (int i = length - 2; i >= 0; --i) {
+					auto data = pointer + i;
+					if (data->time == time[0]) {
+						newBars = length - ++i;
+
+						for (; i < length; ++i) {
+							data = pointer + i;
+							time.add(data->time);
+							low.add(data->low);
+							high.add(data->high);
+							open.add(data->open);
+							close.add(data->close);
+							volume.add(data->tick_volume);
+						}
+						break;
+					}
+				}
+			}
+			
+			inline const unsigned getSize() {
+				return time.getSize();
+			}
+
+	};
+
+	class TimeSeries {
+
+		public:
+
+			TimeSeries() {
+			}
+
+			void reset() {
+				for (auto& pair : _chartData) {
+					pair.second->newBars = 0;
+				}
+			}
+
+			void updateFirst(const double ask, const double bid) {
+				for (auto& pair : _chartData) {
+					pair.second->high[0]  = max(pair.second->high[0], bid);
+					pair.second->low[0]   = min(pair.second->low[0], bid);
+					pair.second->close[0] = bid;
+				}
+			}
+
+			void registerTimeframe(const int timeframe, const unsigned length, fxc::ChartListener* const listener) {
+				MARK_FUNC_IN
+				registerTimeframe(timeframe, length);
+				registerListener(timeframe, listener);
+				MARK_FUNC_OUT
+			}
+
+			void registerTimeframe(const int timeframe, const unsigned length) {
+				MARK_FUNC_IN
+				MARK_FUNC_IN
+				fxc::msg << "timeframe: " << timeframe << " [0x" << &timeframe << "]\r\n" << fxc::msg_box;
+				fxc::msg << "_chartData [0x" << &_chartData << "]\r\n" << fxc::msg_box;
+				fxc::msg << "_timeframes [0x" << &_timeframes << "]\r\n" << fxc::msg_box;
+				if (!_chartData.count(timeframe)) {
+					_chartData[timeframe] = new ChartData();
+					_timeframes.push_back(timeframe);
+					std::sort(_timeframes.begin(), _timeframes.end());
+				}
+				MARK_FUNC_OUT
+				MARK_FUNC_IN
+				if (_chartData[timeframe]->getSize() < length) {
+					_chartData[timeframe]->resize(length);
+				}
+				MARK_FUNC_OUT
+				MARK_FUNC_IN
+				if (!_listeners.count(timeframe)) {
+					_listeners[timeframe] = std::vector<fxc::ChartListener*>();
+				}
+				MARK_FUNC_OUT
+				MARK_FUNC_OUT
+			}
+
+			void registerListener(const int timeframe, fxc::ChartListener* const listener) {
+				MARK_FUNC_IN
+				if (!_listeners.count(timeframe)) {
+					_listeners[timeframe] = std::vector<fxc::ChartListener*>();
+				}
+				_listeners[timeframe].push_back(listener);
+				MARK_FUNC_OUT
+			}
+
+			inline void invokeListeners() {
+				for (auto& pair : _listeners) {
+					for (auto& listener : pair.second) {
+						listener->listenChart();
+					}
+				}
+			}
+
+			inline const std::vector<int> getTimeframes() {
+				return _timeframes;
+			}
+
+			inline fxc::ChartData* getChartData(const int timeframe) {
+				return _chartData[timeframe];
+			}
+
+		private:
+
+			std::vector<int>                                         _timeframes;
+			std::unordered_map<int, ChartData*>                       _chartData;
+			std::unordered_map<int, std::vector<fxc::ChartListener*>> _listeners;
+
+	};
+
 }
-*/

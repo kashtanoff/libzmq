@@ -15,11 +15,13 @@ namespace fxc {
 		public:
 
 			OrdersManager() {
+				MARK_FUNC_IN
 				dillers[0] = new Diller(OP_BUY);
 				dillers[1] = new Diller(OP_SELL);
 
 				dillers[0]->opposite = dillers[1];
 				dillers[1]->opposite = dillers[0];
+				MARK_FUNC_OUT
 			}
 			
 			void init(Parameters* params) {
@@ -108,23 +110,20 @@ namespace fxc {
 				return 0;
 			}
 
-			void updateChartData(double *closes, double *highs, double *lows, int bars) {
-				chartData->closes = closes;
-				chartData->highs  = highs;
-				chartData->lows   = lows;
-				chartData->bars   = bars;
-			}
-
-			Diller* const getDillers() {
+			fxc::Diller* const getDillers() {
 				return *dillers;
 			}
 
-			ChartData* const getChartData() {
-				return chartData;
+			fxc::TimeSeries* const getTimeseries() {
+				return timeseries;
+			}
+
+			fxc::ChartData* const getChartData(const int timeframe) {
+				return timeseries->getChartData(timeframe);
 			}
 
 			// Выдает тикеты закрытых ордеров, пока они есть
-			int getNextClosedTicket() {
+			const int getNextClosedTicket() {
 				bool   found;
 				Order* order;
 
@@ -153,9 +152,8 @@ namespace fxc {
 
 		protected:
 
-			Diller* dillers[2];
-
-			ChartData* const chartData = new ChartData();
+			Diller*     dillers[2];
+			TimeSeries* timeseries = new TimeSeries();
 
 			double	profits[50];
 

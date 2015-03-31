@@ -40,6 +40,9 @@
     <ClInclude Include="fxc\debug\Debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fxc\ChartListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -88,6 +91,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="fxc\ChartData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\indicators\AbstractIndicator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\indicators\RAIndicator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\indicators\MovingAverageIndicator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

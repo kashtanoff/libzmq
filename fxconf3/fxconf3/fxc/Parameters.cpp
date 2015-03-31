@@ -66,6 +66,7 @@ namespace fxc {
 			double	input_rollback;			//95
 			double	input_weighthadge;		//96
 			int     input_opp_close;		//97
+			int		input_timeframe;
 
 			//Общие переменные
 			bool* ext_isRunAllowed;

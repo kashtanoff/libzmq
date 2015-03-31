@@ -23,13 +23,17 @@ namespace fxc {
 		public:
 
 			Simbiot(char* _symbol) {
+				MARK_FUNC_IN
 				strcpy(symbol, _symbol);
 				registerProps();
+				MARK_FUNC_OUT
 			}
 
-			void postInit() {
+			virtual void init() {
+				MARK_FUNC_IN
 				((OrdersManager*) this)->init(this);
 				printRegisteredProps();
+				MARK_FUNC_OUT
 			}
 
 			inline double normLot(double value) {
@@ -162,6 +166,7 @@ namespace fxc {
 				Register("_periodf3",       &input_periodf3);        //93
 				Register("_buf_len",        &input_buf_len);         //94
 				Register("_opp_close",      &input_opp_close);       //97 OppositeCLose;
+				Register("timeframe",       &input_timeframe);
 
 				Register("isRunAllowed",    &ext_isRunAllowed);
 			}

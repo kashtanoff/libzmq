@@ -10,6 +10,19 @@ struct MqlString {
 };
 #pragma pack(pop,1)
 
+#pragma pack(push,1)
+struct MqlRates {
+	time_t time;
+	double open;
+	double high;
+	double low;
+	double close;
+	long   tick_volume;
+	int    spread;
+	long   real_volume;
+};
+#pragma pack(pop,1)
+
 class Mql {
 	
 	public:

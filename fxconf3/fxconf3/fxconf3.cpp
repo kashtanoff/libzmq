@@ -227,24 +227,63 @@ _DLLAPI bool __stdcall c_init(int accountNumber, wchar_t* accountServer, char* s
 		}
 	}
 
-	auto h = std::this_thread::get_id();
-	//bp = true;
-	//msg << "Pool position: " << h << msg_box;
-	pool[h] = new STRAT_CLASS (symbol);
-	fxc::mutex.unlock();
+#if DEBUG
+	try {
+#endif
+		MARK_FUNC_IN
+		auto h = std::this_thread::get_id();
+		//bp = true;
+		//msg << "Pool position: " << h << msg_box;
+		pool[h] = new STRAT_CLASS (symbol);
+		fxc::mutex.unlock();
 
-	if (!isWorkerActive) {
-		isWorkerAllowed   = true;
-		checkAccessThread = std::thread(checkAccessWorker);
-		checkAccessThread.detach();
+		if (!isWorkerActive) {
+			isWorkerAllowed   = true;
+			checkAccessThread = std::thread(checkAccessWorker);
+			checkAccessThread.detach();
+		}
+		MARK_FUNC_OUT
+#if DEBUG
 	}
+	catch (const std::exception& ex) {
+		fxc::msg << "!> ERROR @ c_init(): " << ex.what() << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+	catch (const std::string& ex) {
+		fxc::msg << "!> ERROR @ c_init(): " << ex << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+	catch (...) {
+		fxc::msg << "!> ERROR @ c_init(): [undefined type]\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+#endif
 
 	return true;
 }
 
 _DLLAPI void __stdcall c_postInit() {
-	auto h = std::this_thread::get_id();
-	pool[h]->postInit();
+#if DEBUG
+	try {
+#endif
+		MARK_FUNC_IN
+		pool[std::this_thread::get_id()]->init();
+		MARK_FUNC_OUT
+#if DEBUG
+	}
+	catch (const std::exception& ex) {
+		fxc::msg << "!> ERROR @ c_postInit(): " << ex.what() << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+	catch (const std::string& ex) {
+		fxc::msg << "!> ERROR @ c_postInit(): " << ex << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+	catch (...) {
+		fxc::msg << "!> ERROR @ c_postInit(): [undefined type]\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+#endif
 }
 
 //ќсвобождает пам€ть и индекс в пуле
@@ -320,14 +359,37 @@ _DLLAPI int __stdcall c_getdpi()
 	return 1;
 }
 
-//»нициализаци€ цикла обновлени€ ордеров, поскольку цикл получаетьс€ рваным (кажда€ итераци€ вызываетс€ из MQL), 
-//нельз€ пользовать€ результатами в MQL программе до завершени€ цикла
-_DLLAPI void __stdcall c_refresh_init(double ask, double bid, double equity)   
+_DLLAPI void __stdcall c_refresh_chartdata(int timeframe, int length, void* pointer)
 {
 	fxc::mutex.lock();
-	auto h = std::this_thread::get_id();
-	pool[h]->refresh_init(ask, bid, equity);
+	pool[std::this_thread::get_id()]->getChartData(timeframe)->update((MqlRates*) pointer, length);
 	fxc::mutex.unlock();
+}
+
+_DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
+{
+	auto ts         = pool[std::this_thread::get_id()]->getTimeseries();
+	auto timeframes = ts->getTimeframes();
+	auto length     = timeframes.size();
+
+	for (int i = 0; i < length; ++i) {
+		*((int*) timeframesPtr + i) = timeframes[i];
+		*((int*) sizesPtr + i)      = ts->getChartData(timeframes[i])->getSize();
+	}
+
+	return length;
+}
+
+//»нициализаци€ цикла обновлени€ ордеров, поскольку цикл получаетьс€ рваным (кажда€ итераци€ вызываетс€ из MQL), 
+//нельз€ пользовать€ результатами в MQL программе до завершени€ цикла
+_DLLAPI bool __stdcall c_tick_init_begin(double ask, double bid, double equity)
+{
+	return pool[std::this_thread::get_id()]->tickInitBegin(ask, bid, equity);
+}
+
+_DLLAPI void __stdcall c_tick_init_end()
+{
+	pool[std::this_thread::get_id()]->tickInitEnd();
 }
 
 //ƒобавл€ет новый ордер в цикле скана ордеров, в будущем возвращает код изменени€
@@ -360,14 +422,6 @@ _DLLAPI int __stdcall c_get_next_closed()
 	//fxc::mutex.unlock();
 
 	return res;
-}
-
-_DLLAPI void __stdcall c_refresh_prices(double *_closes, double *_highs, double *_lows, int _bars)
-{
-	//fxc::mutex.lock();
-	auto h = std::this_thread::get_id();
-	pool[h]->refresh_prices(_closes, _highs, _lows, _bars);
-	//fxc::mutex.unlock();
 }
 
 _DLLAPI void __stdcall fcostransform(double a[], int tnn, int inversefct)

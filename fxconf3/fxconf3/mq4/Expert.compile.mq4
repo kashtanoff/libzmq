@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
-//|                                                          {{ver}}   |
+//|                                                          3.300   |
 //|                                      Copyright 2013, Aurora ltd. |
 //|                                      http://www.fxconfidence.com |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2013, Aurora ltd."
 #property link      "http://www.fxconfidence.com"
-#property version "{{ver}}"  
+#property version "3.300"  
 #property description "EA FXConfidence"
 
 #include "Inputs.mq4"
@@ -28,7 +28,7 @@ struct TfRates {
 	MqlRates rates[];
 };
 
-#import "fxc{{build}}.dll"
+#import "fxc3300.dll"
 	bool   c_init(int number, string server, string symbol);
 	void   c_deinit();
 	void   c_postInit();
@@ -521,7 +521,7 @@ void InitLook()
 	ObjectsDeleteAll();
 
 	info.Init();
-	info.Set("header",    "ConfidenceEA v{{ver}}");
+	info.Set("header",    "ConfidenceEA v3.300");
 	info.Set("line",      "----------------------");
    
 	if (!run_allowed)
@@ -579,3 +579,4 @@ void UpdateOrders() {
 		);
 	}
 }
+

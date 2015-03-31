@@ -1,7 +1,8 @@
 #pragma once
 
 #include "AbstractStrategy.cpp"
-#include "../indicators/DefaultIndicator.cpp"
+#include "../debug/Debug.h"
+#include "../indicators/RAIndicator.cpp"
 
 namespace fxc {
 
@@ -12,8 +13,16 @@ namespace strategy {
 		public:
 
 			DefaultStrategy(char* _symbol) : AbstractStrategy(_symbol) {
-				indicator = new fxc::indicator::DefaultIndicator(this, this);
 			}
+
+			virtual void init() {
+				MARK_FUNC_IN
+				Simbiot::init();
+				indicator = new fxc::indicator::RAIndicator(this, input_timeframe, input_period, input_periodf2, input_deviation, input_delta);
+				MARK_FUNC_OUT
+			}
+
+		protected:
 
 			virtual void Strategy() {
 				MARK_FUNC_IN
@@ -60,22 +69,6 @@ namespace strategy {
 				}
 				MARK_FUNC_OUT
 			}
-
-			virtual void refresh_init(double _ask, double _bid, double _equity) {
-				equity = _equity;
-				AbstractStrategy::refresh_init(_ask, _bid, _equity);
-
-				if (!input_new_bar) {
-					indicator->compute();
-				}
-			}
-
-			virtual void refresh_prices(double *closes, double *highs, double *lows, int bars) {
-				AbstractStrategy::refresh_prices(closes, highs, lows, bars);
-				indicator->compute();
-			}
-
-		protected:
 
 			inline void moveTP() {
 				MARK_FUNC_IN
@@ -176,12 +169,10 @@ namespace strategy {
 					return true;
 				}
 
-				auto buffer = indicator->getMaBuffer();
-
 				if (curdil->type) { //Продажи
 					if (curdil->step_peak) {
 						if (
-							(input_periodf3 && *buffer < *(buffer+1)) ||
+							(input_periodf3 && indicator->middle[0] < indicator->middle[1]) ||
 							(input_periodf3 == 0 && curdil->step_peak - curdil->mpo >= input_rollback) ||
 							(input_periodf3 == 0 && input_rollback == 0)
 						) {
@@ -194,14 +185,14 @@ namespace strategy {
 						}
 
 					}
-					else if (curdil->mpo > *indicator->getUp()) {
+					else if (curdil->mpo > indicator->up[0]) {
 						curdil->step_peak = curdil->mpo;
 					}
 				}
 				else { //Покупки
 					if (curdil->step_peak) {
 						if (
-							(input_periodf3 && *buffer > *(buffer+1)) ||
+							(input_periodf3 && indicator->middle[0] < indicator->middle[1]) ||
 							(input_periodf3 == 0 && curdil->mpo - curdil->step_peak >= input_rollback) ||
 							(input_periodf3 == 0 && input_rollback == 0)
 						) {
@@ -213,7 +204,7 @@ namespace strategy {
 							curdil->step_peak = min(curdil->step_peak, curdil->mpo);
 						}
 					}
-					else if (curdil->mpo < *indicator->getDown()) {
+					else if (curdil->mpo < indicator->down[0]) {
 						curdil->step_peak = curdil->mpo;
 					}
 				}
@@ -224,9 +215,7 @@ namespace strategy {
 
 		private:
 
-			double	equity;
-			Diller* curdil;
-			fxc::indicator::DefaultIndicator* indicator;
+			fxc::indicator::RAIndicator* indicator;
 
 			inline void tryOpenForward() {
 				MARK_FUNC_IN

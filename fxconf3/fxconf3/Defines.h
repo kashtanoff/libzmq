@@ -19,6 +19,16 @@
 #define JOB_DELETE 3
 #define JOB_CLOSE  4
 
+#define PERIOD_M1      1     // 1 минута
+#define PERIOD_M5      5     // 5 минут
+#define PERIOD_M15     15    // 15 минут
+#define PERIOD_M30     30    // 30 минут
+#define PERIOD_H1      60    // 1 час
+#define PERIOD_H4      240   // 4 часа
+#define PERIOD_D1      1440  // 1 день
+#define PERIOD_W1      10080 // 1 неделя
+#define PERIOD_MN1     43200 // 1 месяц
+
 #define NUM_ORDERS   100
 #define MAX_BARS     100
 #define PI           3.14159265358979323846

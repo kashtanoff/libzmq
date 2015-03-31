@@ -97,6 +97,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Defines.h" />
+    <ClInclude Include="fxc\ChartListener.h" />
     <ClInclude Include="fxc\debug\Debug.h" />
     <ClInclude Include="fxc\fxc.h" />
     <ClInclude Include="Property.h" />
@@ -117,7 +118,10 @@
     </ClCompile>
     <ClCompile Include="fxc\fxc.cpp" />
     <ClCompile Include="fxconf3.cpp" />
+    <ClCompile Include="fxc\indicators\AbstractIndicator.cpp" />
     <ClCompile Include="fxc\indicators\DefaultIndicator.cpp" />
+    <ClCompile Include="fxc\indicators\MovingAverageIndicator.cpp" />
+    <ClCompile Include="fxc\indicators\RAIndicator.cpp" />
     <ClCompile Include="fxc\OrdersManager.cpp" />
     <ClCompile Include="fxc\TradeManager.cpp" />
     <ClCompile Include="fxc\strat\AbstractStrategy.cpp" />
@@ -125,6 +129,7 @@
     <ClCompile Include="fxc\Order.cpp" />
     <ClCompile Include="fxc\Parameters.cpp" />
     <ClCompile Include="fxc\Simbiot.cpp" />
+    <ClCompile Include="fxc\Utils.cpp" />
     <ClCompile Include="MqlUtils.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

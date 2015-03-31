@@ -36,7 +36,7 @@ CScript "%CD%\ReplaceText.vbs" //B //nologo %indir%\%midfile%.mq4 {{build}} %bui
 %CD%\mql64.exe %indir%\%midfile%.mq4
 
 :: delete temp file
-del %indir%\%midfile%.mq4
+:: del %indir%\%midfile%.mq4
 
 :::::::::::::::::
 :: Copy result ::
