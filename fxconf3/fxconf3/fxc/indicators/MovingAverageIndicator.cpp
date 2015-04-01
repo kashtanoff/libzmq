@@ -51,14 +51,18 @@ namespace indicator {
 			}
 
 			virtual inline void listenChart() {
+				MARK_FUNC_IN
 				compute();
+				MARK_FUNC_OUT
 			}
 
 			virtual void compute() {
+				MARK_FUNC_IN
 				// кеширование вычислений, для тех случаев, когда в рамках тика мы хотим использовать результаты несколько раз
 				for (int i = 0; i < outBufferLength; i++) {
 					outbuffer[i] = value(i);
 				}
+				MARK_FUNC_OUT
 			}
 
 			// для тех случаев, когда мы не хотим регулярно вызывать compute

@@ -198,8 +198,8 @@ void OnTick()
 		return;
 	}
 
-	UpdateOrders(); // Обновляем информацию об ордерах
 	c_tick_init_end();
+	UpdateOrders(); // Обновляем информацию об ордерах
 
 	int l = c_getjob();
 

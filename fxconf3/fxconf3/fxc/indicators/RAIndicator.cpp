@@ -45,10 +45,13 @@ namespace indicator {
 			}
 
 			virtual inline void listenChart() {
+				MARK_FUNC_IN
 				compute();
+				MARK_FUNC_OUT
 			}
 
 			virtual void compute() {
+				MARK_FUNC_IN
 				int b = min(rates->newBars, period2);
 				
 				up.skip(b);
@@ -79,6 +82,7 @@ namespace indicator {
 					up[i]    = middle[i] + sqrt(ups[i])   * deviation;
 					down[i]  = middle[i] - sqrt(downs[i]) * deviation;
 				}
+				MARK_FUNC_OUT
 			}
 		
 			utils::CircularBuffer<double> up;

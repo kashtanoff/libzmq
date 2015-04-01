@@ -26,13 +26,13 @@ namespace strategy {
 
 			virtual void Strategy() {
 				MARK_FUNC_IN
-
 				// ≈сли нет ордеров в рынке
 				if (!curdil->level) {
 					// ≈сли не запрещено открытие новой сетки и есть сигнал
+
 					if (!input_stop_new[curdil->type] && (compSignal() || curdil->opposite->level >= input_forward_lvl)) {
 						createOrder(
-							curdil->type, 
+							curdil->type,
 							compFirstLot(curdil->tp(curdil->mpo, input_takeprofit)),
 							curdil->mpo,
 							curdil->sl(curdil->mpo, input_stoploss),

@@ -22,10 +22,10 @@ namespace utils {
 			void alloc(unsigned size) {
 				MARK_FUNC_IN
 				if (_buffer == nullptr) {
-					_buffer = new T(size);
+					_buffer = new T[size];
 				}
 				else {
-					auto b = new T(size);
+					auto b = new T[size];
 					
 					if (size > _size - _index) {
 						memcpy(b, _buffer + _index, _size - _index);

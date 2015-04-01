@@ -11,8 +11,6 @@ namespace strategy {
 		public:
 
 			AbstractStrategy(char* _symbol) : Simbiot(_symbol) {
-				MARK_FUNC_IN
-				MARK_FUNC_OUT
 			}
 
 			// возвращает количество операций на текущем тике
@@ -33,23 +31,31 @@ namespace strategy {
 
 			// Инициализация цикла обновления ордеров, поскольку цикл получается рваным (каждая итерация вызывается из MQL),
 			// нельзя пользоватья результатами в MQL программе до завершения цикла
-			virtual const bool tickInitBegin(double _ask, double _bid, double _equity) {
+			const bool tickInitBegin(double _ask, double _bid, double _equity) {
+				MARK_FUNC_IN
 				ask    = _ask;
 				bid    = _bid;
 				equity = _equity;
 
+				dillers[0]->mpo = dillers[1]->mpc = ask;
+				dillers[1]->mpo = dillers[0]->mpc = bid;
+
+				MARK_FUNC_OUT
+				return bypass();
+			}
+
+			virtual inline const bool bypass() {
 				return true;
 			}
 
 			virtual void tickInitEnd() {
+				MARK_FUNC_IN
 				getTimeseries()->reset();
 				getTimeseries()->updateFirst(ask, bid);
 				getTimeseries()->invokeListeners();
 
-				dillers[0]->mpo = dillers[1]->mpc = ask;
-				dillers[1]->mpo = dillers[0]->mpc = bid;
-
 				((OrdersManager*) this)->reset();
+				MARK_FUNC_OUT
 			}
 
 		protected:

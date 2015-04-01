@@ -207,34 +207,29 @@ _DLLAPI bool __stdcall c_init(int accountNumber, wchar_t* accountServer, char* s
 		return false;
 	}
 
-	fxc::mutex.lock();
+#if DEBUG
+	/*
+	RedirectIOToConsole();
+	msg << "Debug logging activated\r\n" << msg_box;
+	*/
 
-	if (DEBUG == 1)
-	{
-		/*
-		RedirectIOToConsole();
-		msg << "Debug logging activated\r\n" << msg_box;
-		*/
-
-		if (AllocConsole()) { // Создаем консоль, у процесса не более одной.
-			//SetConsoleTitle("Debug Console");
-			// Связываем буферы консоли с предопределенными файловыми описателями.
-			freopen("conin$", "r", stdin);
-			freopen("CONOUT$", "w", stdout);
-			freopen("conout$", "w", stderr);
-			fxc::console = true;
-			fxc::msg << "Debug logging activated\r\n" << fxc::msg_box;
-		}
+	if (AllocConsole()) { // Создаем консоль, у процесса не более одной.
+		//SetConsoleTitle("Debug Console");
+		// Связываем буферы консоли с предопределенными файловыми описателями.
+		freopen("conin$", "r", stdin);
+		freopen("CONOUT$", "w", stdout);
+		freopen("conout$", "w", stderr);
+		fxc::console = true;
+		fxc::msg << "Debug logging activated\r\n" << fxc::msg_box;
 	}
+#endif
 
 #if DEBUG
 	try {
 #endif
 		MARK_FUNC_IN
-		auto h = std::this_thread::get_id();
-		//bp = true;
-		//msg << "Pool position: " << h << msg_box;
-		pool[h] = new STRAT_CLASS (symbol);
+		fxc::mutex.lock();
+		pool[std::this_thread::get_id()] = new STRAT_CLASS (symbol);
 		fxc::mutex.unlock();
 
 		if (!isWorkerActive) {
@@ -293,10 +288,7 @@ _DLLAPI void __stdcall c_deinit()
 		isWorkerAllowed = false;
 	}
 
-	fxc::mutex.lock();
 	pool.erase( std::this_thread::get_id() );
-	//FreeConsole();
-	fxc::mutex.unlock();
 }
 
 //Выполняет этап алгоритма, возвращает индекс необходимого действия
@@ -312,9 +304,9 @@ _DLLAPI int __stdcall c_getjob()
 #if DEBUG
 	try {
 #endif
-		fxc::mutex.lock();
+		MARK_FUNC_IN
 		res = pool[h]->getJob();
-		fxc::mutex.unlock();
+		MARK_FUNC_OUT
 #if DEBUG
 	}
 	catch (const std::exception& ex) {
@@ -361,14 +353,33 @@ _DLLAPI int __stdcall c_getdpi()
 
 _DLLAPI void __stdcall c_refresh_chartdata(int timeframe, int length, void* pointer)
 {
-	fxc::mutex.lock();
-	pool[std::this_thread::get_id()]->getChartData(timeframe)->update((MqlRates*) pointer, length);
-	fxc::mutex.unlock();
+#if DEBUG
+	try {
+#endif
+		MARK_FUNC_IN
+		pool[std::this_thread::get_id()]->getChartData(timeframe)->update((MqlRates*) pointer, length);
+		MARK_FUNC_OUT
+		return;
+#if DEBUG
+	}
+	catch (const std::exception& ex) {
+		fxc::msg << "!> ERROR @ c_refresh_chartdata(): " << ex.what() << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+	catch (const std::string& ex) {
+		fxc::msg << "!> ERROR @ c_refresh_chartdata(): " << ex << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+	catch (...) {
+		fxc::msg << "!> ERROR @ c_refresh_chartdata(): [undefined type]\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+#endif
 }
 
 _DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
 {
-	auto ts         = pool[std::this_thread::get_id()]->getTimeseries();
+	auto ts = pool[std::this_thread::get_id()]->getTimeseries();
 	auto timeframes = ts->getTimeframes();
 	auto length     = timeframes.size();
 
@@ -389,39 +400,45 @@ _DLLAPI bool __stdcall c_tick_init_begin(double ask, double bid, double equity)
 
 _DLLAPI void __stdcall c_tick_init_end()
 {
-	pool[std::this_thread::get_id()]->tickInitEnd();
+#if DEBUG
+	try {
+#endif
+		MARK_FUNC_IN
+		pool[std::this_thread::get_id()]->tickInitEnd();
+		MARK_FUNC_OUT
+		return;
+#if DEBUG
+	}
+	catch (const std::exception& ex) {
+		fxc::msg << "!> ERROR @ c_tick_init_end(): " << ex.what() << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+	catch (const std::string& ex) {
+		fxc::msg << "!> ERROR @ c_tick_init_end(): " << ex << "\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+	catch (...) {
+		fxc::msg << "!> ERROR @ c_tick_init_end(): [undefined type]\r\n" << fxc::msg_box;
+		fxc::msg << STACK_TRACE << fxc::msg_box;
+	}
+#endif
 }
 
 //Добавляет новый ордер в цикле скана ордеров, в будущем возвращает код изменения
 _DLLAPI int __stdcall c_add_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0)
 {
-	fxc::mutex.lock();
-	auto   h = std::this_thread::get_id();
-	auto res = pool[h]->addOrder(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
-	fxc::mutex.unlock();
-
-	return res;
+	return pool[std::this_thread::get_id()]->addOrder(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
 }
 
 //Нормализация лота для ручных операций
 _DLLAPI double __stdcall c_norm_lot(double _lots)
 {
-	//fxc::mutex.lock();	
-	auto   h = std::this_thread::get_id();
-	auto res = pool[h]->normLot(_lots);
-	//fxc::mutex.unlock();
-
-	return res;
+	return pool[std::this_thread::get_id()]->normLot(_lots);
 }
 
 _DLLAPI int __stdcall c_get_next_closed()
 {
-	//fxc::mutex.lock();
-	auto   h = std::this_thread::get_id();
-	auto res = pool[h]->getNextClosedTicket();
-	//fxc::mutex.unlock();
-
-	return res;
+	return pool[std::this_thread::get_id()]->getNextClosedTicket();
 }
 
 _DLLAPI void __stdcall fcostransform(double a[], int tnn, int inversefct)

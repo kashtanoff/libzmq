@@ -12,14 +12,14 @@ struct MqlString {
 
 #pragma pack(push,1)
 struct MqlRates {
-	time_t time;
-	double open;
-	double high;
-	double low;
-	double close;
-	long   tick_volume;
-	int    spread;
-	long   real_volume;
+	__time64_t time;
+	double     open;
+	double     high;
+	double     low;
+	double     close;
+	__int64    tick_volume;
+	int        spread;
+	__int64    real_volume;
 };
 #pragma pack(pop,1)
 
