@@ -40,6 +40,9 @@ namespace indicator {
 				down.alloc(outBufferLength);
 				downs.alloc(outBufferLength);
 				middle.alloc(outBufferLength);
+
+				ups[1]   = 0;
+				downs[1] = 0;
 				MARK_FUNC_OUT
 				MARK_FUNC_OUT
 			}

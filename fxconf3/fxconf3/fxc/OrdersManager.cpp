@@ -32,7 +32,7 @@ namespace fxc {
 				if (!params->input_is_optimization) { // Если не оптимизация
 					copyOrders = [&]() {
 						old_index  = 0;
-						old_length = sizeof(current_orders);
+						old_length = current_index;
 						memcpy(old_orders, current_orders, old_length); // список текущих ордеров, делаем старым
 					};
 				}
@@ -41,6 +41,7 @@ namespace fxc {
 				}
 
 				dillers[0]->cur_av_lvl = params->input_av_lvl;
+				dillers[1]->cur_av_lvl = params->input_av_lvl;
 				dillers[0]->_base_lot  = params->input_buy_lot;
 				dillers[1]->_base_lot  = params->input_sell_lot;
 			}
@@ -64,10 +65,9 @@ namespace fxc {
 			}
 
 			void reset() {
+				copyOrders();
 				isSorted      = false;
 				current_index = 0;
-
-				copyOrders();
 
 				for (auto type = 0; type < 2; type++) {
 					*(ext_open_dd    + type) = 0.0;
@@ -127,8 +127,11 @@ namespace fxc {
 				bool   found;
 				Order* order;
 
+				//fxc::msg << "-> getNextClosedTicket(" << old_index << " / " << old_length << ")\r\n" << fxc::msg_box;
 				while (old_index < old_length) {
 					order = &old_orders[old_index++];
+					//fxc::msg << "-> getNextClosedTicket::order [0x" << order << "]\r\n" << fxc::msg_box;
+
 
 					if (order->type != OP_BUY && order->type != OP_SELL) { // Пропускаем не рыночные ордера
 						continue;
@@ -166,9 +169,9 @@ namespace fxc {
 			bool isSorted = false;
 			std::function<void()> copyOrders;
 
-			int		old_index;
-			int		old_length;
-			int		current_index;
+			int		old_index     = 0;
+			int		old_length    = 0;
+			int		current_index = 0;
 
 			Order	old_orders[NUM_ORDERS];
 			Order	current_orders[NUM_ORDERS];
