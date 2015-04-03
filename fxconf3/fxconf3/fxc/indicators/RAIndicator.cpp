@@ -28,7 +28,7 @@ namespace indicator {
 				period2(period2),
 				deviation(deviation),
 				mindev(mindev),
-				outBufferLength(period1 + period2 + 1)
+				outBufferLength(period1 + period2 + 2)
 			{
 				MARK_FUNC_IN
 				manager->getTimeseries()->registerTimeframe(timeframe, outBufferLength, this);
