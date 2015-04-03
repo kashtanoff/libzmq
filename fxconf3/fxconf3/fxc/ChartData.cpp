@@ -45,52 +45,30 @@ namespace fxc {
 			void update(MqlRates* pointer, unsigned length) {
 				MARK_FUNC_IN
 				newBars = 0;
-
 				if ((pointer + length - 1)->time == time[0]) {
+					MARK_FUNC_OUT
 					return;
 				}
-
+				MARK_FUNC_IN
 				int i;
 				MqlRates* data;
 
-				MARK_FUNC_IN
 				for (i = length - 2; i >= 0; --i) {
 					data = pointer + i;
 					if (data->time == time[0]) {
-						MARK_FUNC_IN
 						time.update(data->time);
 						low.update(data->low);
 						high.update(data->high);
 						open.update(data->open);
 						close.update(data->close);
 						volume.update(data->tick_volume);
-
-						newBars = length - ++i;
-
-						MARK_FUNC_IN
-						for (; i < length; ++i) {
-							data = pointer + i;
-							time.add(data->time);
-							low.add(data->low);
-							high.add(data->high);
-							open.add(data->open);
-							close.add(data->close);
-							volume.add(data->tick_volume);
-						}
-						MARK_FUNC_OUT
-						MARK_FUNC_OUT
-						MARK_FUNC_OUT
-						return;
+						i++;
+						break;
 					}
 				}
-				MARK_FUNC_OUT
-
-				MARK_FUNC_IN
-				newBars = length;
-
-				for (i = 0; i < length; ++i) {
+				newBars = length - i;
+				for (; i < length; ++i) {
 					data = pointer + i;
-					
 					time.add(data->time);
 					low.add(data->low);
 					high.add(data->high);
@@ -98,7 +76,6 @@ namespace fxc {
 					close.add(data->close);
 					volume.add(data->tick_volume);
 				}
-				MARK_FUNC_OUT
 				MARK_FUNC_OUT
 			}
 			

@@ -39,9 +39,14 @@ namespace strategy {
 
 				dillers[0]->mpo = dillers[1]->mpc = ask;
 				dillers[1]->mpo = dillers[0]->mpc = bid;
+				if (bypass()) {
+					MARK_FUNC_OUT
+					return true;
+				}
+				getTimeseries()->reset();
 
 				MARK_FUNC_OUT
-				return bypass();
+				return false;
 			}
 
 			virtual inline const bool bypass() {
@@ -50,7 +55,7 @@ namespace strategy {
 
 			virtual void tickInitEnd() {
 				MARK_FUNC_IN
-				getTimeseries()->reset();
+				
 				getTimeseries()->updateFirst(ask, bid);
 				getTimeseries()->invokeListeners();
 

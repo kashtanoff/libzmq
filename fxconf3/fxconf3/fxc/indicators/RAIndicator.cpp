@@ -41,7 +41,9 @@ namespace indicator {
 				downs.alloc(outBufferLength);
 				middle.alloc(outBufferLength);
 
+				ups[0]   = 0;
 				ups[1]   = 0;
+				downs[0] = 0;
 				downs[1] = 0;
 				MARK_FUNC_OUT
 				MARK_FUNC_OUT
@@ -56,12 +58,13 @@ namespace indicator {
 			virtual void compute() {
 				MARK_FUNC_IN
 				int b = min(rates->newBars, period2);
-				
-				up.skip(b);
-				ups.skip(b);
-				down.skip(b);
-				downs.skip(b);
-				middle.skip(b);
+				if (b) {
+					up.skip(b);
+					ups.skip(b);
+					down.skip(b);
+					downs.skip(b);
+					middle.skip(b);
+				}
 
 				for (int i = b; i >= 0; i--) {
 					double sumw = period1 + 1;
@@ -84,6 +87,7 @@ namespace indicator {
 					downs[i] = (downs[i + 1] * (period2 - 1) + dnDiff) / period2;
 					up[i]    = middle[i] + sqrt(ups[i])   * deviation;
 					down[i]  = middle[i] - sqrt(downs[i]) * deviation;
+
 				}
 				MARK_FUNC_OUT
 			}
