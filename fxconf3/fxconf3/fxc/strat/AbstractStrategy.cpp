@@ -6,7 +6,7 @@ namespace fxc {
 
 namespace strategy {
 
-	class AbstractStrategy : public fxc::Simbiot {
+	class AbstractStrategy : public Simbiot {
 
 		public:
 
