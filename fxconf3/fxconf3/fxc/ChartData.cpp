@@ -92,7 +92,7 @@ namespace fxc {
 			TimeSeries() {
 			}
 
-			void reset() {
+			void timeSeriesReset() {
 				for (auto& pair : _chartData) {
 					pair.second->newBars = 0;
 				}

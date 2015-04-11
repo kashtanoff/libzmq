@@ -1,14 +1,13 @@
 void CriticalError(string msg)
 {
-	run_allowed = false;
 	if (!showinfo) return;
-	info.Set("error", "Advisor stopped");
-	info.Set("reason", msg);
+	info.Set("5", "Advisor stopped");
+	info.Set("6", msg);
 }
 
 //Обработать ошибку
 void ShowError(string message, int err = -1, bool critical = false) {
-	if (is_optimization)
+	if (mqlOptimization)
 		return;
 
 	if (critical || ShowDebug)
@@ -24,7 +23,7 @@ void ShowError(string message, int err = -1, bool critical = false) {
 
 void ShowActionError(TradeAction& action, string message, int err = -1, bool critical = false)
 {
-	if (is_optimization)
+	if (mqlOptimization)
 		return;
 
 	if (critical || ShowDebug)
@@ -47,7 +46,7 @@ void ShowActionError(TradeAction& action, string message, int err = -1, bool cri
 }
 void ShowActionError2(TradeAction& oldaction, TradeAction& action, string message, int err = -1, bool critical = false)
 {
-	if (is_optimization)
+	if (mqlOptimization)
 		return;
 
 	if (critical || ShowDebug)

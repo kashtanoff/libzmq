@@ -13,7 +13,7 @@ namespace indicator {
 	{
 		public:
 			RAIndicator(
-				OrdersManager* manager,
+				TimeSeries* manager,
 				int timeframe,
 				int period1,
 				int period2,

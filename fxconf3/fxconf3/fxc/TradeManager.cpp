@@ -66,13 +66,13 @@ namespace fxc {
 				//		<< "\r\n" << fxc::msg_box;
 				//}
 			}
-
-			inline void reset() {
+			//Обнуляет список действий
+			inline void resetActionManager() {
 				actionsLen = 0;
 			}
 
 		protected:
-
+			//Возвращает количество назначенных действий
 			inline int getActionsStackSize() {
 				return actionsLen;
 			}
@@ -81,6 +81,7 @@ namespace fxc {
 				MARK_FUNC_IN
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> CreateOrder(): actions limit exceeded\r\n" << fxc::msg_box;
+					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
@@ -157,6 +158,8 @@ namespace fxc {
 				MARK_FUNC_OUT
 			}
 
+
+#pragma endregion
 		private:
 
 			int actionsLen;

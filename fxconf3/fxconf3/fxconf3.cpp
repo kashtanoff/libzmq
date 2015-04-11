@@ -11,6 +11,7 @@
 #include "Defines.h"
 
 #include "fxc/fxc.h"
+
 #include INCLUDE_FILE(STRAT_PATH)
 
 #if DEBUG
@@ -131,7 +132,7 @@ _DLLAPI void __stdcall c_setint(wchar_t* propName, int propValue)
 	if (prop->Type == PropInt) {
 		*(prop->Int) = propValue;
 	} else {
-		fxc::msg << "c_setint ERROR: int expected" << fxc::msg_box;
+		fxc::msg << "c_setint ERROR: int expected - " << name << fxc::msg_box;
 	}
 
 	fxc::mutex.unlock();
@@ -155,7 +156,27 @@ _DLLAPI void __stdcall c_setdouble(wchar_t* propName, double propValue)
 
 	fxc::mutex.unlock();
 }
+_DLLAPI void __stdcall c_setstring(wchar_t* propName, wchar_t* propValue)
+{
+	fxc::mutex.lock();
 
+	char name[64];
+	wcstombs(name, propName, 32);
+	char buffer[512];
+	wcstombs(buffer, propValue, 256);
+
+	auto h = std::this_thread::get_id();
+	auto prop = &pool[h]->PropertyList[name];
+
+	if (prop->Type == PropString) {
+		*(prop->String) = std::string(buffer);
+	}
+	else {
+		fxc::msg << "c_setstring ERROR: string expected" << fxc::msg_box;
+	}
+
+	fxc::mutex.unlock();
+}
 _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 {
 	fxc::mutex.lock();
@@ -195,18 +216,8 @@ _DLLAPI void __stdcall c_setactions(void* pointer, int length) {
 #pragma endregion
 
 //»щет свободную €чейку в пуле и создает новый экземпл€р симбиота
-_DLLAPI bool __stdcall c_init(int accountNumber, wchar_t* accountServer, char* symbol)
+_DLLAPI bool __stdcall c_init()
 {
-	char buffer[512];
-	wcstombs(buffer, accountServer, 256);
-
-	if (accNumber == 0) {
-		accNumber = accountNumber;
-		accServer = std::string(buffer);
-	} else if (accNumber != accountNumber || accServer != std::string(buffer)) {
-		return false;
-	}
-
 #if DEBUG
 	/*
 	RedirectIOToConsole();
@@ -229,7 +240,7 @@ _DLLAPI bool __stdcall c_init(int accountNumber, wchar_t* accountServer, char* s
 #endif
 		MARK_FUNC_IN
 		fxc::mutex.lock();
-		pool[std::this_thread::get_id()] = new STRAT_CLASS (symbol);
+		pool[std::this_thread::get_id()] = new STRAT_CLASS ();
 		fxc::mutex.unlock();
 
 		if (!isWorkerActive) {
@@ -379,13 +390,13 @@ _DLLAPI void __stdcall c_refresh_chartdata(int timeframe, int length, void* poin
 
 _DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
 {
-	auto ts = pool[std::this_thread::get_id()]->getTimeseries();
-	auto timeframes = ts->getTimeframes();
+	auto as = pool[std::this_thread::get_id()];
+	auto timeframes = as->getTimeframes();
 	auto length     = timeframes.size();
 
 	for (int i = 0; i < length; ++i) {
 		*((int*) timeframesPtr + i) = timeframes[i];
-		*((int*) sizesPtr + i)      = ts->getChartData(timeframes[i])->getSize();
+		*((int*) sizesPtr + i)      = as->getChartData(timeframes[i])->getSize();
 	}
 
 	return length;

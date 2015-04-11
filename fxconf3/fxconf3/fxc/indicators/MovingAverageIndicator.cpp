@@ -13,8 +13,7 @@ namespace fxc {
 namespace indicator {
 
 	class MovingAverageIndicator : 
-		public AbstractIndicator,
-		public ChartListener
+		public AbstractIndicator
 	{
 
 		public:
@@ -25,7 +24,7 @@ namespace indicator {
 			// также каждый раз в начале тика необходимо последовательно вызывать все зарегистрированные методы compute, для обновления индикаторов
 			// при повторной регистрации таймфрейма, обновляем период в пользу максимального значения
 			MovingAverageIndicator(
-				OrdersManager* manager,
+				TimeSeries* manager,
 				const int outBufferLength,
 				const int timeframe, 
 				const int period
@@ -36,8 +35,6 @@ namespace indicator {
 			{
 				// так идет регистрация необходимых таймфреймов и их периодов и сохранение метода вычислителя
 				// если мы не хотим постоянных вычислений, то не ставим compute
-				manager->getTimeseries()->registerTimeframe(timeframe, period + max(1, outBufferLength), this);
-				rates = manager->getChartData(timeframe);
 
 				if (outBufferLength) {
 					outbuffer.alloc(outBufferLength);

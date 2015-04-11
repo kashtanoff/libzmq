@@ -29,12 +29,13 @@ struct TfRates {
 };
 
 #import "fxc{{build}}.dll"
-	bool   c_init(int number, string server, string symbol);
+	bool   c_init();
 	void   c_deinit();
 	void   c_postInit();
 
 	void   c_setint(string prop, int value);
 	void   c_setdouble(string prop, double value);
+	void   c_setstring(string prop, string value);
 	void   c_setvar(string prop, bool& var);
 	void   c_setvar(string prop, int& var);
 	void   c_setvar(string prop, int& var[]);
@@ -64,13 +65,13 @@ struct TfRates {
 //----- Глобальные переменные и определения -----
 int tfs[7] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1};
 int k;      //Коэффициент пересчета старых пунктов в новые
-int is_optimization;
-int is_testing;
-int is_visual;
-string symbol;
-double lot_step;
-double req_margin;
-double StartEqu;
+//Кеширование статических характеристик
+int    mqlOptimization;
+int    mqlTester;
+int    mqlVisualMode;
+string symbolName;
+double symbolLotStep;
+double symbolMarginRequired;
 
 //----- Общие с DLL переменные
 int    count[2];
@@ -81,11 +82,6 @@ double max_dd;
 double indicator;
 double indicator2;
 double prev_ind;
-double closes[];
-double highs[];
-double lows[];
-int    buf_len;
-bool   run_allowed;
 
 TradeAction actList[64];
 TfRates     tfRates[];
@@ -94,6 +90,9 @@ int         tfCount = 0;
 int    timeout;
 
 bool   showinfo;
+bool   ecn_mode;
+bool   ShowDebug = false;
+
 bool   show_cpanel = false;
 double kdpi;
 string lotnames[2];
@@ -129,29 +128,26 @@ Look info(10, clrWhite, 10, 16);
 int OnInit()
 {
 	k = (Digits == 3 || Digits == 5) ? 10 : 1;  //Приведение параметров к дельте цены с переводом в старые пункты
-	is_optimization = IsOptimization();
-	is_testing      = IsTesting();
-	is_visual       = IsVisualMode();
-	symbol          = Symbol();
-	lot_step    = MarketInfo(symbol, MODE_LOTSTEP);
-	req_margin  = MarketInfo(symbol, MODE_MARGINREQUIRED);
-	StartEqu    = AccountEquity();
-	showinfo    = (is_optimization || (is_testing && !is_visual)) ? false : true; 
-	ECN_Safe    = (is_optimization || is_testing) ? false : true;
-	run_allowed = true;
+	mqlOptimization       = IsOptimization();
+	mqlTester             = IsTesting();
+	mqlVisualMode         = IsVisualMode();
+	symbolName            = Symbol();
+	symbolLotStep         = MarketInfo(symbolName, MODE_LOTSTEP);
+	symbolMarginRequired  = MarketInfo(symbolName, MODE_MARGINREQUIRED);
+	
+	showinfo    = (mqlOptimization || (mqlTester && !mqlVisualMode)) ? false : true; 
+	ecn_mode    = (mqlOptimization || mqlTester) ? false : true;
 
 	if (showinfo) InitLook();
 	if (!IsDllsAllowed()) CriticalError("DLL is not allowed");
 	if (!IsTradeAllowed()) CriticalError("Trade is not allowed");
 	if (!DllInit()) return (INIT_FAILED);
-	if (SetName != symbol)
+	if (SetName != symbolName)
 	{
 		//MessageBox("SetName must be - '" + symbol + "'", "Set name error");
-		CriticalError("SetName='" + SetName + "', but must be - '" + symbol + "'");
+		CriticalError("SetName='" + SetName + "', but must be - '" + symbolName + "'");
 		//return(INIT_FAILED);
 	}
-	if (MaxLot < ConfirmLot)
-		CriticalError("MaxLot must be higher then ConfirmLot!");
    
 	hddlog = FileOpen("dd.log", FILE_WRITE|FILE_TXT);
 	FileSeek(hddlog, 0, SEEK_END);
@@ -165,23 +161,23 @@ int OnInit()
 	lastday  = Day();
 	lastdate = TimeCurrent();
 
-	if (showinfo) 
-		EventSetTimer(1);
 
 	return (INIT_SUCCEEDED);
 }
 
 void OnTick()
 {
-	if (!c_tick_init_begin(Ask, Bid, AccountEquity())) {
+	if (c_tick_init_begin(Ask, Bid, AccountEquity())) {
+	   Print("bypass");
 		return;
 	}
-
 	for (int i = 0; i < tfCount; i++) {
+	   //TfRates tf = tfRates[i];  //кэширование индексации (индексация работает в mql медленно)
 		// Если последний переданный бар уже не последний, то передаем данные заного
 		if (tfRates[i].rates[tfRates[i].length - 1].time != iTime(NULL, tfRates[i].timeframe, 0)) {
 			if (CopyRates(NULL, tfRates[i].timeframe, 0, tfRates[i].length, tfRates[i].rates) < tfRates[i].length) {
 				// Если скопировано не все, то сбрасываем тик
+				Print("CopyRates error");
 				return;
 			}
 			else {
@@ -193,16 +189,10 @@ void OnTick()
 			break;
 		}
 	}
-
-	if (!run_allowed) {
-		return;
-	}
-
 	c_tick_init_end();
 	UpdateOrders(); // Обновляем информацию об ордерах
 
 	int l = c_getjob();
-
 	for (i = 0; i < l; i++) {
 		//Print("-> Job {", 
 		//	"o_lots: ",      actList[i].o_lots,      ", ",
@@ -214,53 +204,19 @@ void OnTick()
 		//	"intret: ",      actList[i].intret,      ", ",
 		//	"actionId: ",    actList[i].actionId, 
 		//"}");
-
 		switch (actList[i].actionId) {
-			case 1: Order::Create(actList[i]); break;
-			case 2: Order::Modify(actList[i]); break;
-			case 3: Order::Delete(actList[i]); break;
-			case 4: Order::Close(actList[i]); break;
+			case 1: Order::Create    (actList[i]); break;
+			case 2: Order::Modify    (actList[i]); break;
+			case 3: Order::Delete    (actList[i]); break;
+			case 4: Order::Close     (actList[i]); break;
+			case 5: Order::PrintOrder(actList[i]); break;
+			case 6: Order::PrintText (actList[i]); break;
+			case 7: Order::DrawOrder (actList[i]); break;
+			case 8: Order::ShowValue (actList[i]); break;
+			case 9: Order::MsgBox    (actList[i]); break;
 		}
 	}
-
 	Sleep(timeout);
-
-	if (!is_optimization)
-	{
-		if (showinfo) info.Show();
-
-		if (!is_testing)
-			return;
-
-		if (LogDD > 0) {
-			for (i = 0; i < 2; i++)
-			{
-				if (lastlevel[i] > 0 && count[i] == 0 && netdd[i] > LogDD) { //Сброс пирамиды
-					FileWrite(herror, "===============-> ", TimeToStr(startdate[i], TIME_DATE), " - ", TimeToStr(TimeCurrent(), TIME_DATE), "   [", netlevel[i], "] - (", netdd[i], ")");
-				}
-				else if (lastlevel[i] == 0 && count[i] > 0) { //Начало пирамиды
-					startdate[i] = TimeCurrent();
-					netdd[i]     = 0;
-					netlevel[i]  = 0;
-				}
-				else if (count[i] > 0) {
-					netdd[i]    = fmax(netdd[i], fabs(open_dd[i]));
-					netlevel[i] = fmax(netlevel[i], count[i]);
-				}
-				lastlevel[i] = count[i];
-			}
-		}
-
-		if (lastday != Day()) { //Новый день
-			FileWrite(hddlog, TimeToStr(lastdate, TIME_DATE), ";", DoubleToStr(daydd, 2), ";", DoubleToStr(daydd / (AccountEquity()/100.0), 2), "%");
-			lastday  = Day();
-			lastdate = TimeCurrent();
-			daydd    = 0;
-		}
-		else {
-			daydd = fmax(daydd, AccountBalance()-AccountEquity());
-		}
-	}
 }
 
 void OnDeinit(const int r)
@@ -274,56 +230,7 @@ void OnDeinit(const int r)
 
 double OnTester()
 {
-	if (SaveMap && (is_optimization || is_testing)) //Заполнение карты оптимизации x:TP, y:Step
-	{
-		string map[100][100];
-		string tmp;
-		int curTP;
-		int curStep = 0;
-		string filename = "map " + symbol + ".csv";
-		int handle = FileOpen(filename, FILE_READ | FILE_CSV); //Сначала читаем карту
-
-		//Print("FileOpen Error: ", Error(GetLastError()));
-		ResetLastError();
-		if (handle != INVALID_HANDLE)
-		{
-			while (!FileIsEnding(handle))
-			{
-				map[curStep][curTP++] = FileReadString(handle);
-				if (FileIsLineEnding(handle))
-				{
-					curTP = 0;
-					curStep++;
-				}
-			}
-			FileClose(handle);
-		}
-
-		tmp = "=" + DoubleToStr(fmax(0.0, TesterStatistics(STAT_PROFIT)), 2) + "/" + DoubleToStr(fmax(1, TesterStatistics(STAT_EQUITY_DD)), 2);
-		StringReplace(tmp, ".", ",");
-		map[Step - 1][TakeProfit - 1] = tmp;
-
-		//Print("------------------| ", tmp);
-		//Print("Error: ", Error(GetLastError()));
-		
-		handle = FileOpen(filename, FILE_WRITE | FILE_CSV); //Теперь пишем обновленную карту в файл
-		string accu;
-		for (int s = 0; s<100; s++)
-		{
-			accu = "";
-			for (int t = 0; t<100; t++)
-			{
-				StringAdd(accu, ";" + (StringLen(map[s][t]) < 1 ? " " : map[s][t]));
-			}
-			FileWrite(handle, StringSubstr(accu, 1));
-		}
-		FileClose(handle);
-
-		//Print("Error: ", Error(GetLastError()));
-	}
-
 	return (TesterStatistics(STAT_PROFIT) / fmax(1, TesterStatistics(STAT_EQUITY_DD)));
-	//return(fmax(0.0, AccountEquity()-StartEqu) / fmax(1, max_dd));
 }
 
 void OnTimer()
@@ -346,10 +253,10 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 		}
 
 		if (sparam == "BtnMinus") {
-			curlots = curlots - lot_step - 0.001;
+			curlots = curlots - symbolLotStep - 0.001;
 		}
 		else if (sparam == "BtnPlus") {
-			curlots = curlots + lot_step;
+			curlots = curlots + symbolLotStep;
 		}
 		else if (sparam == "EdtBuyLot") {
 			curlots = buylot;
@@ -394,13 +301,6 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 				ShowControlPanel(info.x + info.dx + 10, info.y);
 			}
 		}
-
-		//if (show_cpanel)
-		//{
-		//	ObjectSetString(0, "EdtLot", OBJPROP_TEXT, DoubleToStr(o_lots, 2));
-		//	Sleep(100);
-		//	ObjectSetInteger(0, sparam, OBJPROP_STATE, false);
-		//}
 	}
 }
 
@@ -410,85 +310,76 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 
 bool DllInit()
 {
-	
-	run_allowed = c_init(AccountNumber(), AccountServer(), Symbol());
-	if (run_allowed) {
-		info.Set("handler", "DLL init OK");
-		Print("DLL init OK");
-	} else {
-		reason = "Dll init failed";
-		return (false);
-	}
+   c_init();
+   c_setstring("accountCompany",        AccountCompany());
+   c_setstring("accountCurrency",       AccountCurrency());
+	c_setint(   "accountFreeMarginMode", AccountFreeMarginMode());
+	c_setint(   "accountLeverage",       AccountLeverage());
+   c_setstring("accountName",           AccountName());
+   c_setstring("accountNumber",         AccountNumber());
+   c_setstring("accountServer",         AccountServer());
+	c_setint(   "accountStopoutLevel",   AccountStopoutLevel());
+	c_setint(   "accountStopoutMode",    AccountStopoutMode());
+	c_setint(   "accountTradeMode",      AccountInfoInteger(ACCOUNT_TRADE_MODE));
+	c_setint(   "accountLimitOrders",    AccountInfoInteger(ACCOUNT_LIMIT_ORDERS));
+   c_setstring("symbolName",            symbolName);
+	c_setdouble("symbolPoint",           Point);
+	c_setint(   "symbolDigits",          Digits);
+	c_setint(   "symbolStopLevel",       MarketInfo(symbolName, MODE_STOPLEVEL));
+	c_setint(   "symbolLotSize",         MarketInfo(symbolName, MODE_LOTSIZE));
+	c_setdouble("symbolTickValue",       MarketInfo(symbolName, MODE_TICKVALUE));
+	c_setint(   "symbolTickSize",        MarketInfo(symbolName, MODE_TICKSIZE));
+	c_setdouble("symbolSwapLong",        MarketInfo(symbolName, MODE_SWAPLONG));
+	c_setdouble("symbolSwapShort",       MarketInfo(symbolName, MODE_SWAPSHORT));
+	c_setdouble("symbolMinLot",          MarketInfo(symbolName, MODE_MINLOT));
+	c_setdouble("symbolLotStep",         MarketInfo(symbolName, MODE_LOTSTEP));
+	c_setdouble("symbolMaxLot",          MarketInfo(symbolName, MODE_MAXLOT));
+	c_setint(   "symbolSwapType",        MarketInfo(symbolName, MODE_SWAPTYPE));
+	c_setint(   "symbolProfitCalcMode",  MarketInfo(symbolName, MODE_PROFITCALCMODE));
+	c_setint(   "symbolMarginCalcMode",  MarketInfo(symbolName, MODE_MARGINCALCMODE));
+	c_setdouble("symbolMarginInit",      MarketInfo(symbolName, MODE_MARGININIT));
+	c_setdouble("symbolMarginMaintenance", MarketInfo(symbolName, MODE_MARGINMAINTENANCE));
+	c_setdouble("symbolMarginHadged",      MarketInfo(symbolName, MODE_MARGINHEDGED));
+	c_setdouble("symbolMarginRequired",    MarketInfo(symbolName, MODE_MARGINREQUIRED));
+	c_setint(   "symbolFreezeLevel",       MarketInfo(symbolName, MODE_FREEZELEVEL));
+	c_setint(   "mqlTradeAllowed",         MQLInfoInteger(MQL_TRADE_ALLOWED));
+	c_setint(   "mqlSignalAllowed",        MQLInfoInteger(MQL_SIGNALS_ALLOWED));
+	c_setint(   "mqlDebug",                MQLInfoInteger(MQL_DEBUG));
+	c_setint(   "mqlProfiler",             MQLInfoInteger(MQL_PROFILER));
+	c_setint(   "mqlTester",               MQLInfoInteger(MQL_TESTER));
+	c_setint(   "mqlOptimization",         MQLInfoInteger(MQL_OPTIMIZATION));
+	c_setint(   "mqlVisualMode",           MQLInfoInteger(MQL_VISUAL_MODE));
 
-	c_setint(   "timeframe",          tfs[TimeFrame]);
-	c_setdouble("point",              Point);
-	c_setint(   "digits",             Digits);
-	c_setdouble("lot_step",           lot_step);
-	c_setdouble("lot_min",            MarketInfo(symbol, MODE_MINLOT));
-	c_setdouble("lot_max",            MarketInfo(symbol, MODE_MAXLOT));
-	c_setdouble("min_sl_tp",          MarketInfo(symbol, MODE_STOPLEVEL) * Point);
-	c_setdouble("freeze",             MarketInfo(symbol, MODE_FREEZELEVEL) * Point);
-	c_setint(   "is_optimization",    is_optimization);
-	c_setint(   "is_visual",          is_visual);
-	c_setint(   "is_testing",         is_testing);
+	c_setint(   "StopNewBuy",         StopNewBuy);
+	c_setint(   "StopBuy",            StopBuy);
+	c_setdouble("BaseBuyLot",         BaseBuyLot);
+	c_setint(   "FirstBuyFree",       FirstBuyFree);
+	c_setint(   "StopNewSell",        StopNewSell);
+	c_setint(   "StopSell",           StopSell);
+	c_setdouble("BaseSellLot",        BaseSellLot);
+	c_setint(   "FirstSellFree",      FirstSellFree);
 
-	c_setint(   "_stop_new[0]",       StopNewBuy);
-	c_setint(   "_stop_new[1]",       StopNewSell);
-	c_setint(   "_stop_avr[0]",       StopBuy);
-	c_setint(   "_stop_avr[1]",       StopSell);
-	c_setint(   "_max_grid_lvl",      MaxGridLevel);
-	c_setdouble("_step",              Step * k * Point);
-	c_setdouble("_takeprofit",        TakeProfit * k * Point);
-	c_setint(   "_forward_lvl",       ForwardLevel);
-	c_setint(   "_av_lvl",            AveragingLevel);
-	c_setdouble("_av_lot",            RegresAverageLot);
-	c_setint(   "_op_av_lvl",         OppositeAverageLevel);
-	c_setdouble("_pips_mult",         Pips_Multiplier);
-	c_setint(   "_safe_copy",         Safe_Copy);
-	c_setdouble("_sell_lot",          BaseSellLot);
-	c_setdouble("_buy_lot",           BaseBuyLot);
-	c_setdouble("_maxlot",            MaxLot);
-	c_setdouble("_lot_hadge_mult",    LotHadgeMult);
-	c_setdouble("_regres_mult",       RegresMult);
-	c_setint(   "_trend_lvl",         Trend_Level);
-	c_setdouble("_trend_lot_mult",    Trend_Lot_Mult);
-	c_setdouble("_trend_progress",    Trend_Mult_Progres);
-	c_setint(   "_repeat_lvl",        Repeat_Level);
-	c_setdouble("_repeat_lot_mult",   Repeat_Lot_Mult);
-	c_setdouble("_repeat_progress",   Repeat_Mult_Progres);
-	c_setint(   "_period",            PeriodF);
-	c_setdouble("_deviation",         Deviation);
-	c_setdouble("_stoploss",          StopLoss * k * Point);
-	c_setint(   "_attemts",           NumAttemts);
-	c_setint(   "_auto_mm",           AutoMM);
-	c_setint(   "_mm_equ",            MMEquity);
-	c_setdouble("_basket_hadge_mult", BasketHadgeMult);
-	c_setdouble("_forward_step_mult", ForwardStepMult);
-	c_setdouble("_delta",             Delta);
-	c_setint(   "_first_free",        FirstFree);
-	c_setint(   "_new_bar",           NewBar);
-	c_setint(   "_free_lvl",          FreeLvl);
-	c_setdouble("_multf",             MultF);
-	c_setint(   "_periodf2",          PeriodF2);
-	c_setint(   "_periodf3",          PeriodF3);
+	c_setint(   "Step",               Step);
+	c_setint(   "FirstTakeProfit",    FirstTakeProfit);
+	c_setint(   "TakeProfit",         TakeProfit);
+	c_setint(   "StopLoss",           StopLoss);
+	c_setint(   "MaxGridLevel",       MaxGridLevel);
+	c_setdouble("MaxLot",             MaxLot);
+	c_setdouble("PipsMultiplier",     PipsMultiplier);
+	c_setint(   "AveragingLevel",     AveragingLevel);
+	c_setint(   "AverageAll",         AverageAll);
+	c_setint(   "CloseMode",          CloseMode);
+	c_setint(   "FreeLvl",            FreeLvl);
+	c_setint(   "TimeFrame",          TimeFrame);
+	c_setint(   "Period1",            Period1);
+	c_setdouble("Deviation",          Deviation);
+	c_setint(   "MinDev",             MinDev);
+	c_setint(   "RollBack",           RollBack);
+	c_setint(   "Period2",            Period2);
+	c_setint(   "Magic",              Magic);
+	c_setint(   "AutoMM",             AutoMM);
+	c_setint(   "MMEquity",           MMEquity);
 
-	buf_len = 2 * fmax(PeriodF, fmax(PeriodF2, PeriodF3)) + 2;
-	ArrayResize(closes, buf_len);
-	ArrayResize(highs, buf_len);
-	ArrayResize(lows, buf_len);
-
-	c_setint(   "_buf_len",           buf_len - 1);
-	c_setdouble("_rollback",          RollBack);
-	c_setdouble("_weighthadge",       WeightHadgeMult);
-	c_setint(   "_opp_close",         CloseMode);
-
-	c_setvar("open_dd",      open_dd);
-	c_setvar("total_lots",   total_lots);
-	//c_setvar("indicator",    indicator);
-	c_setvar("count_p",      count);
-	//c_setvar("indicator2",   indicator2);
-
-	c_setvar("isRunAllowed",   run_allowed);
 	c_setactions(actList, ArraySize(actList));
 
 	//Запуск постинициализации
@@ -521,32 +412,25 @@ void InitLook()
 	ObjectsDeleteAll();
 
 	info.Init();
-	info.Set("header",    "ConfidenceEA v{{ver}}");
+	info.Set("header",    "Olsen&Cleverton fxc v{{ver}}");
 	info.Set("line",      "----------------------");
    
-	if (!run_allowed)
-	{
-		CriticalError(reason);
-		return;
-	}
-
-	info.Set("profit",    "Open profit:", 0.0);
-	info.Set("buy_lvl",   "  Buy level:", 0);
-	info.Set("buy_lots",  "       lots:", 0.0);
-	info.Set("sell_lvl",  " Sell level:", 0);
-	info.Set("sell_lots", "       lots:", 0.0);
-	info.Set("balance",   "    Balance:", 0.0);
-	
-	if (is_visual)
+	info.Set("0",    "Open profit:", 0.0);
+	info.Set("1",   "  Buy level:", 0);
+	info.Set("2",  "       lots:", 0.0);
+	info.Set("3",  " Sell level:", 0);
+	info.Set("4", "       lots:", 0.0);
+	info.Set("5", "Trade not allowed");
+	info.Set("6", "Permissions cheking...");
+	/*
+	if (mqlVisualMode)
 	{
 		info.Set("dd",      "     Max DD:", 0.0);
 		info.Set("max_lvl", "  Max level:", 0);
-		info.Set("ind1",    "Indicator 1:", 0.0);
-		info.Set("ind2",    "Indicator 2:", 0.0);
 		info.Set("lot",     "Lot size:", MarketInfo(Symbol(), MODE_LOTSIZE));
 		info.Set("spread",  "Spread:",   MarketInfo(Symbol(), MODE_SPREAD));
 		info.Set("minlot",  "Min lot:",  MarketInfo(Symbol(), MODE_MINLOT));
-	}
+	}*/
 	
 	//ShowControlPanel(info.x + info.dx + 10, info.y);
 	info.DrawHistory();
@@ -560,10 +444,10 @@ void UpdateOrders() {
 			continue; // Обрабатываем только успешные выборки
 
 		if (
-			!is_optimization &&
+			!mqlOptimization &&
 			(
 				(!AverageAll && OrderMagicNumber() != Magic) || // В зависимости от настройки обрабатываем либо все, либо только наши
-				(OrderSymbol() != symbol)                       // Обрабатываем ордера только для текущего символа
+				(OrderSymbol() != symbolName)                       // Обрабатываем ордера только для текущего символа
 			)
 		) continue;
 

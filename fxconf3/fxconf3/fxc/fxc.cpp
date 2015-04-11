@@ -11,11 +11,6 @@
 
 std::mutex fxc::mutex;
 
-bool   fxc::first_run = true;
-int    fxc::sign[6]   = { 1, -1, 1, -1, 1, -1 };
-double fxc::minmax[2] = { 0.0, 1000000.0 };
-double fxc::maxmin[2] = { 1000000.0, 0.0 };
-
 bool   fxc::console;
 time_t fxc::rawtime;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Simbiot.cpp"
+#include "../strat/AbstractStrategy.cpp"
 
 namespace fxc {
 
@@ -13,7 +13,7 @@ namespace indicator {
 	public:
 		AbstractIndicator();
 		AbstractIndicator(
-			OrdersManager* manager,
+			TimeSeries* manager,
 			int timeframe,
 			int outBufferLength
 		) :
@@ -21,7 +21,7 @@ namespace indicator {
 			timeframe(timeframe),
 			outBufferLength(outBufferLength)
 		{
-			manager->getTimeseries()->registerTimeframe(timeframe, outBufferLength, this);
+			manager->registerTimeframe(timeframe, outBufferLength, this);
 			rates = manager->getChartData(timeframe);
 		}
 		//Автоматически вызываемый метод, вызывается каждый тик перед запуском стратегии
@@ -41,7 +41,7 @@ namespace indicator {
 		}
 	protected:
 		ChartData*		rates; // бары в требуемом таймфрейме
-		OrdersManager*	manager;
+		TimeSeries*		manager;
 		int				outBufferLength; // длина буфера кэширования выходных результатов
 		const int		timeframe;
 		std::vector<utils::CircularBuffer<double>*> buffers;

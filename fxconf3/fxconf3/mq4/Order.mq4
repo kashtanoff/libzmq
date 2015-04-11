@@ -5,23 +5,12 @@ public:
 
 	static void Create(TradeAction& action)
 	{
-		if (!is_optimization && (!CheckConnect() || !CheckMargin(action.o_lots)))
+		if (!mqlOptimization && (!CheckConnect() || !CheckMargin(action.o_lots)))
 			return;
 
-		if (action.o_lots >= ConfirmLot) {
-			Print("Открытие большим лотом: ", action.o_lots);
-			int ret = MessageBox(
-				"Советник пытается открыть ордер объемом: " + DoubleToStr(action.o_lots, 2),
-				"Открыть ордер?", 
-				MB_YESNO | MB_ICONQUESTION | MB_TOPMOST
-			);
-			if (ret == IDNO)
-				return;
-		}
-	
 		if (
 			OrderSend(
-				symbol, 
+				symbolName, 
 				action.o_type, action.o_lots, action.o_openprice, 
 				Slippage, 
 				action.o_slprice, action.o_tpprice,
@@ -37,7 +26,7 @@ public:
 
 	static void Modify(TradeAction& action)
 	{
-		if (!is_optimization && !CheckConnect())
+		if (!mqlOptimization && !CheckConnect())
 			return;
 
 		TradeAction a;
@@ -62,7 +51,7 @@ public:
 
 	static void Delete(TradeAction& action)
 	{
-		if (!is_optimization && !CheckConnect())
+		if (!mqlOptimization && !CheckConnect())
 			return;
 
 		if (!OrderDelete(action.o_ticket)) {
@@ -74,7 +63,7 @@ public:
 
 	static void Close(TradeAction& action)
 	{
-		if (!is_optimization && !CheckConnect())
+		if (!mqlOptimization && !CheckConnect())
 			return;
 
 		if (!OrderClose(action.o_ticket, action.o_lots, action.o_openprice, Slippage, clrGreen)) {
@@ -83,13 +72,50 @@ public:
 			Err(err);
 		}
 	}
+	static void PrintOrder(TradeAction& action)
+	{
+	   Print("ticket: ", action.o_ticket,
+	         ", type: ", action.o_type, 
+	         ", price: ", action.o_openprice,
+	         ", tp: ", action.o_tpprice,
+	         ", sl: ", action.o_slprice,
+	         ", lots: ", action.o_lots,
+	         " - ", action.comment);
+	}
+	static void PrintText(TradeAction& action)
+	{
+	   Print(action.comment);
+	}
+	static void DrawOrder(TradeAction& action)
+	{
+	   if(!showinfo)
+	      return;
+	   if (!OrderSelect(action.o_ticket, SELECT_BY_TICKET, MODE_HISTORY))
+		   return;
+      info.DrawOrder(action.o_ticket, OrderType(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
+      info.DelOldDraws();
+	}
+	static void ShowValue(TradeAction& action)  //o_type: 0-str, 1-int, 2-double; o_ticket - key; comment - label; intret - int value/digits; o_lots - double value
+	{
+	   if(!showinfo)
+	      return;
+	   switch(action.o_type) {
+	      case 0: info.Set((string)action.o_ticket, action.comment); break;
+	      case 1: info.Set((string)action.o_ticket, action.intret); break;
+	      case 2: info.Set((string)action.o_ticket, action.o_lots, action.intret); break;
+	   }
+	}
+	static void MsgBox(TradeAction& action)
+	{}
+	
+
 
 private:
 
 	// Проверяем свободную маржу
 	static bool CheckMargin(double lot)
 	{
-		if (lot * req_margin > AccountFreeMargin()) {
+		if (lot * symbolMarginRequired > AccountFreeMargin()) {
 			ShowError("CheckMargin: Недостаточно средств для открытия позиции");
 			return (false);
 		}

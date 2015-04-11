@@ -1,75 +1,92 @@
 #pragma once
 
-#include "vector"
 
+#include "fxc.h"
 #include "debug/Debug.h"
-#include "Order.cpp"
+#include "../Property.h"
+#include "TerminalInfo.cpp"
+#include <vector>
+#include <string>
 
 namespace fxc {
-
-	class Parameters
+	//Параметры советника
+	class Parameters 
 	{
 		public:
+			int			inputStopNew[2];		//Остановить открытие новой сетки
+			int			inputStop[2];		    //Остановить торговлю для типа
+			double		inputBaseLot[2];
+			int			inputFirstFree[2];
 
-			//Константы рынка
-			double   input_point;			    //1 значение минимального шага цены
-			int      input_digits;				//2 количество десятичных знаков для инструмента #unused
-			char     symbol[10];				//3 название символа
-			double   input_lot_step;			//4 минимальный шаг приращения лота #unused
-			double   input_lot_min;				//5 минимальный лот
-			double   input_lot_max;				//6 максимальный лот
-			double   input_min_sl_tp;			//7 минимальное расстояние до стоплосса или тейкпрофита
-			double   input_freeze;				//8 расстояние заморозки ордеров
-			int      input_is_optimization;		//9 флаг оптимизации
-			int      input_is_visual;			//10 флаг визуального режима
-			int      input_is_testing;			//11 флаг тестирования #unused
+			int			inputStep;
+			int			inputFirstTakeProfit;
+			int			inputTakeProfit;
+			int			inputStopLoss;
+			int			inputMaxGridLevel;		// Максимальный уровень сетки
+			double		inputMaxLot;			//70 максимальный лот
+			double		inputPipsMultiplier;		//67 множитель прибыли
+			int			inputAveragingLevel;
+			int			inputAverageAll;
+			int			inputCloseMode;
+			int			inputFreeLvl;
+			int			inputTimeFrame;
+			int			inputPeriod1;
+			double		inputDeviation;
+			int			inputMinDev;
+			int			inputRollBack;
+			int			inputPeriod2;
+			int			inputMagic;
+			std::string	inputCommentText;
+			int			inputSlippage;
+			int			inputAutoMM;
+			int			inputMMEquity;
 
-			//Параметры советника
-			int		input_stop_new[2];		//50, 51 Остановить открытие новой сетки
-			int		input_stop_avr[2];		//52, 53 Остановить открытие новой ступени
-			int		input_max_grid_lvl;		//54 Максимальный уровень сетки
-			double	input_step;				//55 базовый шаг, минимальный шаг (для трейлинг степа)
-			double	input_takeprofit;       //57 базовый тейкпрофит, минимальный (для трейлинг стопа)
-			int		input_forward_lvl;		//59 с какого уровня выставлять форвардные сделки
-			int		input_av_lvl;			//64 ступень усреднения
-			double	input_av_lot;			//65 лот с которого начинается уменьшаться ступень усреднения
-			int		input_op_av_lvl;		//66 уровень начала противоположного усреднения
-			double	input_pips_mult;		//67 множитель прибыли
-			int		input_safe_copy;		//68 вести расчет прибыли с базового лота а не с начального
-			double	input_sell_lot;			//69 начальный лот на продажу
-			double	input_buy_lot;			//97 начальный лот на покупку
-			double  input_maxlot;			//70 максимальный лот
-			double	input_lot_hadge_mult;	//71 процент хэджирования
-			double	input_regres_mult;		//72 процент затухания
-			int		input_trend_lvl;		//73
-			double	input_trend_lot_mult;	//74
-			double	input_trend_progress;	//75
-			int		input_repeat_lvl;		//76
-			double	input_repeat_lot_mult;	//77
-			double	input_repeat_progress;	//78
-			int		input_period;			//79
-			double	input_deviation;		//80
-			double	input_stoploss;         //81 стоплосс
-			int		input_attemts;			//82 #unused
-			int		input_auto_mm;			//83
-			int		input_mm_equ;			//84
-			double	input_basket_hadge_mult;//85
-			double	input_forward_step_mult;//86
-			double	input_delta;			//87
-			int		input_first_free;		//88
-			int		input_new_bar;			//89
-			int		input_free_lvl;			//90
-			double  input_multf;			//91
-			int		input_periodf2;			//92
-			int		input_periodf3;			//93
-			int		input_buf_len;			//94
-			double	input_rollback;			//95
-			double	input_weighthadge;		//96
-			int     input_opp_close;		//97
-			int		input_timeframe;
+			double		deltaStep;
+			double		deltaFirstTP;
+			double		deltaTP;
+			double		deltaSL;
+			double		deltaRollback;
+			double		deltaMinDev;
 
-			//Общие переменные
-			bool* ext_isRunAllowed;
+			Parameters(CPropertyList* registrator) {
+				registrator->Register("StopNewBuy", &inputStopNew[0]);
+				registrator->Register("StopBuy", &inputStop[0]);
+				registrator->Register("BaseBuyLot", &inputBaseLot[0]);
+				registrator->Register("FirstBuyFree", &inputFirstFree[0]);
+				registrator->Register("StopNewSell", &inputStopNew[1]);
+				registrator->Register("StopSell", &inputStop[1]);
+				registrator->Register("BaseSellLot", &inputBaseLot[1]);
+				registrator->Register("FirstSellFree", &inputFirstFree[1]);
+
+				registrator->Register("Step", &inputStep);
+				registrator->Register("FirstTakeProfit", &inputFirstTakeProfit);
+				registrator->Register("TakeProfit", &inputTakeProfit);
+				registrator->Register("StopLoss", &inputStopLoss);
+				registrator->Register("MaxGridLevel", &inputMaxGridLevel);
+				registrator->Register("MaxLot", &inputMaxLot);
+				registrator->Register("PipsMultiplier", &inputPipsMultiplier);
+				registrator->Register("AveragingLevel", &inputAveragingLevel);
+				registrator->Register("AverageAll", &inputAverageAll);
+				registrator->Register("CloseMode", &inputCloseMode);
+				registrator->Register("FreeLvl", &inputFreeLvl);
+				registrator->Register("TimeFrame", &inputTimeFrame);
+				registrator->Register("Period1", &inputPeriod1);
+				registrator->Register("Deviation", &inputDeviation);
+				registrator->Register("MinDev", &inputMinDev);
+				registrator->Register("RollBack", &inputRollBack);
+				registrator->Register("Period2", &inputPeriod2);
+				registrator->Register("Magic", &inputMagic);
+				registrator->Register("AutoMM", &inputAutoMM);
+				registrator->Register("MMEquity", &inputMMEquity);
+			}
+			void paramsDeltaCalc(double oldPoint) {
+				deltaStep		= inputStep				* oldPoint;
+				deltaFirstTP	= inputFirstTakeProfit	* oldPoint;
+				deltaTP			= inputTakeProfit		* oldPoint;
+				deltaSL			= inputStopLoss			* oldPoint;
+				deltaRollback	= inputRollBack			* oldPoint;
+				deltaMinDev		= inputMinDev			* oldPoint;
+			}
 
 	};
 

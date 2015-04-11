@@ -13,11 +13,6 @@ namespace fxc {
 
 	extern std::mutex mutex;
 
-	extern bool   first_run;
-	extern int    sign[6];   //Знаки для разных типов операций
-	extern double minmax[2]; //дает начальное число для сортировки цен на покупку и продажу
-	extern double maxmin[2]; //тоже, но наоборот
-
 	extern bool   console;
 	extern time_t rawtime;
 

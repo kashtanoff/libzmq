@@ -11,7 +11,7 @@ public:
 		textColor = text_color;
 		x         = pos_x;
 		y         = pos_y;
-		GetSymbolSize();
+		SetSymbolSize();
 		Init();
 	}
 
@@ -120,44 +120,6 @@ public:
 		ResizeBox(s);
 	}
 
-	void Show()
-	{
-		max_dd = fmin(max_dd, AccountEquity() - AccountBalance());
-		Change("profit",    open_dd[OP_BUY] + open_dd[OP_SELL]);
-		Change("buy_lvl",   count[OP_BUY]);
-		Change("buy_lots",  total_lots[OP_BUY]);
-		Change("sell_lvl",  count[OP_SELL]);
-		Change("sell_lots", total_lots[OP_SELL]);
-		Change("balance",   AccountBalance());
-		Change("ind1",      indicator);
-		Change("ind2",      indicator2);
-
-		if (is_visual)
-		{
-			Change("dd",      max_dd);
-			Change("max_lvl", max_lvl);
-		}
-
-		int _ticket;
-		bool erase = false;
-		while (true)
-		{
-			_ticket = c_get_next_closed();
-
-			if (_ticket == 0)
-				break;
-
-			if (!OrderSelect(_ticket, SELECT_BY_TICKET, MODE_HISTORY))
-				continue;
-
-			DrawOrder(_ticket, OrderType(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
-			erase = true;
-		}
-
-		if (erase)
-			DelOldDraws();
-	}
-
 	void DrawHistory()
 	{
 		int ord_total     = OrdersHistoryTotal();
@@ -178,7 +140,7 @@ public:
 			close_date = OrderCloseTime();
 			_type      = OrderType();
 
-			if (cur_date - close_date <= seconds && _type <= OP_SELL && OrderSymbol() == symbol)
+			if (cur_date - close_date <= seconds && _type <= OP_SELL && OrderSymbol() == symbolName)
 			{
 				open_date   = OrderOpenTime();
 				open_price  = OrderOpenPrice();
@@ -186,6 +148,50 @@ public:
 				ticket      = OrderTicket();
 				DrawOrder(ticket, _type, open_date, open_price, close_date, close_price);
 			}
+		}
+	}
+	void DrawOrder(int _ticket, int _type, datetime _open_date, double _open_price, datetime _close_date, double _close_price)
+	{
+		if (_close_price == 0)
+			return;
+
+		string open_name  = DoubleToStr(_ticket, 0) + " o";
+		string close_name = DoubleToStr(_ticket, 0) + " c";
+		string line_name  = DoubleToStr(_ticket, 0) + " l";
+
+		// создаём открывающую стрелку
+		ObjectCreate(open_name, OBJ_ARROW, 0, _open_date, _open_price); // открывающая стрелка Бай-ордера
+		ObjectSet(open_name, OBJPROP_ARROWCODE, 1);                     // код стрелки 232 
+		ObjectSet(open_name, OBJPROP_COLOR, colors[_type]);             // цвет стрелки
+		
+		// создаём закрывающую стрелку
+		ObjectCreate(close_name, OBJ_ARROW, 0, _close_date, _close_price); // закрывающая стрелка Бай-ордера
+		ObjectSet(close_name, OBJPROP_ARROWCODE, 3);                       // код стрелки 231
+		ObjectSet(close_name, OBJPROP_COLOR, colors[_type]);               // цвет стрелки
+		
+		// создаём линии
+		ObjectCreate(line_name, OBJ_TREND, 0, _open_date, _open_price, _close_date, _close_price);
+		ObjectSet(line_name, OBJPROP_RAY, false);           // запрещаем рисовать луч
+		ObjectSet(line_name, OBJPROP_WIDTH, 0);             // устанавливаем толщину линии
+		ObjectSet(line_name, OBJPROP_STYLE, 0);             // устанавливаем тип линии (отрезки)
+		ObjectSet(line_name, OBJPROP_STYLE, STYLE_DOT);     // устанавливаем тип штриховки (пунктирная линия)
+		ObjectSet(line_name, OBJPROP_COLOR, colors[_type]); // устанавливаем цвет(синий/красный)
+	}
+   void DelOldDraws()
+	{
+		string _name;
+		int _type;
+	
+		for (int i = 0; i<ObjectsTotal(); i++)
+		{
+			_name = ObjectName(i);
+			_type = ObjectType(_name);
+			
+			if (_type != OBJ_ARROW && _type != OBJ_TREND)
+				continue;
+			
+			if (ObjectGetInteger(0, _name, OBJPROP_TIME) < (TimeCurrent() - 86400 * DrawHistoryDays))
+				ObjectDelete(_name);
 		}
 	}
 
@@ -200,7 +206,7 @@ private:
 	string fontName;
 	color  textColor;
 
-	void GetSymbolSize()
+	void SetSymbolSize()
 	{
 		kdpi = c_getdpi() / 72.0;
 		TextSetFont(fontName, fontSize);
@@ -279,51 +285,4 @@ private:
 		ObjectSetInteger(0, "textbox", OBJPROP_YSIZE, dy);
 		WindowRedraw();
 	}
-
-	void DrawOrder(int _ticket, int _type, datetime _open_date, double _open_price, datetime _close_date, double _close_price)
-	{
-		if (_close_price == 0)
-			return;
-
-		string open_name  = DoubleToStr(_ticket, 0) + " o";
-		string close_name = DoubleToStr(_ticket, 0) + " c";
-		string line_name  = DoubleToStr(_ticket, 0) + " l";
-
-		// создаём открывающую стрелку
-		ObjectCreate(open_name, OBJ_ARROW, 0, _open_date, _open_price); // открывающая стрелка Бай-ордера
-		ObjectSet(open_name, OBJPROP_ARROWCODE, 1);                     // код стрелки 232 
-		ObjectSet(open_name, OBJPROP_COLOR, colors[_type]);             // цвет стрелки
-		
-		// создаём закрывающую стрелку
-		ObjectCreate(close_name, OBJ_ARROW, 0, _close_date, _close_price); // закрывающая стрелка Бай-ордера
-		ObjectSet(close_name, OBJPROP_ARROWCODE, 3);                       // код стрелки 231
-		ObjectSet(close_name, OBJPROP_COLOR, colors[_type]);               // цвет стрелки
-		
-		// создаём линии
-		ObjectCreate(line_name, OBJ_TREND, 0, _open_date, _open_price, _close_date, _close_price);
-		ObjectSet(line_name, OBJPROP_RAY, false);           // запрещаем рисовать луч
-		ObjectSet(line_name, OBJPROP_WIDTH, 0);             // устанавливаем толщину линии
-		ObjectSet(line_name, OBJPROP_STYLE, 0);             // устанавливаем тип линии (отрезки)
-		ObjectSet(line_name, OBJPROP_STYLE, STYLE_DOT);     // устанавливаем тип штриховки (пунктирная линия)
-		ObjectSet(line_name, OBJPROP_COLOR, colors[_type]); // устанавливаем цвет(синий/красный)
-	}
-	
-	void DelOldDraws()
-	{
-		string _name;
-		int _type;
-	
-		for (int i = 0; i<ObjectsTotal(); i++)
-		{
-			_name = ObjectName(i);
-			_type = ObjectType(_name);
-			
-			if (_type != OBJ_ARROW && _type != OBJ_TREND)
-				continue;
-			
-			if (ObjectGetInteger(0, _name, OBJPROP_TIME) < (TimeCurrent() - 86400 * DrawHistoryDays))
-				ObjectDelete(_name);
-		}
-	}
-
 };
