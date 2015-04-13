@@ -1,6 +1,7 @@
 *.opensdf
 *.sdf
 *.suo
+*.ex4
 *.compile.mt4
 /fxconf3/ipch
 /fxconf3/Release

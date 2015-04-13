@@ -4,6 +4,7 @@
 
 #include "zmq.h"
 
+#include <ctime>
 #include <thread>
 #include <unordered_map>
 
@@ -21,96 +22,125 @@
 std::unordered_map<std::thread::id, STRAT_CLASS*> pool;
 bool isRunAllowed = true;
 
-int         accNumber = 0;
-std::string accServer;
+struct AccountData {
+	double      balance;
+	double      equity;
+	double      profit;
+	int         status;
+	std::time_t lastUpdate;
+} account;
 
-bool isWorkerAllowed = true;
-bool isWorkerActive  = false;
+bool isGlobalWorkersAllowed = true;
+bool isAccessWorkerActive   = false;
 void checkAccessWorker()
 {
-	isWorkerActive = true;
-	while (isWorkerAllowed) {
+	isAccessWorkerActive = true;
+	std::this_thread::sleep_for(std::chrono::seconds(5));
+
+	while (isGlobalWorkersAllowed) {
 		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
 
+		auto& expert = pool.begin()->second;
+		if (!expert->mqlTester && !expert->mqlOptimization) {
+
 #if CHECK_ACCESS
-		auto isBlock    = false;
-		auto context    = zmq_ctx_new();
-		auto socket     = zmq_socket(context, ZMQ_REQ);
-		auto connectErr = zmq_connect(socket, 
+			auto isBlock    = false;
+			auto isChanged  = false;
+			auto context    = zmq_ctx_new();
+			auto socket     = zmq_socket(context, ZMQ_REQ);
+			auto connectErr = zmq_connect(socket, 
 #if LOCAL
-			"tcp://localhost:13857"
+				"tcp://localhost:13857"
 #else
-			"tcp://olsencleverton.com:13857"
+				"tcp://olsencleverton.com:13857"
 #endif
-		);
+				);
+		
+			std::stringstream ss;
+			ss
+				<< "{"
+					<< "\"balance\":"    <<  account.balance                << ","
+					<< "\"equity\":"     <<  account.equity                 << ","
+					<< "\"profit\":"     <<  account.profit                 << ","
+					<< "\"leverage\":"   <<  expert->accountLeverage        << ","
+					<< "\"demo\":"       << (expert->accountTradeMode == 0) << ","
+					<< "\"number\":"     <<  expert->accountNumber          << ","
+					<< "\"name\":\""     <<  expert->accountName            << "\","
+					<< "\"broker\":\""   <<  expert->accountCompany         << "\","
+					<< "\"server\":\""   <<  expert->accountServer          << "\","
+					<< "\"currency\":\"" <<  expert->accountCurrency        << "\""
+				<< "}";
 
-		std::string message("");
-		message
-			.append(std::to_string(accNumber))
-			.append("@")
-			.append(accServer);
+			std::string message = ss.str();
 
-		auto linger     = 2000;
-		auto sndTimeout = 4000;
-		auto rcvTimeout = 4000;
-		auto correlate  = true;
-		zmq_setsockopt(socket, ZMQ_LINGER,        &linger,     sizeof(linger));
-		zmq_setsockopt(socket, ZMQ_SNDTIMEO,      &sndTimeout, sizeof(sndTimeout));
-		zmq_setsockopt(socket, ZMQ_RCVTIMEO,      &rcvTimeout, sizeof(rcvTimeout));
-		zmq_setsockopt(socket, ZMQ_REQ_CORRELATE, &correlate,  sizeof(correlate));
+			auto linger     = 2000;
+			auto sndTimeout = 4000;
+			auto rcvTimeout = 4000;
+			auto correlate  = true;
+			zmq_setsockopt(socket, ZMQ_LINGER,        &linger,     sizeof(linger));
+			zmq_setsockopt(socket, ZMQ_SNDTIMEO,      &sndTimeout, sizeof(sndTimeout));
+			zmq_setsockopt(socket, ZMQ_RCVTIMEO,      &rcvTimeout, sizeof(rcvTimeout));
+			zmq_setsockopt(socket, ZMQ_REQ_CORRELATE, &correlate,  sizeof(correlate));
 
-		if (0 == connectErr) {
-			if (-1 == zmq_send(socket, message.c_str(), strlen(message.c_str()), 0)) {
-				fxc::msg << "-> send error: " << zmq_errno() << "\r\n" << fxc::msg_box;
-				isBlock = true;
-			}
+			if (0 == connectErr) {
+				if (-1 == zmq_send(socket, message.c_str(), strlen(message.c_str()), 0)) {
+					fxc::msg << "-> send error: " << zmq_errno() << "\r\n" << fxc::msg_box;
+					isBlock = true;
+				}
 
-			char buffer[64];
-			auto recvSize = zmq_recv(socket, &buffer, sizeof(buffer), 0);
-			if (-1 == recvSize) {
-				fxc::msg << "-> receive error: " << zmq_errno() << "\r\n" << fxc::msg_box;
-				isBlock = true;
-			} else {
-				auto response = std::string(buffer).substr(0, recvSize);
-				fxc::msg << "-> received: [" << response << "]\r\n" << fxc::msg_box;
+				char buffer[64];
+				auto recvSize = zmq_recv(socket, &buffer, sizeof(buffer), 0);
+				if (-1 == recvSize) {
+					fxc::msg << "-> receive error: " << zmq_errno() << "\r\n" << fxc::msg_box;
+					isBlock = true;
+				}
+				else {
+					auto response = std::string(buffer).substr(0, recvSize);
+					fxc::msg << "-> received: [" << response << "]\r\n" << fxc::msg_box;
 
-				try {
-					auto code = std::stoi(response);
-					if (code != 1) {
-						isBlock = true;
+					try {
+						auto code = std::stoi(response);
+						isChanged = account.status != code;
+						account.status = code;
+
+						fxc::msg << "-> parsed: [" << code << "]\r\n" << fxc::msg_box;
 					}
-					fxc::msg << "-> parsed: [" << code << "]\r\n" << fxc::msg_box;
-				} catch (std::exception e) {
-					fxc::msg << "-> parse error: [" << e.what() << "]\r\n" << fxc::msg_box;
+					catch (std::exception e) {
+						fxc::msg << "-> parse error: [" << e.what() << "]\r\n" << fxc::msg_box;
+					}
+				}
+
+				if (-1 == zmq_close(socket)) {
+					fxc::msg << "-> close error: " << zmq_errno() << "\r\n" << fxc::msg_box;
+				}
+
+				if (-1 == zmq_ctx_term(context)) {
+					fxc::msg << "-> terminate error: " << zmq_errno() << "\r\n" << fxc::msg_box;
 				}
 			}
-
-			if (-1 == zmq_close(socket)) {
-				fxc::msg << "-> close error: " << zmq_errno() << "\r\n" << fxc::msg_box;
+			else {
+				fxc::msg << "-> connect error: " << connectErr << "\r\n" << fxc::msg_box;
+				isBlock = true;
 			}
 
-			if (-1 == zmq_ctx_term(context)) {
-				fxc::msg << "-> terminate error: " << zmq_errno() << "\r\n" << fxc::msg_box;
-			}
-		} else {
-			fxc::msg << "-> connect error: " << connectErr << "\r\n" << fxc::msg_box;
-			isBlock = true;
-		}
+			if (isBlock || (isChanged && account.status > 0)) {
+				// TODO: описать стратегию прекращения работы
 
-		if (isBlock) {
-			isRunAllowed = false;
-			for (auto &pair : pool) {
-				*(pair.second->ext_isRunAllowed) = isRunAllowed;
+				//isRunAllowed = false;
+				//for (auto &pair : pool) {
+				//	*(pair.second->ext_isRunAllowed) = isRunAllowed;
+				//}
+				break;
 			}
-			break;
-		}
-
 #endif
 
+		}
+
+		account.lastUpdate = 0;
 		std::this_thread::sleep_for(std::chrono::seconds(60));
 	}
 	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
-	isWorkerActive = false;
+	isAccessWorkerActive = false;
 }
 
 std::thread checkAccessThread;
@@ -156,6 +186,7 @@ _DLLAPI void __stdcall c_setdouble(wchar_t* propName, double propValue)
 
 	fxc::mutex.unlock();
 }
+
 _DLLAPI void __stdcall c_setstring(wchar_t* propName, wchar_t* propValue)
 {
 	fxc::mutex.lock();
@@ -177,6 +208,7 @@ _DLLAPI void __stdcall c_setstring(wchar_t* propName, wchar_t* propValue)
 
 	fxc::mutex.unlock();
 }
+
 _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 {
 	fxc::mutex.lock();
@@ -243,8 +275,10 @@ _DLLAPI bool __stdcall c_init()
 		pool[std::this_thread::get_id()] = new STRAT_CLASS ();
 		fxc::mutex.unlock();
 
-		if (!isWorkerActive) {
-			isWorkerAllowed   = true;
+		isGlobalWorkersAllowed = true;
+		// Если глобальные потоки еще не запущены, то запускаем
+		// Если же уже есть один поток, то второй нам не нужен
+		if (!isAccessWorkerActive) {
 			checkAccessThread = std::thread(checkAccessWorker);
 			checkAccessThread.detach();
 		}
@@ -295,11 +329,19 @@ _DLLAPI void __stdcall c_postInit() {
 //Освобождает память и индекс в пуле
 _DLLAPI void __stdcall c_deinit()
 {
-	if (isWorkerActive) {
-		isWorkerAllowed = false;
-	}
+	pool.erase(std::this_thread::get_id());
 
-	pool.erase( std::this_thread::get_id() );
+	// Если у нас больше не осталось экземпляров советника, то можно прекращать передачу данных серверу
+	if (!pool.size()) {
+		isGlobalWorkersAllowed = false;
+	}
+}
+
+_DLLAPI void __stdcall c_updateAccount(double balance, double equity, double profit) {
+	account.balance    = balance;
+	account.equity     = equity;
+	account.profit     = profit;
+	account.lastUpdate = time(0);
 }
 
 //Выполняет этап алгоритма, возвращает индекс необходимого действия

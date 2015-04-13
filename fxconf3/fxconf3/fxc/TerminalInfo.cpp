@@ -92,6 +92,7 @@ namespace fxc {
 			Register("mqlOptimization",			&mqlOptimization);			//Признак работы запущенной программы в процессе оптимизации
 			Register("mqlVisualMode",			&mqlVisualMode);			//Признак работы запущенной программы в визуальном режиме тестирования
 		}
+
 		void printRegisteredProps() {
 			for (auto pair : PropertyList)
 			{
@@ -142,9 +143,11 @@ namespace fxc {
 				}
 			}
 		}
+		
 		inline double pointRecalc(int value) {
-			return(value * k_point * symbolPoint);
+			return value * k_point * symbolPoint;
 		}
+		
 		inline void deltaCalc() {
 			deltaStopLevel		= symbolStopLevel	* symbolPoint;
 			deltaFreezeLevel	= symbolFreezeLevel	* symbolPoint;

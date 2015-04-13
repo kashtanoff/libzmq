@@ -26,6 +26,7 @@ namespace strategy {
 			AbstractStrategy() :
 				TerminalInfo() 	{
 			}
+
 			virtual void initStrategy() {};   //Инициализация стратегии
 			virtual inline const bool bypass() { return false; }  //Функция интелектуального пропуска тиков, для ускорения оптимизации
 			virtual void Strategy() {};   // Тут, в наследнике, должен быть код стратегии
@@ -38,8 +39,8 @@ namespace strategy {
 				printRegisteredProps();
 				initStrategy();
 				MARK_FUNC_OUT
-				
 			}
+				
 			// возвращает количество операций на текущем тике
 			int getJob() {
 				MARK_FUNC_IN
@@ -57,7 +58,6 @@ namespace strategy {
 			// Инициализация цикла обновления ордеров, поскольку цикл получается рваным (каждая итерация вызывается из MQL),
 			// нельзя пользоватья результатами в MQL программе до завершения цикла
 			const bool tickInitBegin(double _ask, double _bid, double _equity) {
-				MARK_FUNC_IN
 				MARK_FUNC_IN
 				ask    = _ask;
 				bid    = _bid;
