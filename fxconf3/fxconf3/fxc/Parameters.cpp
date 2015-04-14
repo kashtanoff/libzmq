@@ -12,7 +12,7 @@ namespace fxc {
 	//Параметры советника
 	class Parameters 
 	{
-		public:
+		public: 
 			int			inputStopNew[2];		//Остановить открытие новой сетки
 			int			inputStop[2];		    //Остановить торговлю для типа
 			double		inputBaseLot[2];

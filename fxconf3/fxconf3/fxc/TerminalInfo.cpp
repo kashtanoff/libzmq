@@ -6,7 +6,7 @@
 #include <string>
 
 namespace fxc {
-	class TerminalInfo : public CPropertyList
+	class TerminalInfo : public CPropertyList 
 	{
 	public:
 		std::string accountCompany;			//название брокерской компании, в которой зарегистрирован текущий счет

@@ -18,7 +18,7 @@ namespace indicator {
 
 		public:
 
-			// what to do:
+			// what to do: 
 			// для timeframe можно ввести перечисление таймфреймов для удобства использования
 			// в менеджер индикаторов необходимо добавить метод RegIndicator(int timeframe, int period, delegate compute=null);
 			// также каждый раз в начале тика необходимо последовательно вызывать все зарегистрированные методы compute, для обновления индикаторов

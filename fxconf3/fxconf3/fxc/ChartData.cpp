@@ -45,10 +45,12 @@ namespace fxc {
 			void update(MqlRates* pointer, unsigned length) {
 				MARK_FUNC_IN
 				newBars = 0;
+				
 				if ((pointer + length - 1)->time == time[0]) {
 					MARK_FUNC_OUT
 					return;
 				}
+				
 				MARK_FUNC_IN
 				int i;
 				MqlRates* data;
@@ -66,6 +68,7 @@ namespace fxc {
 						break;
 					}
 				}
+
 				newBars = length - i;
 				for (; i < length; ++i) {
 					data = pointer + i;
@@ -78,14 +81,14 @@ namespace fxc {
 				}
 				MARK_FUNC_OUT
 			}
-			
+
 			inline const unsigned getSize() {
 				return time.getSize();
 			}
 
 	};
 
-	class TimeSeries {
+	class TimeSeries { 
 
 		public:
 

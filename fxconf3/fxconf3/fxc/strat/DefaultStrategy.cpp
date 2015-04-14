@@ -16,7 +16,7 @@ namespace strategy {
 
 		public:
 
-			DefaultStrategy() : 
+			DefaultStrategy() :  
 				AbstractStrategy(),
 				Parameters((CPropertyList*) this){
 

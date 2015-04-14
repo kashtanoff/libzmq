@@ -1,0 +1,10 @@
+diff a/fxconf3/fxconf3/fxc/Parameters.cpp b/fxconf3/fxconf3/fxc/Parameters.cpp	(rejected hunks)
+@@ -12,7 +12,7 @@
+ 	//Ïàðàìåòðû ñîâåòíèêà
+ 	class Parameters 
+ 	{
+-		public:
++		public: 
+ 			int			inputStopNew[2];		//Îñòàíîâèòü îòêðûòèå íîâîé ñåòêè
+ 			int			inputStop[2];		    //Îñòàíîâèòü òîðãîâëþ äëÿ òèïà
+ 			double		inputBaseLot[2];

@@ -334,7 +334,7 @@ _DLLAPI int __stdcall c_getjob()
 	}
 #endif
 
-#if PROFILE
+#if PROFILE 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	auto  d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 

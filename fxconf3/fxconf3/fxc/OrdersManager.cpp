@@ -7,7 +7,7 @@
 #include "TerminalInfo.cpp"
 #include "Diller.cpp"
 
-namespace fxc {
+namespace fxc { 
 
 	class OrdersManager {
 

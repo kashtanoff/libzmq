@@ -6,7 +6,7 @@
 #include "fxc.h"
 #include "../MqlUtils.cpp"
 
-namespace fxc {
+namespace fxc { 
 
 	#pragma pack(1)
 	struct TradeAction {

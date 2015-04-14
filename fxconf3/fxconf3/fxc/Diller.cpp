@@ -50,7 +50,7 @@ namespace fxc {
 				if (level) {
 					prev_lvl  = level;
 				}
-				if (last) {
+				if (last) { 
 					prev_lots = last->lots;
 				}
 				orders.clear();

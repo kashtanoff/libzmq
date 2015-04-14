@@ -8,7 +8,7 @@ namespace fxc {
 
 namespace indicator {
 
-	class RAIndicator : 
+	class RAIndicator :  
 		AbstractIndicator
 	{
 		public:

@@ -13,7 +13,7 @@ namespace fxc {
 
 namespace strategy {
 
-	class AbstractStrategy : 
+	class AbstractStrategy :  
 		public TerminalInfo,
 		public OrdersManager,
 		public TradeManager,

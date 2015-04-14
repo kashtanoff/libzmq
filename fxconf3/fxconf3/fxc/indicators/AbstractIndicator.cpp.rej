@@ -1,0 +1,54 @@
+diff a/fxconf3/fxconf3/fxc/indicators/AbstractIndicator.cpp b/fxconf3/fxconf3/fxc/indicators/AbstractIndicator.cpp	(rejected hunks)
+@@ -45,6 +45,52 @@
+ 		int				outBufferLength; // äëèíà áóôåðà êýøèðîâàíèÿ âûõîäíûõ ðåçóëüòàòîâ
+ 		const int		timeframe;
+ 		std::vector<utils::CircularBuffer<double>*> buffers;
++=======
++		public:
++
++			AbstractIndicator(
++				OrdersManager* manager,
++				int timeframe,
++				int outBufferLength
++			) :
++				manager(manager),
++				timeframe(timeframe),
++				outBufferLength(outBufferLength)
++			{
++				manager->getTimeseries()->registerTimeframe(timeframe, outBufferLength, this);
++				rates = manager->getChartData(timeframe);
++			}
++
++			//Àâòîìàòè÷åñêè âûçûâàåìûé ìåòîä, âûçûâàåòñÿ êàæäûé òèê ïåðåä çàïóñêîì ñòðàòåãèè
++			inline void listenChart() {
++				MARK_FUNC_IN
++				if (rates->newBars) {
++					for (auto& buffer : buffers) {
++						buffer->skip(rates->newBars);
++					}
++				}
++
++				compute(rates->newBars);
++				MARK_FUNC_OUT
++			}
++		
++			//Çàãîòîâêà ïîä ìåòîä âû÷èñëåíèÿ èíäèêàòîðà
++			virtual void compute(int newBars) = 0;
++		
++			void regBuffer(utils::CircularBuffer<double>* buffer) {
++				buffer->alloc(outBufferLength);
++				buffers.push_back(buffer);
++			}
++
++		protected:
++
++			ChartData*		rates; // áàðû â òðåáóåìîì òàéìôðåéìå
++			OrdersManager*	manager;
++			const int       outBufferLength; // äëèíà áóôåðà êýøèðîâàíèÿ âûõîäíûõ ðåçóëüòàòîâ
++			const int		timeframe;
++			std::vector<utils::CircularBuffer<double>*> buffers;
++	
++>>>>>>> 163fc1e3494f4f4542a9aa8987d500ed578215ae
+ 	};
+ 
+ }
