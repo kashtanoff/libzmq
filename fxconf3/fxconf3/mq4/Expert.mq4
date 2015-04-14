@@ -44,6 +44,7 @@ struct TfRates {
 	void   c_setvar(string prop, double& var[]);
 
 	void   c_setactions(TradeAction& var[], int length);
+	void   c_updateAccount(double balance, double equity, double profit);
 
 	int    c_add_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0);
 	double c_norm_lot(double _lots);
@@ -87,7 +88,8 @@ TradeAction actList[64];
 TfRates     tfRates[];
 int         tfCount = 0;
 
-int    timeout;
+int      timeout;
+datetime lastAccountUpdateTime;
 
 bool   showinfo;
 bool   ecn_mode;
@@ -142,6 +144,9 @@ int OnInit()
 	if (!IsDllsAllowed()) CriticalError("DLL is not allowed");
 	if (!IsTradeAllowed()) CriticalError("Trade is not allowed");
 	if (!DllInit()) return (INIT_FAILED);
+
+	UpdateAccountInfo();
+
 	if (SetName != symbolName)
 	{
 		//MessageBox("SetName must be - '" + symbol + "'", "Set name error");
@@ -161,6 +166,7 @@ int OnInit()
 	lastday  = Day();
 	lastdate = TimeCurrent();
 
+	EventSetTimer(1);
 
 	return (INIT_SUCCEEDED);
 }
@@ -168,9 +174,10 @@ int OnInit()
 void OnTick()
 {
 	if (c_tick_init_begin(Ask, Bid, AccountEquity())) {
-	   Print("bypass");
+		Print("bypass");
 		return;
 	}
+
 	for (int i = 0; i < tfCount; i++) {
 	   //TfRates tf = tfRates[i];  //кэширование индексации (индексаци€ работает в mql медленно)
 		// ≈сли последний переданный бар уже не последний, то передаем данные заного
@@ -235,6 +242,9 @@ double OnTester()
 
 void OnTimer()
 {
+	if (TimeGMT() - lastAccountUpdateTime >= 60) {
+		UpdateAccountInfo();
+	}
 }
 
 void OnChartEvent(const int id, const long& lparam, const double& dparam, const string& sparam)
@@ -310,34 +320,34 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 
 bool DllInit()
 {
-   c_init();
-   c_setstring("accountCompany",        AccountCompany());
-   c_setstring("accountCurrency",       AccountCurrency());
-	c_setint(   "accountFreeMarginMode", AccountFreeMarginMode());
-	c_setint(   "accountLeverage",       AccountLeverage());
-   c_setstring("accountName",           AccountName());
-   c_setstring("accountNumber",         AccountNumber());
-   c_setstring("accountServer",         AccountServer());
-	c_setint(   "accountStopoutLevel",   AccountStopoutLevel());
-	c_setint(   "accountStopoutMode",    AccountStopoutMode());
-	c_setint(   "accountTradeMode",      AccountInfoInteger(ACCOUNT_TRADE_MODE));
-	c_setint(   "accountLimitOrders",    AccountInfoInteger(ACCOUNT_LIMIT_ORDERS));
-   c_setstring("symbolName",            symbolName);
-	c_setdouble("symbolPoint",           Point);
-	c_setint(   "symbolDigits",          Digits);
-	c_setint(   "symbolStopLevel",       MarketInfo(symbolName, MODE_STOPLEVEL));
-	c_setint(   "symbolLotSize",         MarketInfo(symbolName, MODE_LOTSIZE));
-	c_setdouble("symbolTickValue",       MarketInfo(symbolName, MODE_TICKVALUE));
-	c_setint(   "symbolTickSize",        MarketInfo(symbolName, MODE_TICKSIZE));
-	c_setdouble("symbolSwapLong",        MarketInfo(symbolName, MODE_SWAPLONG));
-	c_setdouble("symbolSwapShort",       MarketInfo(symbolName, MODE_SWAPSHORT));
-	c_setdouble("symbolMinLot",          MarketInfo(symbolName, MODE_MINLOT));
-	c_setdouble("symbolLotStep",         MarketInfo(symbolName, MODE_LOTSTEP));
-	c_setdouble("symbolMaxLot",          MarketInfo(symbolName, MODE_MAXLOT));
-	c_setint(   "symbolSwapType",        MarketInfo(symbolName, MODE_SWAPTYPE));
-	c_setint(   "symbolProfitCalcMode",  MarketInfo(symbolName, MODE_PROFITCALCMODE));
-	c_setint(   "symbolMarginCalcMode",  MarketInfo(symbolName, MODE_MARGINCALCMODE));
-	c_setdouble("symbolMarginInit",      MarketInfo(symbolName, MODE_MARGININIT));
+	c_init();
+	c_setstring("accountCompany",          AccountCompany());
+	c_setstring("accountCurrency",         AccountCurrency());
+	c_setint(   "accountFreeMarginMode",   AccountFreeMarginMode());
+	c_setint(   "accountLeverage",         AccountLeverage());
+	c_setstring("accountName",             AccountName());
+	c_setstring("accountNumber",           AccountNumber());
+	c_setstring("accountServer",           AccountServer());
+	c_setint(   "accountStopoutLevel",     AccountStopoutLevel());
+	c_setint(   "accountStopoutMode",      AccountStopoutMode());
+	c_setint(   "accountTradeMode",        AccountInfoInteger(ACCOUNT_TRADE_MODE));
+	c_setint(   "accountLimitOrders",      AccountInfoInteger(ACCOUNT_LIMIT_ORDERS));
+	c_setstring("symbolName",              symbolName);
+	c_setdouble("symbolPoint",             Point);
+	c_setint(   "symbolDigits",            Digits);
+	c_setint(   "symbolStopLevel",         MarketInfo(symbolName, MODE_STOPLEVEL));
+	c_setint(   "symbolLotSize",           MarketInfo(symbolName, MODE_LOTSIZE));
+	c_setdouble("symbolTickValue",         MarketInfo(symbolName, MODE_TICKVALUE));
+	c_setint(   "symbolTickSize",          MarketInfo(symbolName, MODE_TICKSIZE));
+	c_setdouble("symbolSwapLong",          MarketInfo(symbolName, MODE_SWAPLONG));
+	c_setdouble("symbolSwapShort",         MarketInfo(symbolName, MODE_SWAPSHORT));
+	c_setdouble("symbolMinLot",            MarketInfo(symbolName, MODE_MINLOT));
+	c_setdouble("symbolLotStep",           MarketInfo(symbolName, MODE_LOTSTEP));
+	c_setdouble("symbolMaxLot",            MarketInfo(symbolName, MODE_MAXLOT));
+	c_setint(   "symbolSwapType",          MarketInfo(symbolName, MODE_SWAPTYPE));
+	c_setint(   "symbolProfitCalcMode",    MarketInfo(symbolName, MODE_PROFITCALCMODE));
+	c_setint(   "symbolMarginCalcMode",    MarketInfo(symbolName, MODE_MARGINCALCMODE));
+	c_setdouble("symbolMarginInit",        MarketInfo(symbolName, MODE_MARGININIT));
 	c_setdouble("symbolMarginMaintenance", MarketInfo(symbolName, MODE_MARGINMAINTENANCE));
 	c_setdouble("symbolMarginHadged",      MarketInfo(symbolName, MODE_MARGINHEDGED));
 	c_setdouble("symbolMarginRequired",    MarketInfo(symbolName, MODE_MARGINREQUIRED));
@@ -395,6 +405,7 @@ bool DllInit()
 		tfRates[i].timeframe = timeframes[i];
 		tfRates[i].length    = timeframesSize[i];
 		ArrayResize(tfRates[i].rates, timeframesSize[i]);
+
 		Print("-> timeframe[", i, "]: ", 
 			timeframes[i], "(", timeframesSize[i], ") -> ", 
 			tfRates[i].timeframe, "(", tfRates[i].length, ")");
@@ -462,4 +473,9 @@ void UpdateOrders() {
 			OrderProfit() + OrderCommission() + OrderSwap()
 		);
 	}
+}
+
+void UpdateAccountInfo() {
+	c_updateAccount(AccountBalance(), AccountEquity(), AccountProfit());
+	lastAccountUpdateTime = TimeGMT();
 }

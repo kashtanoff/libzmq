@@ -6,9 +6,15 @@
 #include "fxc.h"
 #include "../MqlUtils.cpp"
 
+<<<<<<< HEAD
 namespace fxc { 
 
 	#pragma pack(1)
+=======
+namespace fxc {
+	
+	#pragma pack(push,1)
+>>>>>>> 0dc9dc87f274df0eab7db03cfa1e8c555362fe13
 	struct TradeAction {
 		double    lots;      // 8 bytes
 		double    openprice; // 8 bytes
@@ -20,6 +26,7 @@ namespace fxc {
 		int       actionId;  // 4 bytes
 		MqlString comment;   // 12 bytes
 	};
+	#pragma pack(pop,1)
 
 	class TradeManager {
 

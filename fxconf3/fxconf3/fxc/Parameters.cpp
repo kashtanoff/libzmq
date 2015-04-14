@@ -49,36 +49,37 @@ namespace fxc {
 			double		deltaMinDev;
 
 			Parameters(CPropertyList* registrator) {
-				registrator->Register("StopNewBuy", &inputStopNew[0]);
-				registrator->Register("StopBuy", &inputStop[0]);
-				registrator->Register("BaseBuyLot", &inputBaseLot[0]);
-				registrator->Register("FirstBuyFree", &inputFirstFree[0]);
-				registrator->Register("StopNewSell", &inputStopNew[1]);
-				registrator->Register("StopSell", &inputStop[1]);
-				registrator->Register("BaseSellLot", &inputBaseLot[1]);
-				registrator->Register("FirstSellFree", &inputFirstFree[1]);
+				registrator->Register("StopNewBuy",      &inputStopNew[0]);
+				registrator->Register("StopBuy",         &inputStop[0]);
+				registrator->Register("BaseBuyLot",      &inputBaseLot[0]);
+				registrator->Register("FirstBuyFree",    &inputFirstFree[0]);
+				registrator->Register("StopNewSell",     &inputStopNew[1]);
+				registrator->Register("StopSell",        &inputStop[1]);
+				registrator->Register("BaseSellLot",     &inputBaseLot[1]);
+				registrator->Register("FirstSellFree",   &inputFirstFree[1]);
 
-				registrator->Register("Step", &inputStep);
+				registrator->Register("Step",            &inputStep);
 				registrator->Register("FirstTakeProfit", &inputFirstTakeProfit);
-				registrator->Register("TakeProfit", &inputTakeProfit);
-				registrator->Register("StopLoss", &inputStopLoss);
-				registrator->Register("MaxGridLevel", &inputMaxGridLevel);
-				registrator->Register("MaxLot", &inputMaxLot);
-				registrator->Register("PipsMultiplier", &inputPipsMultiplier);
-				registrator->Register("AveragingLevel", &inputAveragingLevel);
-				registrator->Register("AverageAll", &inputAverageAll);
-				registrator->Register("CloseMode", &inputCloseMode);
-				registrator->Register("FreeLvl", &inputFreeLvl);
-				registrator->Register("TimeFrame", &inputTimeFrame);
-				registrator->Register("Period1", &inputPeriod1);
-				registrator->Register("Deviation", &inputDeviation);
-				registrator->Register("MinDev", &inputMinDev);
-				registrator->Register("RollBack", &inputRollBack);
-				registrator->Register("Period2", &inputPeriod2);
-				registrator->Register("Magic", &inputMagic);
-				registrator->Register("AutoMM", &inputAutoMM);
-				registrator->Register("MMEquity", &inputMMEquity);
+				registrator->Register("TakeProfit",      &inputTakeProfit);
+				registrator->Register("StopLoss",        &inputStopLoss);
+				registrator->Register("MaxGridLevel",    &inputMaxGridLevel);
+				registrator->Register("MaxLot",          &inputMaxLot);
+				registrator->Register("PipsMultiplier",  &inputPipsMultiplier);
+				registrator->Register("AveragingLevel",  &inputAveragingLevel);
+				registrator->Register("AverageAll",      &inputAverageAll);
+				registrator->Register("CloseMode",       &inputCloseMode);
+				registrator->Register("FreeLvl",         &inputFreeLvl);
+				registrator->Register("TimeFrame",       &inputTimeFrame);
+				registrator->Register("Period1",         &inputPeriod1);
+				registrator->Register("Deviation",       &inputDeviation);
+				registrator->Register("MinDev",          &inputMinDev);
+				registrator->Register("RollBack",        &inputRollBack);
+				registrator->Register("Period2",         &inputPeriod2);
+				registrator->Register("Magic",           &inputMagic);
+				registrator->Register("AutoMM",          &inputAutoMM);
+				registrator->Register("MMEquity",        &inputMMEquity);
 			}
+
 			void paramsDeltaCalc(double oldPoint) {
 				deltaStep		= inputStep				* oldPoint;
 				deltaFirstTP	= inputFirstTakeProfit	* oldPoint;
