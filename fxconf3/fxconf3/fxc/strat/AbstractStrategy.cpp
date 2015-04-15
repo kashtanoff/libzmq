@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../OrdersManager.cpp"
+#include "../fxc.h"
+#include "../debug/Debug.h"
 #include "../TradeManager.cpp"
 #include "../Diller.cpp"
 
@@ -11,20 +12,19 @@
 
 namespace fxc {
 
-namespace strategy {
-
 	class AbstractStrategy :  
 		public TerminalInfo,
-		public OrdersManager,
 		public TradeManager,
 		public TimeSeries {
 
 		public:
-			bool tradeAllowed = false;		//флаг разрешени€ или запрета торговых операций
+			bool softBreak = false;
+			bool hardBreak = false;
+			std::string status;				//ќсновной статус работы советника
 			std::string reason;				//причина запрета торговых операций
 
 			AbstractStrategy() :
-				TerminalInfo() 	{
+				TerminalInfo() {
 			}
 
 			virtual void initStrategy() {};   //»нициализаци€ стратегии
@@ -36,8 +36,9 @@ namespace strategy {
 				k_point = (symbolDigits == 3 || symbolDigits == 5) ? 10 : 1;
 				deltaCalc();
 				initOrdersManager(this);
-				printRegisteredProps();
+				//printRegisteredProps();
 				initStrategy();
+				is_visual = true; // mqlVisualMode;
 				MARK_FUNC_OUT
 			}
 				
@@ -78,6 +79,7 @@ namespace strategy {
 			void tickInitEnd() {
 				MARK_FUNC_IN
 				updateFirst(ask, bid);
+				//msg << "newBars: " << (int)getChartData(3)->newBars << "\r\n" << msg_box;
 				invokeListeners();
 				((OrdersManager*) this)->reset();
 				MARK_FUNC_OUT
@@ -156,6 +158,5 @@ namespace strategy {
 			double	equity;
 			Diller* curdil;
 	};
-}
 
 }

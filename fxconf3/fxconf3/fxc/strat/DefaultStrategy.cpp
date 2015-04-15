@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../fxc.h"
+#include "../debug/Debug.h"
 #include "AbstractStrategy.cpp"
 #include "../debug/Debug.h"
 #include "../indicators/RAIndicator.cpp"
@@ -38,10 +40,16 @@ namespace strategy {
 
 			virtual void Strategy() {
 				MARK_FUNC_IN
-					//fxc::msg << "Strategy" << fxc::msg_box;
-				// Если нет ордеров в рынке
-				if (!curdil->level) {
-					// Если не запрещено открытие новой сетки и есть сигнал
+					
+					// Если нет ордеров в рынке
+					showValue(8, "Strategy working...");
+				showValue(7, "new bars:", (int)getChartData(30)->newBars);
+				if (!curdil->level) {  //Если ордеров нет, то если можно, открываем первый
+					if (softBreak) {
+						hardBreak = true;  //После завершения усреднения, включаем полный запрет
+						status = "Averaging done. Trading stopped.";
+						return;
+					}
 
 					if (!inputStopNew[curdil->type] && compSignal()) {
 						createOrder(

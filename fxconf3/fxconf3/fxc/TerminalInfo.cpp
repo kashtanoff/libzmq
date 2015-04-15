@@ -4,6 +4,7 @@
 #include "debug/Debug.h"
 #include "../Property.h"
 #include <string>
+#include <array>
 
 namespace fxc {
 	class TerminalInfo : public CPropertyList 

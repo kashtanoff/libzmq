@@ -4,8 +4,6 @@
 
 namespace fxc {
 
-namespace indicator {
-
 	class AbstractIndicator :
 		ChartListener 
 	{
@@ -47,6 +45,5 @@ namespace indicator {
 		std::vector<utils::CircularBuffer<double>*> buffers;
 	};
 
-}
 
 }

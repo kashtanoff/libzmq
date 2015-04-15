@@ -99,6 +99,7 @@ public:
 	{
 	   if(!showinfo)
 	      return;
+	   Print("Comment: ", action.comment);
 	   switch(action.o_type) {
 	      case 0: info.Set((string)action.o_ticket, action.comment); break;
 	      case 1: info.Set((string)action.o_ticket, action.intret); break;

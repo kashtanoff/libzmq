@@ -5,16 +5,12 @@
 #include "debug/Debug.h"
 #include "fxc.h"
 #include "../MqlUtils.cpp"
+#include "OrdersManager.cpp"
 
-<<<<<<< HEAD
-namespace fxc { 
 
-	#pragma pack(1)
-=======
 namespace fxc {
 	
 	#pragma pack(push,1)
->>>>>>> 0dc9dc87f274df0eab7db03cfa1e8c555362fe13
 	struct TradeAction {
 		double    lots;      // 8 bytes
 		double    openprice; // 8 bytes
@@ -28,10 +24,11 @@ namespace fxc {
 	};
 	#pragma pack(pop,1)
 
-	class TradeManager {
+	class TradeManager :
+		public OrdersManager {
 
 		public:
-
+			bool is_visual = false;
 			void mapActions(void* arrayPtr, int length) {
 				auto ptr = (fxc::TradeAction*) arrayPtr;
 
@@ -102,6 +99,7 @@ namespace fxc {
 				action->slprice   = slprice;
 				action->tpprice   = tpprice;
 				action->actionId  = JOB_CREATE;
+				Mql::write2str(&action->comment, comment.c_str());
 				MARK_FUNC_OUT
 			}
 
@@ -149,6 +147,7 @@ namespace fxc {
 				MARK_FUNC_IN
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> CloseOrder(): actions limit exceeded\r\n" << fxc::msg_box;
+					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
@@ -164,14 +163,77 @@ namespace fxc {
 				action->actionId  = JOB_CLOSE;
 				MARK_FUNC_OUT
 			}
+			inline void showValue(int key, std::string value) {
+				MARK_FUNC_IN
+				if (!is_visual)
+					return;
+				if (actionsLen + 1 >= ext_tradeActions.size()) {
+					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
+					return;
+				}
+				auto action = ext_tradeActions[actionsLen++];
+
+				action->ticket = key;
+				action->intret = 0;
+				action->type = SHOW_STR_VALUE;
+				action->lots = 0;
+				action->openprice = 0;
+				action->slprice = 0;
+				action->tpprice = 0;
+				action->actionId = JOB_SHOW_VALUE;
+				Mql::write2str(&action->comment, value.c_str());
+				msg << "c_str: " << value.c_str() << "\r\n" << msg_box;
+				MARK_FUNC_OUT
+			}
+			inline void showValue(int key, std::string label, int value) {
+				MARK_FUNC_IN
+				if (!is_visual)
+					return;
+				if (actionsLen + 1 >= ext_tradeActions.size()) {
+					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
+					return;
+				}
+				auto action = ext_tradeActions[actionsLen++];
+
+				action->ticket = key;
+				action->intret = value;
+				action->type = SHOW_INT_VALUE;
+				action->lots = 0;
+				action->openprice = 0;
+				action->slprice = 0;
+				action->tpprice = 0;
+				action->actionId = JOB_SHOW_VALUE;
+				Mql::write2str(&action->comment, label.c_str());
+				MARK_FUNC_OUT
+			}
+			inline void showValue(int key, std::string label, double value, int digits=5) {
+				MARK_FUNC_IN
+					if (!is_visual)
+						return;
+				if (actionsLen + 1 >= ext_tradeActions.size()) {
+					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
+					return;
+				}
+				auto action = ext_tradeActions[actionsLen++];
+
+				action->ticket = key;
+				action->intret = digits;
+				action->type = SHOW_DOUBLE_VALUE;
+				action->lots = value;
+				action->openprice = 0;
+				action->slprice = 0;
+				action->tpprice = 0;
+				action->actionId = JOB_SHOW_VALUE;
+				Mql::write2str(&action->comment, label.c_str());
+				MARK_FUNC_OUT
+			}
 
 
 #pragma endregion
 		private:
-
+			
 			int actionsLen;
-
-			std::vector<TradeAction*> ext_tradeActions;
+		std::vector<TradeAction*> ext_tradeActions;
 
 	};
 

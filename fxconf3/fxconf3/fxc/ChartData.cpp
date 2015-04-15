@@ -42,7 +42,7 @@ namespace fxc {
 				volume.alloc(buffSize);
 			}
 
-			void update(MqlRates* pointer, unsigned length) {
+			void update(MqlRates* pointer, int length) {
 				MARK_FUNC_IN
 				newBars = 0;
 				
@@ -55,7 +55,7 @@ namespace fxc {
 				int i;
 				MqlRates* data;
 
-				for (i = length - 2; i >= 0; --i) {
+				for (i = length - 2; i >= 0; i--) {
 					data = pointer + i;
 					if (data->time == time[0]) {
 						time.update(data->time);
@@ -64,11 +64,10 @@ namespace fxc {
 						open.update(data->open);
 						close.update(data->close);
 						volume.update(data->tick_volume);
-						i++;
 						break;
 					}
 				}
-
+				i++;
 				newBars = length - i;
 				for (; i < length; ++i) {
 					data = pointer + i;
@@ -82,7 +81,7 @@ namespace fxc {
 				MARK_FUNC_OUT
 			}
 
-			inline const unsigned getSize() {
+			inline const int getSize() {
 				return time.getSize();
 			}
 
@@ -109,27 +108,23 @@ namespace fxc {
 				}
 			}
 
-			void registerTimeframe(const int timeframe, const unsigned length, fxc::ChartListener* const listener) {
+			void registerTimeframe(const int timeframe, const int length, fxc::ChartListener* const listener) {
 				MARK_FUNC_IN
 				registerTimeframe(timeframe, length);
 				registerListener(timeframe, listener);
 				MARK_FUNC_OUT
 			}
 
-			void registerTimeframe(const int timeframe, const unsigned length) {
-				MARK_FUNC_IN
+			void registerTimeframe(const int timeframe, const int length) {
 				MARK_FUNC_IN
 				if (!_chartData.count(timeframe)) {
 					_chartData[timeframe] = new ChartData();
 					_timeframes.push_back(timeframe);
 					std::sort(_timeframes.begin(), _timeframes.end());
 				}
-				MARK_FUNC_OUT
-				MARK_FUNC_IN
 				if (_chartData[timeframe]->getSize() < length) {
 					_chartData[timeframe]->resize(length);
 				}
-				MARK_FUNC_OUT
 				MARK_FUNC_OUT
 			}
 
@@ -154,7 +149,10 @@ namespace fxc {
 			}
 
 			inline fxc::ChartData* getChartData(const int timeframe) {
-				return _chartData[timeframe];
+				MARK_FUNC_IN
+					auto res = _chartData[timeframe];
+				MARK_FUNC_OUT
+				return res;
 			}
 
 		private:

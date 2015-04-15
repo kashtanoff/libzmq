@@ -19,10 +19,11 @@ namespace utils {
 				delete []_buffer;
 			}
 
-			void alloc(unsigned size) {
+			void alloc(int size) {
 				MARK_FUNC_IN
 				if (_buffer == nullptr) {
 					_buffer = new T[size];
+					memset(_buffer, 0, sizeof(T) * size);
 				}
 				else {
 					auto b = new T[size];
@@ -52,26 +53,26 @@ namespace utils {
 				_buffer[_index] = value;
 			}
 
-			void skip(unsigned i) {
+			void skip(int i) {
 				i = i % _size;
 				_index = i > _index ? 
 					_index - i + _size : 
 					_index - i;
 			}
 			
-			T& operator[](const unsigned i) {
+			T& operator[](const int i) {
 				return _buffer[(_index+i) % _size];
 			}
 
-			inline unsigned getSize() {
+			inline int getSize() {
 				return _size;
 			}
 		
 		private:
 
-			T*       _buffer;
-			int      _index;
-			unsigned _size;
+			T*      _buffer;
+			int     _index;
+			int		_size;
 
 	};
 

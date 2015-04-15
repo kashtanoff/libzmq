@@ -18,6 +18,15 @@
 #define JOB_MODIFY 2
 #define JOB_DELETE 3
 #define JOB_CLOSE  4
+#define JOB_PRINT_ORDER	5
+#define JOB_PRINT_TEXT	6
+#define JOB_DRAW_ORDER	7
+#define JOB_SHOW_VALUE	8
+#define JOB_MASG_BOX	9
+
+#define SHOW_STR_VALUE		0
+#define SHOW_INT_VALUE		1
+#define SHOW_DOUBLE_VALUE	2
 
 #define PERIOD_M1      1     // 1 минута
 #define PERIOD_M5      5     // 5 минут

@@ -167,7 +167,7 @@ int OnInit()
 	lastdate = TimeCurrent();
 
 	EventSetTimer(1);
-
+	Print("tfCount=", tfCount);
 	return (INIT_SUCCEEDED);
 }
 
@@ -188,10 +188,12 @@ void OnTick()
 				return;
 			}
 			else {
+			Print("call c_refresh_chartdata");
 				c_refresh_chartdata(tfRates[i].timeframe, tfRates[i].length, tfRates[i].rates);
 			}
 		}
 		else {
+		Print("wait bar border, iTime=", iTime(NULL, tfRates[i].timeframe, 0), "  timeframe=", tfRates[i].timeframe);
 			// Если для меньшего таймфрема мы не прошли границу таймфрема, нет смысла проверять ее для более высоких таймфреймов
 			break;
 		}
@@ -380,7 +382,7 @@ bool DllInit()
 	c_setint(   "AverageAll",         AverageAll);
 	c_setint(   "CloseMode",          CloseMode);
 	c_setint(   "FreeLvl",            FreeLvl);
-	c_setint(   "TimeFrame",          TimeFrame);
+	c_setint(   "TimeFrame",          tfs[TimeFrame]);
 	c_setint(   "Period1",            Period1);
 	c_setdouble("Deviation",          Deviation);
 	c_setint(   "MinDev",             MinDev);
