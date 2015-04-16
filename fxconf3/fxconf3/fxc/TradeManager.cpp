@@ -24,11 +24,12 @@ namespace fxc {
 	};
 	#pragma pack(pop,1)
 
-	class TradeManager :
-		public OrdersManager {
+	class TradeManager : public OrdersManager {
 
 		public:
+
 			bool is_visual = false;
+			
 			void mapActions(void* arrayPtr, int length) {
 				auto ptr = (fxc::TradeAction*) arrayPtr;
 
@@ -36,17 +37,17 @@ namespace fxc {
 					ext_tradeActions.push_back(ptr + i);
 				}
 
-				//fxc::msg << "array  mql::[0x" << pointer << "][" << length << "]\r\n" << fxc::msg_box;
-				//fxc::msg << "vector [" << vec->size() << "] / [" << vec->capacity() << "]\r\n" << fxc::msg_box;
+				//fxc::msg << "array  mql::[0x" << arrayPtr << "][" << length << "]\r\n" << fxc::msg_box;
+				//fxc::msg << "vector [" << ext_tradeActions.size() << "] / [" << ext_tradeActions.capacity() << "]\r\n" << fxc::msg_box;
 				//
 				//for (auto i = 0; i < length; ++i) {
-				//	vec->at(i)->o_lots      = i + 0; // 8 bytes
-				//	vec->at(i)->o_openprice = i + 1; // 8 bytes
-				//	vec->at(i)->o_tpprice   = i + 2; // 8 bytes
-				//	vec->at(i)->o_slprice   = i + 3; // 8 bytes
-				//	vec->at(i)->o_ticket    = i + 4; // 4 bytes
-				//	vec->at(i)->o_type      = i + 5; // 4 bytes
-				//	vec->at(i)->intret      = i + 6; // 4 bytes
+				//	//ext_tradeActions.at(i)->lots      = i + 0; // 8 bytes
+				//	//ext_tradeActions.at(i)->openprice = i + 1; // 8 bytes
+				//	//ext_tradeActions.at(i)->tpprice   = i + 2; // 8 bytes
+				//	//ext_tradeActions.at(i)->slprice   = i + 3; // 8 bytes
+				//	//ext_tradeActions.at(i)->ticket    = i + 4; // 4 bytes
+				//	//ext_tradeActions.at(i)->type      = i + 5; // 4 bytes
+				//	//ext_tradeActions.at(i)->intret    = i + 6; // 4 bytes
 				//
 				//	std::stringstream ss;
 				//	ss << "~> cmnt[" << i*i << "]";
@@ -55,7 +56,7 @@ namespace fxc {
 				//
 				//	fxc::msg 
 				//		<< "vector[" << i << "] " 
-				//		<< "[0x" << vec->at(i) << "] "
+				//		<< "[0x" << ext_tradeActions.at(i) << "] "
 				//		//<< vec->at(i)->o_lots << ", "
 				//		//<< vec->at(i)->o_openprice << ", "
 				//		//<< vec->at(i)->o_tpprice << ", "
@@ -64,18 +65,25 @@ namespace fxc {
 				//		//<< vec->at(i)->o_type << ", "
 				//		//<< vec->at(i)->intret << ", "
 				//		<< "["
-				//		<< vec->at(i)->comment.size << ", "
-				//		<< vec->at(i)->comment.buffer 
-				//		<< "] : \"" << Mql::str2chars(&vec->at(i)->comment) << "\""
+				//		<< (ptr + i)->comment.size << ", "
+				//		<< (ptr + i)->comment.buffer
+				//		<< "] => "
+				//		<< "["
+				//		<< ext_tradeActions.at(i)->comment.size << ", "
+				//		<< ext_tradeActions.at(i)->comment.buffer
+				//		<< "]"
+				//		<< " : \"" << Mql::str2chars(&ext_tradeActions.at(i)->comment) << "\""
 				//		<< "\r\n" << fxc::msg_box;
 				//}
 			}
+			
 			//Обнуляет список действий
 			inline void resetActionManager() {
 				actionsLen = 0;
 			}
 
 		protected:
+			
 			//Возвращает количество назначенных действий
 			inline int getActionsStackSize() {
 				return actionsLen;
@@ -163,77 +171,84 @@ namespace fxc {
 				action->actionId  = JOB_CLOSE;
 				MARK_FUNC_OUT
 			}
+
 			inline void showValue(int key, std::string value) {
 				MARK_FUNC_IN
-				if (!is_visual)
+				if (!is_visual) {
 					return;
+				}
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
 					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
-				action->ticket = key;
-				action->intret = 0;
-				action->type = SHOW_STR_VALUE;
-				action->lots = 0;
+				action->ticket    = key;
+				action->intret    = 0;
+				action->type      = SHOW_STR_VALUE;
+				action->lots      = 0;
 				action->openprice = 0;
-				action->slprice = 0;
-				action->tpprice = 0;
-				action->actionId = JOB_SHOW_VALUE;
+				action->slprice   = 0;
+				action->tpprice   = 0;
+				action->actionId  = JOB_SHOW_VALUE;
 				Mql::write2str(&action->comment, value.c_str());
-				msg << "c_str: " << value.c_str() << "\r\n" << msg_box;
+
+				//msg << "-> c_str: \"" << value.c_str() << "\" => \"" << Mql::str2chars(&action->comment) << "\" [" << action->comment.size << "] [0x" << action->comment.buffer << "]\r\n" << msg_box;
 				MARK_FUNC_OUT
 			}
+			
 			inline void showValue(int key, std::string label, int value) {
 				MARK_FUNC_IN
-				if (!is_visual)
+				if (!is_visual) {
 					return;
+				}
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
 					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
-				action->ticket = key;
-				action->intret = value;
-				action->type = SHOW_INT_VALUE;
-				action->lots = 0;
+				action->ticket    = key;
+				action->intret    = value;
+				action->type      = SHOW_INT_VALUE;
+				action->lots      = 0;
 				action->openprice = 0;
-				action->slprice = 0;
-				action->tpprice = 0;
-				action->actionId = JOB_SHOW_VALUE;
+				action->slprice   = 0;
+				action->tpprice   = 0;
+				action->actionId  = JOB_SHOW_VALUE;
 				Mql::write2str(&action->comment, label.c_str());
+
 				MARK_FUNC_OUT
 			}
+			
 			inline void showValue(int key, std::string label, double value, int digits=5) {
 				MARK_FUNC_IN
-					if (!is_visual)
-						return;
+				if (!is_visual) {
+					return;
+				}
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
 					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
-				action->ticket = key;
-				action->intret = digits;
-				action->type = SHOW_DOUBLE_VALUE;
-				action->lots = value;
+				action->ticket    = key;
+				action->intret    = digits;
+				action->type      = SHOW_DOUBLE_VALUE;
+				action->lots      = value;
 				action->openprice = 0;
-				action->slprice = 0;
-				action->tpprice = 0;
-				action->actionId = JOB_SHOW_VALUE;
+				action->slprice   = 0;
+				action->tpprice   = 0;
+				action->actionId  = JOB_SHOW_VALUE;
 				Mql::write2str(&action->comment, label.c_str());
+
 				MARK_FUNC_OUT
 			}
 
-
-#pragma endregion
 		private:
 			
 			int actionsLen;
-		std::vector<TradeAction*> ext_tradeActions;
+			std::vector<TradeAction*> ext_tradeActions;
 
 	};
 

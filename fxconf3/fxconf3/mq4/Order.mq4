@@ -97,14 +97,14 @@ public:
 	}
 	static void ShowValue(TradeAction& action)  //o_type: 0-str, 1-int, 2-double; o_ticket - key; comment - label; intret - int value/digits; o_lots - double value
 	{
-	   if(!showinfo)
-	      return;
-	   Print("Comment: ", action.comment);
-	   switch(action.o_type) {
-	      case 0: info.Set((string)action.o_ticket, action.comment); break;
-	      case 1: info.Set((string)action.o_ticket, action.intret); break;
-	      case 2: info.Set((string)action.o_ticket, action.o_lots, action.intret); break;
-	   }
+		if(!showinfo)
+			return;
+		Print("Comment: \"", ExtractString(action.comment), "\"");
+		switch(action.o_type) {
+			case 0: info.Set((string) action.o_ticket, ExtractString(action.comment)); break;
+			case 1: info.Set((string) action.o_ticket, action.intret); break;
+			case 2: info.Set((string) action.o_ticket, action.o_lots, action.intret); break;
+		}
 	}
 	static void MsgBox(TradeAction& action)
 	{}

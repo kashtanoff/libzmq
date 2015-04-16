@@ -28,6 +28,16 @@ struct TfRates {
 	MqlRates rates[];
 };
 
+string ExtractString(string str) {
+	int len = StringLen(str);
+	for (int i = 0; i < len; i++) {
+		if (StringGetChar(str, i) == 0) {
+			return StringSubstr(str, 0, i);
+		}
+	}
+	return str;
+}
+
 #import "fxc{{build}}.dll"
 	bool   c_init();
 	void   c_deinit();
@@ -392,6 +402,9 @@ bool DllInit()
 	c_setint(   "AutoMM",             AutoMM);
 	c_setint(   "MMEquity",           MMEquity);
 
+	for (int n = 0; n < 64; n++) {
+		StringInit(actList[n].comment, 128, 95);
+	}
 	c_setactions(actList, ArraySize(actList));
 
 	//Запуск постинициализации

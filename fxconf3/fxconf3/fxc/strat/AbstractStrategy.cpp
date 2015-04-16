@@ -36,7 +36,7 @@ namespace fxc {
 				k_point = (symbolDigits == 3 || symbolDigits == 5) ? 10 : 1;
 				deltaCalc();
 				initOrdersManager(this);
-				//printRegisteredProps();
+				printRegisteredProps();
 				initStrategy();
 				is_visual = true; // mqlVisualMode;
 				MARK_FUNC_OUT
