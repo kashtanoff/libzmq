@@ -48,10 +48,16 @@ namespace fxc {
 		int			mqlTester;				//Признак работы запущенной программы в тестере
 		int			mqlOptimization;		//Признак работы запущенной программы в процессе оптимизации
 		int			mqlVisualMode;			//Признак работы запущенной программы в визуальном режиме тестирования
-
+		//Динамические данные (обновляются каждый тик)
+		double	ask;
+		double	bid;
+		double	equity;
+		double	balance;
+		//Пересчетные константные параметры
 		int			k_point = 1;				//Коэффициент пересчета старых и новых пунктов
 		double		deltaStopLevel;
 		double		deltaFreezeLevel;
+		bool		is_visual;
 	
 		TerminalInfo() {
 			Register("accountCompany",			&accountCompany);			//название брокерской компании, в которой зарегистрирован текущий счет
@@ -149,9 +155,10 @@ namespace fxc {
 			return value * k_point * symbolPoint;
 		}
 		
-		inline void deltaCalc() {
+		inline void terminalInfoCalc() {
 			deltaStopLevel		= symbolStopLevel	* symbolPoint;
 			deltaFreezeLevel	= symbolFreezeLevel	* symbolPoint;
+			is_visual = (mqlOptimization || (mqlTester && !mqlVisualMode)) ? false : true;
 		}
 	};
 }

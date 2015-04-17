@@ -446,9 +446,9 @@ _DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
 
 //Инициализация цикла обновления ордеров, поскольку цикл получаеться рваным (каждая итерация вызывается из MQL), 
 //нельзя пользоватья результатами в MQL программе до завершения цикла
-_DLLAPI bool __stdcall c_tick_init_begin(double ask, double bid, double equity)
+_DLLAPI bool __stdcall c_tick_init_begin(double ask, double bid, double equity, double balance)
 {
-	return pool[std::this_thread::get_id()]->tickInitBegin(ask, bid, equity);
+	return pool[std::this_thread::get_id()]->tickInitBegin(ask, bid, equity, balance);
 }
 
 _DLLAPI void __stdcall c_tick_init_end()

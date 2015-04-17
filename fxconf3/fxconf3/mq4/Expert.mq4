@@ -64,7 +64,7 @@ string ExtractString(string str) {
 
 	void   c_refresh_chartdata(int timeframe, int length, MqlRates& rates[]);
 	int    c_get_timeframes(int& timeframes[], int& sizes[]);
-	bool   c_tick_init_begin(double ask, double bid, double equity);
+	bool   c_tick_init_begin(double ask, double bid, double equity, double balance);
 	void   c_tick_init_end();
 #import
 
@@ -183,7 +183,7 @@ int OnInit()
 
 void OnTick()
 {
-	if (c_tick_init_begin(Ask, Bid, AccountEquity())) {
+	if (c_tick_init_begin(Ask, Bid, AccountEquity(), AccountBalance())) {
 		Print("bypass");
 		return;
 	}
@@ -198,12 +198,10 @@ void OnTick()
 				return;
 			}
 			else {
-			Print("call c_refresh_chartdata");
 				c_refresh_chartdata(tfRates[i].timeframe, tfRates[i].length, tfRates[i].rates);
 			}
 		}
 		else {
-		Print("wait bar border, iTime=", iTime(NULL, tfRates[i].timeframe, 0), "  timeframe=", tfRates[i].timeframe);
 			// Если для меньшего таймфрема мы не прошли границу таймфрема, нет смысла проверять ее для более высоких таймфреймов
 			break;
 		}
@@ -403,7 +401,7 @@ bool DllInit()
 	c_setint(   "MMEquity",           MMEquity);
 
 	for (int n = 0; n < 64; n++) {
-		StringInit(actList[n].comment, 64, 95);
+		StringInit(actList[n].comment, 26, 95);
 	}
 	c_setactions(actList, ArraySize(actList));
 
@@ -439,24 +437,8 @@ void InitLook()
 
 	info.Init();
 	info.Set("header",    "Olsen&Cleverton fxc v{{ver}}");
-	info.Set("line",      "----------------------");
+	info.Set("line",      "--------------------------");
    
-	info.Set("0",    "Open profit:", 0.0);
-	info.Set("1",   "  Buy level:", 0);
-	info.Set("2",  "       lots:", 0.0);
-	info.Set("3",  " Sell level:", 0);
-	info.Set("4", "       lots:", 0.0);
-	info.Set("5", "Trade not allowed");
-	info.Set("6", "Permissions cheking...");
-	/*
-	if (mqlVisualMode)
-	{
-		info.Set("dd",      "     Max DD:", 0.0);
-		info.Set("max_lvl", "  Max level:", 0);
-		info.Set("lot",     "Lot size:", MarketInfo(Symbol(), MODE_LOTSIZE));
-		info.Set("spread",  "Spread:",   MarketInfo(Symbol(), MODE_SPREAD));
-		info.Set("minlot",  "Min lot:",  MarketInfo(Symbol(), MODE_MINLOT));
-	}*/
 	
 	//ShowControlPanel(info.x + info.dx + 10, info.y);
 	info.DrawHistory();

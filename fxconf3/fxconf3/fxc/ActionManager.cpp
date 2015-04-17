@@ -28,7 +28,7 @@ namespace fxc {
 
 		public:
 
-			bool is_visual = false;
+			
 			
 			void mapActions(void* arrayPtr, int length) {
 				auto ptr = (fxc::TradeAction*) arrayPtr;
@@ -239,6 +239,69 @@ namespace fxc {
 				action->actionId  = JOB_SHOW_VALUE;
 				Mql::write2str(&action->comment, label);
 				MARK_FUNC_OUT
+			}
+#pragma region Checks
+			public:
+			//Проверка уровня стоплосса или тейкпрофита
+			inline bool check_sl(int type, double low_price, double high_price) {
+				return !(low_price && high_price && dillers[type % 2]->delta(low_price, high_price) < deltaStopLevel);
+			}
+
+			//Проверка на правильность параметров при открытии ордера
+			inline int check_new(int type, double* lots, double* openprice, double* slprice, double* tpprice) {
+				type = type % 2;
+				if (
+					type < 2 && // Для немедленного исполнения
+					(
+					!check_sl(type, *slprice, dillers[type]->mpc) ||
+					!check_sl(type, dillers[type]->mpc, *tpprice)
+					)
+					) {
+					return 201;
+				}
+
+				if (
+					type > 1 &&  // Для отложенных ордеров
+					(
+					!check_sl(type, *openprice, *tpprice) ||
+					!check_sl(type, *slprice, *openprice)
+					)
+					) {
+					return 201;
+				}
+
+				if (
+					(type == OP_BUYLIMIT || type == OP_SELLLIMIT) &&
+					!check_sl(type, *openprice, dillers[type]->mpo)
+					) {
+					return 202;
+				}
+
+				if (
+					(type == OP_BUYSTOP || type == OP_SELLSTOP) &&
+					!check_sl(type, dillers[type]->mpo, *openprice)
+					) {
+					return 202;
+				}
+
+				*lots = normLot(*lots);
+				*openprice = normPrice(*openprice);
+				*tpprice = normPrice(*tpprice);
+				*slprice = normPrice(*slprice);
+
+				return 0;
+			}
+
+#pragma endregion
+
+			inline double normLot(double value) {
+				value = int(ceil(value / symbolLotStep)) * symbolLotStep;
+				value = max(value, symbolMinLot);
+				return min(value, symbolMaxLot);
+			}
+
+			inline double normPrice(double value) {
+				return floor(value / symbolPoint + 0.5) * symbolPoint;
 			}
 
 		private:

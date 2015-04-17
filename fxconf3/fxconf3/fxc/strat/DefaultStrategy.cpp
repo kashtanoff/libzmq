@@ -89,10 +89,10 @@ namespace strategy {
 
 				AsciiTable table;
 				table
-					.setCell("BuyLevel:") .right().setCell(Format::decimal(dillers[0]->level,      2)).down() // Уровень сетки на покупку
+					.setCell("BuyLevel:") .right().setCell(Format::decimal(dillers[0]->level,      0)).down() // Уровень сетки на покупку
 					.setCell("BuyLots:")  .right().setCell(Format::decimal(dillers[0]->total_lots, 2)).down() // Суммарная лотность на покупку
 					.setCell("BuyDD:")    .right().setCell(Format::decimal(dillers[0]->open_dd,    2)).down() // Просадка на покупку
-					.setCell("SellLevel:").right().setCell(Format::decimal(dillers[1]->level,      2)).down() // Уровень сетки на продажу
+					.setCell("SellLevel:").right().setCell(Format::decimal(dillers[1]->level,      0)).down() // Уровень сетки на продажу
 					.setCell("SellLots:") .right().setCell(Format::decimal(dillers[1]->total_lots, 2)).down() // Суммарная лотность на продажу
 					.setCell("SellDD:")   .right().setCell(Format::decimal(dillers[1]->open_dd,    2)).down() // Просадка на продажу
 					.setCell("SymbolDD:") .right().setCell(Format::decimal(dillers[0]->open_dd 

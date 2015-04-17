@@ -9,11 +9,13 @@
 
 namespace fxc { 
 
-	class OrdersManager {
+	class OrdersManager :
+		public TerminalInfo	{
 
 		public:
 
-			OrdersManager() {
+			OrdersManager() :
+				TerminalInfo(){
 				MARK_FUNC_IN
 				dillers[0] = new Diller(OP_BUY);
 				dillers[1] = new Diller(OP_SELL);
@@ -23,8 +25,9 @@ namespace fxc {
 				MARK_FUNC_OUT
 			}
 			
-			void initOrdersManager(TerminalInfo* terminal) {
-				if (!terminal->mqlOptimization) { // Если не оптимизация
+			void initOrdersManager() {
+				terminalInfoCalc();
+				if (mqlOptimization) { // Если не оптимизация
 					copyOrders = [&]() {
 						old_index  = 0;
 						old_length = current_index;
@@ -35,8 +38,8 @@ namespace fxc {
 					copyOrders = []() {};
 				}
 				//Предварительная инициализация базового лота, после получения параметров советника будет переопределение
-				dillers[OP_BUY]->base_lot = terminal->symbolMinLot; 
-				dillers[OP_SELL]->base_lot = terminal->symbolMinLot; 
+				dillers[OP_BUY]->base_lot = symbolMinLot; 
+				dillers[OP_SELL]->base_lot = symbolMinLot; 
 			}
 
 			inline void sortOrders() {
@@ -50,7 +53,7 @@ namespace fxc {
 				MARK_FUNC_OUT
 			}
 
-			void reset() {
+			void resetOrderManager() {
 				copyOrders();
 				isSorted      = false;
 				current_index = 0;
@@ -127,10 +130,6 @@ namespace fxc {
 		protected:
 
 			Diller*     dillers[2];
-
-			double*	ext_open_dd;     //102 подсчет открытой просадки по каждому типу отдельно
-			double*	ext_total_lots;  //103 суммарный объем лотов по каждому типу
-			int*    ext_count_p;     //107
 
 		private:
 
