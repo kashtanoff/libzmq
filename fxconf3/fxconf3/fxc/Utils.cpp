@@ -1,6 +1,10 @@
 #pragma once
 
+#include <windows.h>
+#include <sstream>
+#include <iomanip>
 #include "debug/Debug.h"
+#include "fxc.h"
 
 namespace fxc {
 
@@ -73,6 +77,141 @@ namespace utils {
 			T*      _buffer;
 			int     _index;
 			int		_size;
+
+	};
+
+	class AsciiTable {
+
+		public:
+
+			static const int ALIGN_LEFT  = 0;
+			static const int ALIGN_RIGHT = 1;
+
+			AsciiTable& up(bool resetColumn = true) {
+				_y = _y == 0 ? _bottom : _y - 1;
+				if (resetColumn) {
+					_x = 0;
+				}
+				return *this;
+			}
+
+			AsciiTable& left() {
+				_x = _x == 0 ? _right : _x - 1;
+				return *this;
+			}
+
+			AsciiTable& down(bool resetColumn = true) {
+				_y++;
+				if (resetColumn) {
+					_x = 0;
+				}
+				return *this;
+			}
+
+			AsciiTable& right() {
+				_x++;
+				return *this;
+			}
+
+			AsciiTable& setCell(int row, int col, std::string str) {
+				_x = col;
+				_y = row;
+				return setCell(str);
+			}
+
+			AsciiTable& setCell(std::string str) {
+				MARK_FUNC_IN
+				while (_y > ((int) _cells.size()) - 1) {
+					_cells.push_back(std::vector<std::string>());
+				}
+				while (_x > ((int) _cells[_y].size()) - 1) {
+					_cells[_y].push_back("");
+				}
+				while (_x > ((int) _colSizes.size()) - 1) {
+					_colSizes.push_back(0);
+				}
+				while (_x > ((int) _colAlign.size()) - 1) {
+					_colAlign.push_back(0);
+				}
+
+				_cells[_y][_x] = str;
+				_colSizes[_x]  = max(_colSizes[_x], str.size());
+				MARK_FUNC_OUT
+
+				if (_bottom < _y) {
+					_bottom = _y;
+				}
+				if (_right < _x) {
+					_right = _x;
+				}
+				return *this;
+			}
+
+			inline AsciiTable& setAlign(const int col, const int align) {
+				_colAlign[col] = align;
+				return *this;
+			}
+
+			inline const int getRowsCount() {
+				return _bottom+1;
+			}
+
+			inline const int getColsCount() {
+				return _right+1;
+			}
+
+			std::string toString() {
+				std::stringstream ss;
+
+				auto rc    = getRowsCount();
+				auto cc    = getColsCount();
+				auto width = getWidth();
+				std::string spacer(_cellspacing, ' ');
+
+				auto ir = 0;
+				for (auto& row : _cells) {
+					auto rw = 0;
+					auto ic = 0;
+					for (auto& cell : row) {
+						ss << (ic > 0 ? spacer : "");
+
+						if (_colAlign[ic] == ALIGN_LEFT) {
+							ss << cell << std::string(_colSizes[ic] - cell.size(), ' ');
+						}
+						else if (_colAlign[ic] == ALIGN_RIGHT) {
+							ss << std::string(_colSizes[ic] - cell.size(), ' ') << cell;
+						}
+						
+						rw += _colSizes[ic++];
+					}
+					ss << std::string(width - rw, ' ');
+					if (++ir < rc) {
+						ss << std::endl;
+					}
+				}
+
+				return ss.str();
+			}
+
+		private:
+
+			int _x           = 0;
+			int _y           = 0;
+			int _bottom      = 0;
+			int _right       = 0;
+			int _cellspacing = 1;
+
+			std::vector< std::vector<std::string> > _cells;
+			std::vector< int > _colSizes;
+			std::vector< int > _colAlign;
+
+			inline const int getWidth() {
+				auto w = _cellspacing * (getColsCount() - 1);
+				for (auto n : _colSizes) {
+					w += n;
+				}
+				return w;
+			}
 
 	};
 

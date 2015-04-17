@@ -43,6 +43,9 @@
     <ClInclude Include="fxc\ChartListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fxc\Format.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -75,9 +78,6 @@
     <ClCompile Include="fxc\debug\Debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fxc\TradeManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="fxc\OrdersManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -103,6 +103,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="fxc\strat\AbstractStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\ActionManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\Format.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

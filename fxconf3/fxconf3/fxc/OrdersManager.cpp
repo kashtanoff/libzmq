@@ -18,7 +18,7 @@ namespace fxc {
 				dillers[0] = new Diller(OP_BUY);
 				dillers[1] = new Diller(OP_SELL);
 
-				dillers[OP_BUY]->opposite = dillers[OP_SELL];
+				dillers[OP_BUY]->opposite  = dillers[OP_SELL];
 				dillers[OP_SELL]->opposite = dillers[OP_BUY];
 				MARK_FUNC_OUT
 			}

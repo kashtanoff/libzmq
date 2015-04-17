@@ -3,7 +3,7 @@
 #include <windows.h>
 
 #include "./AbstractIndicator.cpp"
-#include "../TradeManager.cpp"
+#include "../ActionManager.cpp"
 #include "../OrdersManager.cpp"
 #include "../ChartListener.h"
 #include "../Utils.cpp"

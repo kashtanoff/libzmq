@@ -24,7 +24,7 @@ namespace fxc {
 	};
 	#pragma pack(pop,1)
 
-	class TradeManager : public OrdersManager {
+	class ActionManager : public OrdersManager {
 
 		public:
 
@@ -207,7 +207,7 @@ namespace fxc {
 				auto action = ext_tradeActions[actionsLen++];
 
 				action->ticket    = key;
-				action->intret = value;
+				action->intret    = value;
 				action->type      = SHOW_INT_VALUE;
 				action->lots      = 0;
 				action->openprice = 0;

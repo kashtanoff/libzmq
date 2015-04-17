@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../fxc.h"
-#include "../debug/Debug.h"
-#include "AbstractStrategy.cpp"
+#include "../Format.h"
 #include "../debug/Debug.h"
 #include "../indicators/RAIndicator.cpp"
 #include "../Parameters.cpp"
+#include "AbstractStrategy.cpp"
 
 namespace fxc {
 
@@ -20,8 +20,8 @@ namespace strategy {
 
 			DefaultStrategy() :  
 				AbstractStrategy(),
-				Parameters((CPropertyList*) this){
-
+				Parameters((CPropertyList*) this)
+			{
 			}
 
 			virtual void initStrategy() {
@@ -43,9 +43,9 @@ namespace strategy {
 					
 				// Если нет ордеров в рынке
 				if (!curdil->level) {  //Если ордеров нет, то если можно, открываем первый
-					if (softBreak) {
-						hardBreak = true;  //После завершения усреднения, включаем полный запрет
-						status = "Averaging done. Trading stopped.";
+					if (breakStatus == SOFT_BREAK) {
+						breakStatus = HARD_BREAK;  //После завершения усреднения, включаем полный запрет
+						status    = "Averaging done. Trading stopped.";
 						return;
 					}
 
@@ -82,9 +82,36 @@ namespace strategy {
 				}
 				MARK_FUNC_OUT
 			}
+
 			virtual void showInfo() {
-				int width1 = 14;
-				showValue(0, "BuyLevel:");
+				MARK_FUNC_IN
+				using namespace fxc::utils;
+
+				AsciiTable table;
+				table
+					.setCell("BuyLevel:") .right().setCell(Format::decimal(dillers[0]->level,      2)).down() // Уровень сетки на покупку
+					.setCell("BuyLots:")  .right().setCell(Format::decimal(dillers[0]->total_lots, 2)).down() // Суммарная лотность на покупку
+					.setCell("BuyDD:")    .right().setCell(Format::decimal(dillers[0]->open_dd,    2)).down() // Просадка на покупку
+					.setCell("SellLevel:").right().setCell(Format::decimal(dillers[1]->level,      2)).down() // Уровень сетки на продажу
+					.setCell("SellLots:") .right().setCell(Format::decimal(dillers[1]->total_lots, 2)).down() // Суммарная лотность на продажу
+					.setCell("SellDD:")   .right().setCell(Format::decimal(dillers[1]->open_dd,    2)).down() // Просадка на продажу
+					.setCell("SymbolDD:") .right().setCell(Format::decimal(dillers[0]->open_dd 
+					                                                     + dillers[1]->open_dd,    2)).down() // Общая просадка
+					.setCell("PrevProfit:") .right().setCell("0").down()  // Прибыль за прошлый период
+					.setCell("Profit:")     .right().setCell("0").down()  // Прибыль за текущий период
+					.setCell("O&C Balance:").right().setCell("0").down(); // Баланс средств у нас
+
+				std::stringstream ss(table.setAlign(1, AsciiTable::ALIGN_RIGHT).toString());
+				std::string line;
+				int i = 0;
+
+				while (std::getline(ss, line, '\n')) {
+					showValue(i++, line);
+				}
+
+				showValue(i++, status); // Статус
+				showValue(i++, reason); // Причина
+				MARK_FUNC_OUT
 			}
 
 			inline void moveTP() {
@@ -198,7 +225,8 @@ namespace strategy {
 			}
 
 		private:
-			double	profits[50];
+
+			double profits[50];
 			fxc::indicator::RAIndicator* indicator;
 
 			inline void openNextOrder() {

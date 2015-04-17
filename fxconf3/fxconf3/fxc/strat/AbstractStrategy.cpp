@@ -2,7 +2,7 @@
 
 #include "../fxc.h"
 #include "../debug/Debug.h"
-#include "../TradeManager.cpp"
+#include "../ActionManager.cpp"
 #include "../Diller.cpp"
 
 #include "../TerminalInfo.cpp"
@@ -14,14 +14,14 @@ namespace fxc {
 
 	class AbstractStrategy :  
 		public TerminalInfo,
-		public TradeManager,
+		public ActionManager,
 		public TimeSeries {
 
 		public:
-			bool softBreak = false;
-			bool hardBreak = false;
-			std::string status;				//Основной статус работы советника
-			std::string reason;				//причина запрета торговых операций
+
+			int breakStatus = NO_BREAK;
+			std::string status; // Основной статус работы советника
+			std::string reason; // причина запрета торговых операций
 
 			AbstractStrategy() :
 				TerminalInfo() {
@@ -85,6 +85,7 @@ namespace fxc {
 				((OrdersManager*) this)->reset();
 				MARK_FUNC_OUT
 			}
+
 			/*
 			inline fxc::TimeSeries* const getTimeseries() {
 				return timeseries;
@@ -92,8 +93,10 @@ namespace fxc {
 
 			inline fxc::ChartData* const getChartData(const int timeframe) {
 				return timeseries->getChartData(timeframe);
-				*/
-#pragma region Checks
+			}
+			*/
+
+			#pragma region Checks
 
 			//Проверка уровня стоплосса или тейкпрофита
 			inline bool check_sl(int type, double low_price, double high_price) {
@@ -144,6 +147,9 @@ namespace fxc {
 
 				return 0;
 			}
+
+			#pragma endregion
+
 			inline double normLot(double value) {
 				value = int(ceil(value / symbolLotStep)) * symbolLotStep;
 				value = max(value, symbolMinLot);
@@ -153,7 +159,9 @@ namespace fxc {
 			inline double normPrice(double value) {
 				return floor(value / symbolPoint + 0.5) * symbolPoint;
 			}
+
 		protected:
+			
 			double	ask;
 			double	bid;
 			double	equity;

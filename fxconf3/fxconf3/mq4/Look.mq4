@@ -177,7 +177,7 @@ public:
 		ObjectSet(line_name, OBJPROP_STYLE, STYLE_DOT);     // устанавливаем тип штриховки (пунктирная линия)
 		ObjectSet(line_name, OBJPROP_COLOR, colors[_type]); // устанавливаем цвет(синий/красный)
 	}
-   void DelOldDraws()
+	void DelOldDraws()
 	{
 		string _name;
 		int _type;

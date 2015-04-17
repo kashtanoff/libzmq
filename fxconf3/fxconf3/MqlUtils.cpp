@@ -35,14 +35,12 @@ class Mql {
 			return psz;
 		}
 
-		inline static void write2str(MqlString* str, const char* chars) {
-			write2str(str, chars, false);
+		inline static void write2str(MqlString* mqlstr, const char* chars) {
+			mbstowcs(mqlstr->buffer, chars, mqlstr->size);
 		}
 
-		inline static void write2str(MqlString* str, const char* chars, bool terminate) {
-			mbstowcs(str->buffer, chars, str->size + terminate);
-		}
-		inline static void write2str(MqlString* mqlstr, std::string str) {
+		inline static void write2str(MqlString* mqlstr, const std::string& str) {
+			//write2str(mqlstr, str.c_str());
 			mbstowcs(mqlstr->buffer, str.c_str(), str.length()+1);
 		}
 

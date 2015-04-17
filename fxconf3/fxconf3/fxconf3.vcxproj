@@ -103,6 +103,7 @@
     <ClInclude Include="Defines.h" />
     <ClInclude Include="fxc\ChartListener.h" />
     <ClInclude Include="fxc\debug\Debug.h" />
+    <ClInclude Include="fxc\Format.h" />
     <ClInclude Include="fxc\fxc.h" />
     <ClInclude Include="Property.h" />
     <ClInclude Include="stdafx.h" />
@@ -120,6 +121,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="fxc\Format.cpp" />
     <ClCompile Include="fxc\fxc.cpp" />
     <ClCompile Include="fxconf3.cpp" />
     <ClCompile Include="fxc\indicators\AbstractIndicator.cpp" />
@@ -127,7 +129,7 @@
     <ClCompile Include="fxc\indicators\MovingAverageIndicator.cpp" />
     <ClCompile Include="fxc\indicators\RAIndicator.cpp" />
     <ClCompile Include="fxc\OrdersManager.cpp" />
-    <ClCompile Include="fxc\TradeManager.cpp" />
+    <ClCompile Include="fxc\ActionManager.cpp" />
     <ClCompile Include="fxc\strat\AbstractStrategy.cpp" />
     <ClCompile Include="fxc\strat\DefaultStrategy.cpp" />
     <ClCompile Include="fxc\Order.cpp" />

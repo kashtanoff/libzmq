@@ -13,6 +13,10 @@
 #define OP_BUYSTOP   4
 #define OP_SELLSTOP  5
 
+#define NO_BREAK   0
+#define SOFT_BREAK 1
+#define HARD_BREAK 2
+
 #define JOB_EXIT   0
 #define JOB_CREATE 1
 #define JOB_MODIFY 2
