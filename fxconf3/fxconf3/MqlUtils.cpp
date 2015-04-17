@@ -1,6 +1,7 @@
 #pragma once
 
 #include "windows.h"
+#include <string>
 
 #pragma pack(push,1)
 struct MqlString {
@@ -23,6 +24,7 @@ struct MqlRates {
 };
 #pragma pack(pop,1)
 
+
 class Mql {
 	
 	public:
@@ -39,6 +41,9 @@ class Mql {
 
 		inline static void write2str(MqlString* str, const char* chars, bool terminate) {
 			mbstowcs(str->buffer, chars, str->size + terminate);
+		}
+		inline static void write2str(MqlString* mqlstr, std::string str) {
+			mbstowcs(mqlstr->buffer, str.c_str(), str.length()+1);
 		}
 
 };

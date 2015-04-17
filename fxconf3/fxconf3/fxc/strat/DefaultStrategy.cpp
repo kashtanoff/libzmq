@@ -41,9 +41,7 @@ namespace strategy {
 			virtual void Strategy() {
 				MARK_FUNC_IN
 					
-					// Если нет ордеров в рынке
-					showValue(8, "Strategy working...");
-				showValue(7, "new bars:", (int)getChartData(30)->newBars);
+				// Если нет ордеров в рынке
 				if (!curdil->level) {  //Если ордеров нет, то если можно, открываем первый
 					if (softBreak) {
 						hardBreak = true;  //После завершения усреднения, включаем полный запрет
@@ -83,6 +81,10 @@ namespace strategy {
 					}
 				}
 				MARK_FUNC_OUT
+			}
+			virtual void showInfo() {
+				int width1 = 14;
+				showValue(0, "BuyLevel:");
 			}
 
 			inline void moveTP() {

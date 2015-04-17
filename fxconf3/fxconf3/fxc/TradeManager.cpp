@@ -107,7 +107,7 @@ namespace fxc {
 				action->slprice   = slprice;
 				action->tpprice   = tpprice;
 				action->actionId  = JOB_CREATE;
-				Mql::write2str(&action->comment, comment.c_str());
+				Mql::write2str(&action->comment, comment);
 				MARK_FUNC_OUT
 			}
 
@@ -191,9 +191,7 @@ namespace fxc {
 				action->slprice   = 0;
 				action->tpprice   = 0;
 				action->actionId  = JOB_SHOW_VALUE;
-				Mql::write2str(&action->comment, value.c_str());
-
-				//msg << "-> c_str: \"" << value.c_str() << "\" => \"" << Mql::str2chars(&action->comment) << "\" [" << action->comment.size << "] [0x" << action->comment.buffer << "]\r\n" << msg_box;
+				Mql::write2str(&action->comment, value);
 				MARK_FUNC_OUT
 			}
 			
@@ -209,15 +207,14 @@ namespace fxc {
 				auto action = ext_tradeActions[actionsLen++];
 
 				action->ticket    = key;
-				action->intret    = value;
+				action->intret = value;
 				action->type      = SHOW_INT_VALUE;
 				action->lots      = 0;
 				action->openprice = 0;
 				action->slprice   = 0;
 				action->tpprice   = 0;
 				action->actionId  = JOB_SHOW_VALUE;
-				Mql::write2str(&action->comment, label.c_str());
-
+				Mql::write2str(&action->comment, label);
 				MARK_FUNC_OUT
 			}
 			
@@ -240,8 +237,7 @@ namespace fxc {
 				action->slprice   = 0;
 				action->tpprice   = 0;
 				action->actionId  = JOB_SHOW_VALUE;
-				Mql::write2str(&action->comment, label.c_str());
-
+				Mql::write2str(&action->comment, label);
 				MARK_FUNC_OUT
 			}
 

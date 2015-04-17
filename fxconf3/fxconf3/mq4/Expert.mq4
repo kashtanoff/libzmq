@@ -19,7 +19,7 @@ struct TradeAction {
 	int    o_type;      // 4 bytes
 	int    intret;      // 4 bytes
 	int    actionId;    // 4 bytes
-	string comment;     // 12 bytes
+	string comment;      // 12 bytes
 };
 
 struct TfRates {
@@ -403,7 +403,7 @@ bool DllInit()
 	c_setint(   "MMEquity",           MMEquity);
 
 	for (int n = 0; n < 64; n++) {
-		StringInit(actList[n].comment, 128, 95);
+		StringInit(actList[n].comment, 64, 95);
 	}
 	c_setactions(actList, ArraySize(actList));
 

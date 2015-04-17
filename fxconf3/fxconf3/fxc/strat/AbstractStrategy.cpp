@@ -30,6 +30,7 @@ namespace fxc {
 			virtual void initStrategy() {};   //Инициализация стратегии
 			virtual inline const bool bypass() { return false; }  //Функция интелектуального пропуска тиков, для ускорения оптимизации
 			virtual void Strategy() {};   // Тут, в наследнике, должен быть код стратегии
+			virtual void showInfo() {};
 
 			void init() {
 				MARK_FUNC_IN
@@ -51,7 +52,7 @@ namespace fxc {
 					curdil = dillers[i];
 					Strategy(); // Тут в наследнике должна быть вся торговая логика
 				}
-
+				showInfo();
 				MARK_FUNC_OUT
 				return getActionsStackSize();
 			}
