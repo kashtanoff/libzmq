@@ -95,6 +95,8 @@ namespace fxc {
 					fxc::msg << " -> CreateOrder(): actions limit exceeded\r\n" << fxc::msg_box;
 					return;
 				}
+				if (check_new(type, lots, openprice, slprice, tpprice) != 0)
+					return;
 				auto action = ext_tradeActions[actionsLen++];
 
 #if DEBUG
@@ -169,6 +171,27 @@ namespace fxc {
 				action->lots      = lots;
 				action->openprice = openprice;
 				action->actionId  = JOB_CLOSE;
+				MARK_FUNC_OUT
+			}
+			inline void drawOrder(int ticket) {
+				MARK_FUNC_IN
+					if (!is_visual) {
+						return;
+					}
+				if (actionsLen + 1 >= ext_tradeActions.size()) {
+					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
+					return;
+				}
+				auto action = ext_tradeActions[actionsLen++];
+
+				action->ticket		= ticket;
+				action->intret		= 0;
+				action->type		= 0;
+				action->lots		= 0;
+				action->openprice	= 0;
+				action->slprice		= 0;
+				action->tpprice		= 0;
+				action->actionId	= JOB_DRAW_ORDER;
 				MARK_FUNC_OUT
 			}
 
@@ -248,13 +271,13 @@ namespace fxc {
 			}
 
 			//ѕроверка на правильность параметров при открытии ордера
-			inline int check_new(int type, double* lots, double* openprice, double* slprice, double* tpprice) {
+			inline int check_new(int type, double lots, double openprice, double slprice, double tpprice) {
 				type = type % 2;
 				if (
 					type < 2 && // ƒл€ немедленного исполнени€
 					(
-					!check_sl(type, *slprice, dillers[type]->mpc) ||
-					!check_sl(type, dillers[type]->mpc, *tpprice)
+					!check_sl(type, slprice, dillers[type]->mpc) ||
+					!check_sl(type, dillers[type]->mpc, tpprice)
 					)
 					) {
 					return 201;
@@ -263,8 +286,8 @@ namespace fxc {
 				if (
 					type > 1 &&  // ƒл€ отложенных ордеров
 					(
-					!check_sl(type, *openprice, *tpprice) ||
-					!check_sl(type, *slprice, *openprice)
+					!check_sl(type, openprice, tpprice) ||
+					!check_sl(type, slprice, openprice)
 					)
 					) {
 					return 201;
@@ -272,22 +295,22 @@ namespace fxc {
 
 				if (
 					(type == OP_BUYLIMIT || type == OP_SELLLIMIT) &&
-					!check_sl(type, *openprice, dillers[type]->mpo)
+					!check_sl(type, openprice, dillers[type]->mpo)
 					) {
 					return 202;
 				}
 
 				if (
 					(type == OP_BUYSTOP || type == OP_SELLSTOP) &&
-					!check_sl(type, dillers[type]->mpo, *openprice)
+					!check_sl(type, dillers[type]->mpo, openprice)
 					) {
 					return 202;
 				}
 
-				*lots = normLot(*lots);
-				*openprice = normPrice(*openprice);
-				*tpprice = normPrice(*tpprice);
-				*slprice = normPrice(*slprice);
+				lots = normLot(lots);
+				openprice = normPrice(openprice);
+				tpprice = normPrice(tpprice);
+				slprice = normPrice(slprice);
 
 				return 0;
 			}

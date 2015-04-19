@@ -24,13 +24,12 @@ namespace fxc {
 				dillers[OP_SELL]->opposite = dillers[OP_BUY];
 				MARK_FUNC_OUT
 			}
-			
+			virtual void onOrderClose(int ticket) {};
 			void initOrdersManager() {
 				terminalInfoCalc();
 				if (mqlOptimization) { // Если не оптимизация
 					copyOrders = [&]() {
-						old_index  = 0;
-						old_length = current_index;
+						old_length = current_length;
 						memcpy(old_orders, current_orders, old_length); // список текущих ордеров, делаем старым
 					};
 				}
@@ -47,6 +46,7 @@ namespace fxc {
 				if (isSorted) {
 					return;
 				}
+				calcClosedOrders();
 				dillers[0]->sortOrders();
 				dillers[1]->sortOrders();
 				isSorted = true;
@@ -56,14 +56,14 @@ namespace fxc {
 			void resetOrderManager() {
 				copyOrders();
 				isSorted      = false;
-				current_index = 0;
+				current_length = 0;
 				dillers[OP_BUY]->reset();
 				dillers[OP_SELL]->reset();
 			}
 
 			//3.1 Добавляет новый ордер в цикле скана ордеров, в будущем возвращает код изменения
 			int addOrder(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0) {
-				auto order = &current_orders[current_index++];
+				auto order = &current_orders[current_length++];
 				order->ticket    = _ticket;
 				order->type      = _type;
 				order->lots      = _lots;
@@ -95,38 +95,28 @@ namespace fxc {
 			inline fxc::Diller* const getDillers() {
 				return *dillers;
 			}
-			
-			// Выдает тикеты закрытых ордеров, пока они есть
-			const int getNextClosedTicket() {
+			//Выдает событи onOrderClose  для закрытых ордеров
+			inline void calcClosedOrders() {
 				bool   found;
 				Order* order;
-
-				//fxc::msg << "-> getNextClosedTicket(" << old_index << " / " << old_length << ")\r\n" << fxc::msg_box;
-				while (old_index < old_length) {
-					order = &old_orders[old_index++];
-					//fxc::msg << "-> getNextClosedTicket::order [0x" << order << "]\r\n" << fxc::msg_box;
-
-
+				for (int old_index = 0; old_index < old_length; old_index++) {
+					order = &old_orders[old_index];
 					if (order->type != OP_BUY && order->type != OP_SELL) { // Пропускаем не рыночные ордера
 						continue;
 					}
-
 					found = false;
-					for (int i = 0; i <= current_index; i++) {
-						if (order->ticket == current_orders[i].ticket) {
+					for (int cur_index = 0; cur_index < current_length; cur_index++) {
+						if (order->ticket == current_orders[cur_index].ticket) {
 							found = true;
 							break;
 						}
 					}
-
 					if (!found) {
-						return order->ticket;
+						onOrderClose(order->ticket);
 					}
 				}
 
-				return 0;
 			}
-
 		protected:
 
 			Diller*     dillers[2];
@@ -136,9 +126,9 @@ namespace fxc {
 			bool isSorted = false;
 			std::function<void()> copyOrders;
 
-			int		old_index     = 0;
+			//int		old_index     = 0;
 			int		old_length    = 0;
-			int		current_index = 0;
+			int		current_length = 0;
 
 			Order	old_orders[NUM_ORDERS];
 			Order	current_orders[NUM_ORDERS];

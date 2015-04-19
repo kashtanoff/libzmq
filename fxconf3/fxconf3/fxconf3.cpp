@@ -496,10 +496,6 @@ _DLLAPI double __stdcall c_norm_lot(double _lots)
 	return pool[stratKey]->normLot(_lots);
 }
 
-_DLLAPI int __stdcall c_get_next_closed()
-{
-	return pool[stratKey]->getNextClosedTicket();
-}
 
 _DLLAPI void __stdcall fcostransform(double a[], int tnn, int inversefct)
 {

@@ -37,7 +37,7 @@ namespace strategy {
 			}
 
 		protected:
-			inline virtual const bool bypass() {	return true;	}
+			//inline virtual const bool bypass() {	return true;	}
 			virtual void Strategy() {
 				MARK_FUNC_IN
 					
@@ -81,6 +81,9 @@ namespace strategy {
 					}
 				}
 				MARK_FUNC_OUT
+			}
+			virtual void onOrderClose(int ticket) {
+				drawOrder(ticket);
 			}
 
 			virtual void showInfo() {

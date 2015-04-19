@@ -60,7 +60,6 @@ string ExtractString(string str) {
 	double c_norm_lot(double _lots);
 	int    c_getjob();
 	int    c_getdpi();
-	int    c_get_next_closed();
 
 	void   c_refresh_chartdata(int timeframe, int length, MqlRates& rates[]);
 	int    c_get_timeframes(int& timeframes[], int& sizes[]);

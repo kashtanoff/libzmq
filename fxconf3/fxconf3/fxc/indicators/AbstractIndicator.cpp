@@ -11,7 +11,7 @@ namespace fxc {
 	public:
 		AbstractIndicator();
 		AbstractIndicator(
-			TimeSeries* manager,
+			AbstractStrategy* manager,
 			int timeframe,
 			int outBufferLength
 		) :
@@ -39,7 +39,7 @@ namespace fxc {
 		}
 	protected:
 		ChartData*		rates; // бары в требуемом таймфрейме
-		TimeSeries*		manager;
+		AbstractStrategy*		manager;
 		int				outBufferLength; // длина буфера кэширования выходных результатов
 		const int		timeframe;
 		std::vector<utils::CircularBuffer<double>*> buffers;

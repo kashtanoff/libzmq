@@ -7,6 +7,10 @@ public:
 	{
 		if (!mqlOptimization && (!CheckConnect() || !CheckMargin(action.o_lots)))
 			return;
+		if (ecn_mode) {
+			action.o_slprice = 0;
+			action.o_tpprice = 0;
+		}
 
 		if (
 			OrderSend(
@@ -74,6 +78,8 @@ public:
 	}
 	static void PrintOrder(TradeAction& action)
 	{
+		if(mqlOptimization)
+			return;
 	   Print("ticket: ", action.o_ticket,
 	         ", type: ", action.o_type, 
 	         ", price: ", action.o_openprice,
@@ -84,6 +90,8 @@ public:
 	}
 	static void PrintText(TradeAction& action)
 	{
+		if(mqlOptimization)
+			return;
 	   Print(action.comment);
 	}
 	static void DrawOrder(TradeAction& action)

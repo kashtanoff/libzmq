@@ -13,7 +13,7 @@ namespace indicator {
 	{
 		public:
 			RAIndicator(
-				TimeSeries* manager,
+				AbstractStrategy* manager,
 				int timeframe,
 				int period1,
 				int period2,
@@ -44,7 +44,8 @@ namespace indicator {
 			virtual void compute(int newBars) {
 				MARK_FUNC_IN
 				int b = min(newBars, period2);
-
+				if (b == 0 && manager->bid < rates->high[0] && manager->bid > rates->low[0])
+					return;  //≈сли на обновлении бара не обновлены экстремумы, нет смысла перевычисл€ть
 				for (int i = b; i >= 0; i--) {
 					double sumw = period1 + 1;
 					double sum  = sumw * rates->close[i];
