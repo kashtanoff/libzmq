@@ -100,7 +100,7 @@ public:
 		if(!showinfo)
 			return;
 		//Print("Comment: \"", ExtractString(action.comment), "\"");
-		Print("buflen: ", StringBufferLen(action.comment), ", len: ", StringLen(action.comment));
+		//Print("buflen: ", StringBufferLen(action.comment), ", len: ", StringLen(action.comment));
 		switch(action.o_type) {
 			case 0: info.Set((string) action.o_ticket, action.comment); break;
 			case 1: info.Set((string) action.o_ticket, action.comment, action.intret); break;

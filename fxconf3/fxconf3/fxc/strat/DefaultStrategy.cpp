@@ -37,7 +37,7 @@ namespace strategy {
 			}
 
 		protected:
-
+			inline virtual const bool bypass() {	return true;	}
 			virtual void Strategy() {
 				MARK_FUNC_IN
 					

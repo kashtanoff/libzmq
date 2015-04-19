@@ -48,23 +48,23 @@ namespace utils {
 				MARK_FUNC_OUT
 			}
 
-			void add(T value) {
+			inline void add(T value) {
 				_index = _index ? _index-1 : _size-1;
 				_buffer[_index] = value;
 			}
 			
-			void update(T value) {
+			inline void update(T value) {
 				_buffer[_index] = value;
 			}
 
-			void skip(int i) {
+			inline void skip(int i) {
 				i = i % _size;
 				_index = i > _index ? 
 					_index - i + _size : 
 					_index - i;
 			}
 			
-			T& operator[](const int i) {
+			inline T& operator[](const int i) {
 				return _buffer[(_index+i) % _size];
 			}
 

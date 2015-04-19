@@ -1,6 +1,6 @@
 #pragma once
 
-#define DEBUG 1
+#define DEBUG 0
 #define CHECK_ACCESS   1 // Включена ли сетевая проверка пользователя
 #define LOCAL          1 // Определяет сервер проверки пользователя, как локальный
 #define PROFILE        0 // Профилирование

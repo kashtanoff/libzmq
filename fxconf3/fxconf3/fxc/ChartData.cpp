@@ -94,7 +94,7 @@ namespace fxc {
 			TimeSeries() {
 			}
 
-			void timeSeriesReset() {
+			inline void timeSeriesReset() {
 				for (auto& pair : _chartData) {
 					pair.second->newBars = 0;
 				}
@@ -128,7 +128,7 @@ namespace fxc {
 				MARK_FUNC_OUT
 			}
 
-			void registerListener(const int timeframe, fxc::ChartListener* const listener) {
+			inline void registerListener(const int timeframe, fxc::ChartListener* const listener) {
 				MARK_FUNC_IN
 				_listeners[timeframe].push_back(listener);
 				MARK_FUNC_OUT
