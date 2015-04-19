@@ -6,7 +6,6 @@
 
 #include <ctime>
 #include <thread>
-#include <unordered_map>
 
 #include "stdafx.h"
 #include "Defines.h"
@@ -19,7 +18,8 @@
 #include <chrono>
 #endif
 
-std::unordered_map<std::thread::id, STRAT_CLASS*> pool;
+std::vector<STRAT_CLASS*> pool;
+__declspec(thread) unsigned stratKey;
 bool isRunAllowed = true;
 
 struct AccountData {
@@ -40,7 +40,14 @@ void checkAccessWorker()
 	while (isGlobalWorkersAllowed) {
 		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
 
-		auto& expert = pool.begin()->second;
+		STRAT_CLASS* expert = nullptr;
+		for (auto entry : pool) {
+			if (entry != nullptr) {
+				expert = entry;
+				break;
+			}
+		}
+
 		if (!expert->mqlTester && !expert->mqlOptimization) {
 
 #if CHECK_ACCESS
@@ -156,8 +163,7 @@ _DLLAPI void __stdcall c_setint(wchar_t* propName, int propValue)
 	char name[64];
 	wcstombs(name, propName, 32);
 
-	auto h    = std::this_thread::get_id();
-	auto prop = &pool[h]->PropertyList[name];
+	auto prop = &pool[stratKey]->PropertyList[name];
 	
 	if (prop->Type == PropInt) {
 		*(prop->Int) = propValue;
@@ -175,8 +181,7 @@ _DLLAPI void __stdcall c_setdouble(wchar_t* propName, double propValue)
 	char name[64];
 	wcstombs(name, propName, 32);
 
-	auto h    = std::this_thread::get_id();
-	auto prop = &pool[h]->PropertyList[name];
+	auto prop = &pool[stratKey]->PropertyList[name];
 
 	if (prop->Type == PropDouble) {
 		*(prop->Double) = propValue;
@@ -196,8 +201,7 @@ _DLLAPI void __stdcall c_setstring(wchar_t* propName, wchar_t* propValue)
 	char buffer[512];
 	wcstombs(buffer, propValue, 256);
 
-	auto h = std::this_thread::get_id();
-	auto prop = &pool[h]->PropertyList[name];
+	auto prop = &pool[stratKey]->PropertyList[name];
 
 	if (prop->Type == PropString) {
 		*(prop->String) = std::string(buffer);
@@ -216,8 +220,7 @@ _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 	char name[64];
 	wcstombs(name, propName, 32);
 
-	auto h    = std::this_thread::get_id();
-	auto prop = &pool[h]->PropertyList[name];
+	auto prop = &pool[stratKey]->PropertyList[name];
 
 	if (prop->Type == PropIntPtr) {
 		*(prop->IntPtr)   = (int*) pointer;
@@ -241,7 +244,7 @@ _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 _DLLAPI void __stdcall c_setactions(void* pointer, int length) {
 	fxc::mutex.lock();
 	//fxc::msg << "-> c_actions([0x" << pointer << "], " << length << ")\r\n" << fxc::msg_box;
-	pool[std::this_thread::get_id()]->mapActions(pointer, length);
+	pool[stratKey]->mapActions(pointer, length);
 	fxc::mutex.unlock();
 }
 
@@ -272,7 +275,8 @@ _DLLAPI bool __stdcall c_init()
 #endif
 		MARK_FUNC_IN
 		fxc::mutex.lock();
-		pool[std::this_thread::get_id()] = new STRAT_CLASS ();
+		stratKey = pool.size();
+		pool.push_back(new STRAT_CLASS());
 		fxc::mutex.unlock();
 
 		isGlobalWorkersAllowed = true;
@@ -307,7 +311,7 @@ _DLLAPI void __stdcall c_postInit() {
 	try {
 #endif
 		MARK_FUNC_IN
-		pool[std::this_thread::get_id()]->init();
+		pool[stratKey]->init();
 		MARK_FUNC_OUT
 #if DEBUG
 	}
@@ -329,12 +333,16 @@ _DLLAPI void __stdcall c_postInit() {
 //Освобождает память и индекс в пуле
 _DLLAPI void __stdcall c_deinit()
 {
-	pool.erase(std::this_thread::get_id());
+	delete pool[stratKey];
+	pool[stratKey] = nullptr;
 
 	// Если у нас больше не осталось экземпляров советника, то можно прекращать передачу данных серверу
-	if (!pool.size()) {
-		isGlobalWorkersAllowed = false;
+	for (auto ptr : pool) {
+		if (ptr != nullptr) {
+			return;
+		}
 	}
+	isGlobalWorkersAllowed = false;
 }
 
 _DLLAPI void __stdcall c_updateAccount(double balance, double equity, double profit) {
@@ -352,13 +360,12 @@ _DLLAPI int __stdcall c_getjob()
 #endif
 
 	auto res = 0;
-	auto   h = std::this_thread::get_id();
 
 #if DEBUG
 	try {
 #endif
 		MARK_FUNC_IN
-		res = pool[h]->getJob();
+		res = pool[stratKey]->getJob();
 		MARK_FUNC_OUT
 #if DEBUG
 	}
@@ -410,7 +417,7 @@ _DLLAPI void __stdcall c_refresh_chartdata(int timeframe, int length, void* poin
 	try {
 #endif
 		MARK_FUNC_IN
-		pool[std::this_thread::get_id()]->getChartData(timeframe)->update((MqlRates*) pointer, length);
+		pool[stratKey]->getChartData(timeframe)->update((MqlRates*) pointer, length);
 		MARK_FUNC_OUT
 		return;
 #if DEBUG
@@ -432,7 +439,7 @@ _DLLAPI void __stdcall c_refresh_chartdata(int timeframe, int length, void* poin
 
 _DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
 {
-	auto as = pool[std::this_thread::get_id()];
+	auto as         = pool[stratKey];
 	auto timeframes = as->getTimeframes();
 	auto length     = timeframes.size();
 
@@ -448,7 +455,7 @@ _DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
 //нельзя пользоватья результатами в MQL программе до завершения цикла
 _DLLAPI bool __stdcall c_tick_init_begin(double ask, double bid, double equity, double balance)
 {
-	return pool[std::this_thread::get_id()]->tickInitBegin(ask, bid, equity, balance);
+	return pool[stratKey]->tickInitBegin(ask, bid, equity, balance);
 }
 
 _DLLAPI void __stdcall c_tick_init_end()
@@ -457,7 +464,7 @@ _DLLAPI void __stdcall c_tick_init_end()
 	try {
 #endif
 		MARK_FUNC_IN
-		pool[std::this_thread::get_id()]->tickInitEnd();
+		pool[stratKey]->tickInitEnd();
 		MARK_FUNC_OUT
 		return;
 #if DEBUG
@@ -480,18 +487,18 @@ _DLLAPI void __stdcall c_tick_init_end()
 //Добавляет новый ордер в цикле скана ордеров, в будущем возвращает код изменения
 _DLLAPI int __stdcall c_add_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0)
 {
-	return pool[std::this_thread::get_id()]->addOrder(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
+	return pool[stratKey]->addOrder(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
 }
 
 //Нормализация лота для ручных операций
 _DLLAPI double __stdcall c_norm_lot(double _lots)
 {
-	return pool[std::this_thread::get_id()]->normLot(_lots);
+	return pool[stratKey]->normLot(_lots);
 }
 
 _DLLAPI int __stdcall c_get_next_closed()
 {
-	return pool[std::this_thread::get_id()]->getNextClosedTicket();
+	return pool[stratKey]->getNextClosedTicket();
 }
 
 _DLLAPI void __stdcall fcostransform(double a[], int tnn, int inversefct)
