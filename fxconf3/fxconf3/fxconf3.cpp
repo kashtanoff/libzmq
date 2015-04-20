@@ -40,17 +40,20 @@ void checkAccessWorker()
 	while (isGlobalWorkersAllowed) {
 		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
 
-		STRAT_CLASS* expert = nullptr;
-		for (auto entry : pool) {
-			if (entry != nullptr) {
-				expert = entry;
-				break;
-			}
-		}
-
-		if (!expert->mqlTester && !expert->mqlOptimization) {
-
 #if CHECK_ACCESS
+			STRAT_CLASS* expert = nullptr;
+			auto tester = true;
+			for (auto entry : pool) {
+				if (entry != nullptr) {
+					expert = entry;
+					tester = expert->mqlTester || expert->mqlOptimization;
+
+					if (!tester) {
+						break;
+					}
+				}
+			}
+
 			auto isBlock    = false;
 			auto isChanged  = false;
 			auto context    = zmq_ctx_new();
@@ -64,19 +67,28 @@ void checkAccessWorker()
 				);
 		
 			std::stringstream ss;
-			ss
-				<< "{"
-					<< "\"balance\":"    <<  account.balance                << ","
-					<< "\"equity\":"     <<  account.equity                 << ","
-					<< "\"profit\":"     <<  account.profit                 << ","
-					<< "\"leverage\":"   <<  expert->accountLeverage        << ","
-					<< "\"demo\":"       << (expert->accountTradeMode == 0) << ","
-					<< "\"number\":"     <<  expert->accountNumber          << ","
-					<< "\"name\":\""     <<  expert->accountName            << "\","
-					<< "\"broker\":\""   <<  expert->accountCompany         << "\","
-					<< "\"server\":\""   <<  expert->accountServer          << "\","
-					<< "\"currency\":\"" <<  expert->accountCurrency        << "\""
-				<< "}";
+			ss.str("");
+
+			ss << "{" 
+				<< "\"tester\":"    << tester         << ","
+				<< "\"version\":\"" << EXPERT_VERSION << "\",";
+
+			if (!tester) {
+				account.lastUpdate = 0;
+				ss 
+					<< "\"balance\":" << account.balance << ","
+					<< "\"equity\":"  << account.equity  << ","
+					<< "\"profit\":"  << account.profit  << ",";
+			}
+			ss 
+				<< "\"leverage\":"   <<  expert->accountLeverage        << ","
+				<< "\"demo\":"       << (expert->accountTradeMode == 0) << ","
+				<< "\"number\":"     <<  expert->accountNumber          << ","
+				<< "\"name\":\""     <<  expert->accountName            << "\","
+				<< "\"broker\":\""   <<  expert->accountCompany         << "\","
+				<< "\"server\":\""   <<  expert->accountServer          << "\","
+				<< "\"currency\":\"" <<  expert->accountCurrency        << "\""
+			<< "}";
 
 			std::string message = ss.str();
 
@@ -133,17 +145,19 @@ void checkAccessWorker()
 			if (isBlock || (isChanged && account.status > 0)) {
 				// TODO: описать стратегию прекращени€ работы
 
-				//isRunAllowed = false;
-				//for (auto &pair : pool) {
-				//	*(pair.second->ext_isRunAllowed) = isRunAllowed;
-				//}
+				isRunAllowed = false;
+				for (auto& expert : pool) {
+					auto demo = expert->accountTradeMode == 0;
+					tester    = expert->mqlTester || expert->mqlOptimization;
+
+					if (!demo && !tester) {
+						expert->breakStatus = SOFT_BREAK;
+					}
+				}
 				break;
 			}
 #endif
 
-		}
-
-		account.lastUpdate = 0;
 		std::this_thread::sleep_for(std::chrono::seconds(60));
 	}
 	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
@@ -346,10 +360,12 @@ _DLLAPI void __stdcall c_deinit()
 }
 
 _DLLAPI void __stdcall c_updateAccount(double balance, double equity, double profit) {
-	account.balance    = balance;
-	account.equity     = equity;
-	account.profit     = profit;
-	account.lastUpdate = time(0);
+	if (!pool[stratKey]->mqlTester && !pool[stratKey]->mqlOptimization) {
+		account.balance    = balance;
+		account.equity     = equity;
+		account.profit     = profit;
+		account.lastUpdate = time(0);
+	}
 }
 
 //¬ыполн€ет этап алгоритма, возвращает индекс необходимого действи€
