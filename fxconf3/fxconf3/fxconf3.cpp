@@ -30,6 +30,19 @@ struct AccountData {
 	std::time_t lastUpdate;
 } account;
 
+std::string resolveError(int err) {
+	switch (err) {
+	case 1:   return "negative balance";
+	case 2:   return "update required";
+	case 100: return "invalid broker";
+	case 101: return "banned broker";
+	case 200: return "invalid account";
+	case 201: return "banned account";
+	case 202: return "invalid account info";
+	}
+	return "blocked by server";
+}
+
 bool isGlobalWorkersAllowed = true;
 bool isAccessWorkerActive   = false;
 void checkAccessWorker()
@@ -173,18 +186,6 @@ void checkAccessWorker()
 	}
 	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
 	isAccessWorkerActive = false;
-}
-std::string resolveError(int err) {
-	switch (err) {
-		case 1:   return "negative balance";
-		case 2:   return "update required";
-		case 100: return "invalid broker";
-		case 101: return "banned broker";
-		case 200: return "invalid account";
-		case 201: return "banned account";
-		case 202: return "invalid account info";
-	}
-	return "blocked by server";
 }
 
 std::thread checkAccessThread;
