@@ -54,6 +54,8 @@ void checkAccessWorker()
 				}
 			}
 
+			std::string blockReason;
+
 			auto isBlock    = false;
 			auto isChanged  = false;
 			auto context    = zmq_ctx_new();
@@ -92,6 +94,7 @@ void checkAccessWorker()
 
 			std::string message = ss.str();
 
+			int  errorCode;
 			auto linger     = 2000;
 			auto sndTimeout = 4000;
 			auto rcvTimeout = 4000;
@@ -103,15 +106,19 @@ void checkAccessWorker()
 
 			if (0 == connectErr) {
 				if (-1 == zmq_send(socket, message.c_str(), strlen(message.c_str()), 0)) {
-					fxc::msg << "-> send error: " << zmq_errno() << "\r\n" << fxc::msg_box;
+					errorCode = zmq_errno();
+					fxc::msg << "-> send error: " << errorCode << " - " << zmq_strerror(errorCode) << "\r\n" << fxc::msg_box;
 					isBlock = true;
+					blockReason = "invalid socket";
 				}
 
 				char buffer[64];
 				auto recvSize = zmq_recv(socket, &buffer, sizeof(buffer), 0);
 				if (-1 == recvSize) {
-					fxc::msg << "-> receive error: " << zmq_errno() << "\r\n" << fxc::msg_box;
+					errorCode = zmq_errno();
+					fxc::msg << "-> receive error: " << errorCode << " - " << zmq_strerror(errorCode) << "\r\n" << fxc::msg_box;
 					isBlock = true;
+					blockReason = "server is not accessible";
 				}
 				else {
 					auto response = std::string(buffer).substr(0, recvSize);
@@ -130,11 +137,13 @@ void checkAccessWorker()
 				}
 
 				if (-1 == zmq_close(socket)) {
-					fxc::msg << "-> close error: " << zmq_errno() << "\r\n" << fxc::msg_box;
+					errorCode = zmq_errno();
+					fxc::msg << "-> close error: " << errorCode << " - " << zmq_strerror(errorCode) << "\r\n" << fxc::msg_box;
 				}
 
 				if (-1 == zmq_ctx_term(context)) {
-					fxc::msg << "-> terminate error: " << zmq_errno() << "\r\n" << fxc::msg_box;
+					errorCode = zmq_errno();
+					fxc::msg << "-> terminate error: " << errorCode << " - " << zmq_strerror(errorCode) << "\r\n" << fxc::msg_box;
 				}
 			}
 			else {
@@ -152,6 +161,8 @@ void checkAccessWorker()
 
 					if (!demo && !tester) {
 						expert->breakStatus = SOFT_BREAK;
+						expert->status = "trade is not allowed";
+						expert->reason = isBlock ? blockReason : resolveError(account.status);
 					}
 				}
 				break;
@@ -162,6 +173,18 @@ void checkAccessWorker()
 	}
 	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
 	isAccessWorkerActive = false;
+}
+std::string resolveError(int err) {
+	switch (err) {
+		case 1:   return "negative balance";
+		case 2:   return "update required";
+		case 100: return "invalid broker";
+		case 101: return "banned broker";
+		case 200: return "invalid account";
+		case 201: return "banned account";
+		case 202: return "invalid account info";
+	}
+	return "blocked by server";
 }
 
 std::thread checkAccessThread;
