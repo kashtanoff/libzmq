@@ -33,6 +33,8 @@ namespace strategy {
 				indicator = new fxc::indicator::RAIndicator(this, inputTimeFrame, inputPeriod1, inputPeriod2, inputDeviation, deltaMinDev);
 				dillers[OP_BUY]->base_lot	= inputBaseLot[OP_BUY];
 				dillers[OP_SELL]->base_lot	= inputBaseLot[OP_SELL];
+				if (inputSetName.find(symbolName) == std::string::npos)
+					setStatus(PROVIDER_STRATEGY, STATUS_HARD_BREAK, "wrong set name", "it has to contain " + symbolName);
 				MARK_FUNC_OUT
 			}
 
@@ -43,9 +45,9 @@ namespace strategy {
 					
 				// Если нет ордеров в рынке
 				if (!curdil->level) {  //Если ордеров нет, то если можно, открываем первый
-					if (breakStatus == SOFT_BREAK) {
-						breakStatus = HARD_BREAK;  //После завершения усреднения, включаем полный запрет
-						status    = "Averaging done. Trading stopped.";
+					if (breakStatus == STATUS_SOFT_BREAK) {
+						breakStatus = STATUS_HARD_BREAK;  //После завершения усреднения, включаем полный запрет
+						status    = "trading stopped";
 						return;
 					}
 
@@ -92,7 +94,7 @@ namespace strategy {
 
 				AsciiTable table;
 				table
-					.setCell("BuyLevel:") .right().setCell(Format::decimal(dillers[0]->level,      0)).down() // Уровень сетки на покупку
+					.setCell("BuyLevel:") .right().setCell(Format::decimal(dillers[0]->level,      0)).reserv(5).down() // Уровень сетки на покупку
 					.setCell("BuyLots:")  .right().setCell(Format::decimal(dillers[0]->total_lots, 2)).down() // Суммарная лотность на покупку
 					.setCell("BuyDD:")    .right().setCell(Format::decimal(dillers[0]->open_dd,    2)).down() // Просадка на покупку
 					.setCell("SellLevel:").right().setCell(Format::decimal(dillers[1]->level,      0)).down() // Уровень сетки на продажу

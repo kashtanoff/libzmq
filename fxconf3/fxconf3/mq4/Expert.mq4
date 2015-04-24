@@ -60,6 +60,7 @@ string ExtractString(string str) {
 	double c_norm_lot(double _lots);
 	int    c_getjob();
 	int    c_getdpi();
+	int    c_get_next_closed();
 
 	void   c_refresh_chartdata(int timeframe, int length, MqlRates& rates[]);
 	int    c_get_timeframes(int& timeframes[], int& sizes[]);
@@ -151,18 +152,10 @@ int OnInit()
 
 	if (showinfo) InitLook();
 	if (!IsDllsAllowed()) CriticalError("DLL is not allowed");
-	if (!IsTradeAllowed()) CriticalError("Trade is not allowed");
 	if (!DllInit()) return (INIT_FAILED);
 
 	UpdateAccountInfo();
 
-	if (SetName != symbolName)
-	{
-		//MessageBox("SetName must be - '" + symbol + "'", "Set name error");
-		CriticalError("SetName='" + SetName + "', but must be - '" + symbolName + "'");
-		//return(INIT_FAILED);
-	}
-   
 	hddlog = FileOpen("dd.log", FILE_WRITE|FILE_TXT);
 	FileSeek(hddlog, 0, SEEK_END);
 	herror = FileOpen("dd_err.log", FILE_WRITE|FILE_TXT);
@@ -361,7 +354,7 @@ bool DllInit()
 	c_setdouble("symbolMarginHadged",      MarketInfo(symbolName, MODE_MARGINHEDGED));
 	c_setdouble("symbolMarginRequired",    MarketInfo(symbolName, MODE_MARGINREQUIRED));
 	c_setint(   "symbolFreezeLevel",       MarketInfo(symbolName, MODE_FREEZELEVEL));
-	c_setint(   "mqlTradeAllowed",         MQLInfoInteger(MQL_TRADE_ALLOWED));
+	c_setint(   "mqlTradeAllowed",         IsTradeAllowed());//MQLInfoInteger(MQL_TRADE_ALLOWED));
 	c_setint(   "mqlSignalAllowed",        MQLInfoInteger(MQL_SIGNALS_ALLOWED));
 	c_setint(   "mqlDebug",                MQLInfoInteger(MQL_DEBUG));
 	c_setint(   "mqlProfiler",             MQLInfoInteger(MQL_PROFILER));
@@ -369,6 +362,7 @@ bool DllInit()
 	c_setint(   "mqlOptimization",         MQLInfoInteger(MQL_OPTIMIZATION));
 	c_setint(   "mqlVisualMode",           MQLInfoInteger(MQL_VISUAL_MODE));
 
+   c_setstring("SetName",            SetName);
 	c_setint(   "StopNewBuy",         StopNewBuy);
 	c_setint(   "StopBuy",            StopBuy);
 	c_setdouble("BaseBuyLot",         BaseBuyLot);
@@ -396,6 +390,7 @@ bool DllInit()
 	c_setint(   "RollBack",           RollBack);
 	c_setint(   "Period2",            Period2);
 	c_setint(   "Magic",              Magic);
+	c_setstring("Comment",            CommentText);
 	c_setint(   "AutoMM",             AutoMM);
 	c_setint(   "MMEquity",           MMEquity);
 

@@ -13,6 +13,7 @@ namespace fxc {
 	class Parameters 
 	{
 		public: 
+			std::string inputSetName;
 			int			inputStopNew[2];		//Остановить открытие новой сетки
 			int			inputStop[2];		    //Остановить торговлю для типа
 			double		inputBaseLot[2];
@@ -49,6 +50,7 @@ namespace fxc {
 			double		deltaMinDev;
 
 			Parameters(CPropertyList* registrator) {
+				registrator->Register("SetName",		 &inputSetName);
 				registrator->Register("StopNewBuy",      &inputStopNew[0]);
 				registrator->Register("StopBuy",         &inputStop[0]);
 				registrator->Register("BaseBuyLot",      &inputBaseLot[0]);
@@ -76,6 +78,7 @@ namespace fxc {
 				registrator->Register("RollBack",        &inputRollBack);
 				registrator->Register("Period2",         &inputPeriod2);
 				registrator->Register("Magic",           &inputMagic);
+				registrator->Register("Comment",		 &inputCommentText);
 				registrator->Register("AutoMM",          &inputAutoMM);
 				registrator->Register("MMEquity",        &inputMMEquity);
 			}

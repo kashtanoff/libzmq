@@ -13,10 +13,20 @@
 #define OP_SELLLIMIT 3
 #define OP_BUYSTOP   4
 #define OP_SELLSTOP  5
-
-#define NO_BREAK   0
-#define SOFT_BREAK 1
-#define HARD_BREAK 2
+//work statuses
+#define STATUS_OK				0
+#define STATUS_DANGER			1
+#define STATUS_SOFT_BREAK		2
+#define STATUS_HARD_BREAK		3
+#define STATUS_EMERGENCY_BREAK	4
+//Errors and status providers
+#define PROVIDER_SERVER		0
+#define PROVIDER_TERMINAL	1
+#define PROVIDER_BROKER		2
+#define PROVIDER_MQL		3
+#define PROVIDER_DLL		4
+#define PROVIDER_STRATEGY	5
+#define PROVIDERS_COUNT		6
 
 #define JOB_EXIT   0
 #define JOB_CREATE 1

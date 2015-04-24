@@ -86,6 +86,10 @@ namespace utils {
 
 			static const int ALIGN_LEFT  = 0;
 			static const int ALIGN_RIGHT = 1;
+			AsciiTable& reserv(int width) {
+				_colSizes[_x] = max(_colSizes[_x], width);
+				return *this;
+			}
 
 			AsciiTable& up(bool resetColumn = true) {
 				_y = _y == 0 ? _bottom : _y - 1;
