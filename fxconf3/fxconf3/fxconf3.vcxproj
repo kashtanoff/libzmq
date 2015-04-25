@@ -75,7 +75,7 @@
       <SDLCheck>true</SDLCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>D:\work\zeromq-4.0.5\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\work\zeromq-4.0.5\include;D:\work\rapidjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>
       </RuntimeTypeInfo>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -111,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fxc\ChartData.cpp" />
+    <ClCompile Include="fxc\ConnectionAdapter.cpp" />
     <ClCompile Include="fxc\debug\Debug.cpp" />
     <ClCompile Include="fxc\Diller.cpp" />
     <ClCompile Include="dllmain.cpp">

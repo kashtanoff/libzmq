@@ -181,7 +181,7 @@ void OnTick()
 	}
 
 	for (int i = 0; i < tfCount; i++) {
-	   //TfRates tf = tfRates[i];  //кэширование индексации (индексация работает в mql медленно)
+		// TfRates tf = tfRates[i];  //кэширование индексации (индексация работает в mql медленно)
 		// Если последний переданный бар уже не последний, то передаем данные заного
 		if (tfRates[i].rates[tfRates[i].length - 1].time != iTime(NULL, tfRates[i].timeframe, 0)) {
 			if (CopyRates(NULL, tfRates[i].timeframe, 0, tfRates[i].length, tfRates[i].rates) < tfRates[i].length) {

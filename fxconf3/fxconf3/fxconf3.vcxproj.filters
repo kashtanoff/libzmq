@@ -111,6 +111,9 @@
     <ClCompile Include="fxc\Format.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fxc\ConnectionAdapter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mq4\Errors.mq4">

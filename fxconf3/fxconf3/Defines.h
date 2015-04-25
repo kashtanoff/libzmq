@@ -3,8 +3,7 @@
 #define DEBUG          1
 #define CHECK_ACCESS   1 // Включена ли сетевая проверка пользователя
 #define LOCAL          0 // Определяет сервер проверки пользователя, как локальный
-#define PROFILE        0 // Профилирование
-#define TRACE_STRATEGY 0 // Логирование стратегии в консоль
+#define EXPERT_NAME    "OC Single"
 #define EXPERT_VERSION "3.300"
 
 #define OP_BUY       0

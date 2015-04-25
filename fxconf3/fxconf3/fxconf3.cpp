@@ -2,15 +2,23 @@
 
 // fxconf.cpp: определяет экспортированные функции для приложения DLL.
 
-#include "zmq.h"
+#include "stdafx.h"
+#include <windows.h>
+#include <shellapi.h>
+
+#include <codecvt>
 
 #include <ctime>
 #include <thread>
 
-#include "stdafx.h"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
 #include "Defines.h"
 
 #include "fxc/fxc.h"
+#include "fxc/ConnectionAdapter.cpp"
 
 #include INCLUDE_FILE(STRAT_PATH)
 
@@ -19,7 +27,6 @@
 #endif
 
 std::vector<STRAT_CLASS*> pool;
-__declspec(thread) unsigned stratKey;
 __declspec(thread) STRAT_CLASS* strategy;
 bool isRunAllowed = true;
 
@@ -34,30 +41,58 @@ struct AccountData {
 std::string resolveError(int err) {
 	switch (err) {
 		//NO_BREAK
-	case 0:	  return "all ok";
+		case 0:	  return "all ok";
 		//SOFT_BREAK
-	case 1:   return "negative balance";
-	case 2:   return "update required";
+		case 1:   return "negative balance";
+		case 2:   return "update required";
 		//HARD_BREAK
-	case 100: return "invalid broker";
-	case 101: return "banned broker";
-	case 200: return "invalid account";
-	case 201: return "banned account";
-	case 202: return "invalid account info";
-	case 300: return "invalid socket";
-	case 301: return "server is not accessible";
-	case 500: return "unknown";
+		case 100: return "invalid broker";
+		case 101: return "banned broker";
+		case 200: return "invalid account";
+		case 201: return "banned account";
+		case 202: return "invalid account info";
+		case 300: return "invalid socket";
+		case 301: return "server is not accessible";
+		case 500: return "unknown";
 	}
 	return "blocked by server";
 }
 std::string resolveStatus(int status){
 	switch (status) {
-	case STATUS_OK: return "trading allowed";
-	case STATUS_DANGER:	return "Atention!";
-	case STATUS_SOFT_BREAK: return "finalize trading";
-	case STATUS_HARD_BREAK: return "trading not allowed";
-	case STATUS_EMERGENCY_BREAK: return "Emergecy stop!";
+		case STATUS_OK:              return "trading allowed";
+		case STATUS_DANGER:	         return "Atention!";
+		case STATUS_SOFT_BREAK:      return "finalize trading";
+		case STATUS_HARD_BREAK:      return "trading not allowed";
+		case STATUS_EMERGENCY_BREAK: return "Emergecy stop!";
 	}
+}
+
+const std::string getRequestJson(STRAT_CLASS* expert) {
+	auto tester = expert->mqlTester || expert->mqlOptimization;
+	std::stringstream ss;
+
+	ss << "{"
+		<< "\"tester\":"    << tester << ","
+		<< "\"version\":\"" << EXPERT_VERSION << "\",";
+
+	if (!tester) {
+		account.lastUpdate = 0;
+		ss
+			<< "\"balance\":" << account.balance << ","
+			<< "\"equity\":"  << account.equity  << ","
+			<< "\"profit\":"  << account.profit  << ",";
+	}
+	ss
+		<< "\"leverage\":"   <<  expert->accountLeverage        <<   ","
+		<< "\"demo\":"       << (expert->accountTradeMode == 0) <<   ","
+		<< "\"number\":"     <<  expert->accountNumber          <<   ","
+		<< "\"name\":\""     <<  expert->accountName            << "\","
+		<< "\"broker\":\""   <<  expert->accountCompany         << "\","
+		<< "\"server\":\""   <<  expert->accountServer          << "\","
+		<< "\"currency\":\"" <<  expert->accountCurrency        << "\""
+	<< "}";
+
+	return ss.str();
 }
 
 bool isGlobalWorkersAllowed = true;
@@ -68,154 +103,122 @@ std::string reason = "not initialized";
 void checkAccessWorker()
 {
 	isAccessWorkerActive = true;
-	account.status = 500;
-	//std::this_thread::sleep_for(std::chrono::seconds(5));
+	account.status       = 500;
 
 	while (isGlobalWorkersAllowed) {
-		try {
-			fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
+		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
 
 #if CHECK_ACCESS
+	#if DEBUG
+		try {
+	#endif
+			fxc::mutex.lock();
 			STRAT_CLASS* expert = nullptr;
-			auto tester = true;
-			for (auto entry : pool) {
-				if (entry != nullptr) {
-					expert = entry;
-					tester = expert->mqlTester || expert->mqlOptimization;
 
-					if (!tester) {
-						break;
-					}
+			for (auto& entry : pool) {
+				expert = entry;
+
+				if (!expert->mqlTester && !expert->mqlOptimization) {
+					break;
 				}
 			}
-			std::string status;
-			std::string reason;
 
-			auto isBlock = false;
-			auto isChanged = false;
-			auto context = zmq_ctx_new();
-			auto socket = zmq_socket(context, ZMQ_REQ);
-			auto connectErr = zmq_connect(socket,
+			auto request = getRequestJson(expert);
+			fxc::mutex.unlock();
+
+
+			fxc::ConnectionAdapter connection(
 #if LOCAL
 				"tcp://localhost:13857"
 #else
 				"tcp://olsencleverton.com:13857"
 #endif
-				);
+			);
+			if (connection.send(request)) {
+				rapidjson::Document doc;
 
-			std::stringstream ss;
-			ss.str("");
+				if (!doc.Parse(connection.getResponse().c_str()).HasParseError()) {
+					account.status = doc["statusCode"].GetInt();
+					reason         = doc["status"].GetString();
+					
+					switch (account.status) {
+						case 0:
+							work_status = STATUS_OK;
+							break;
+						case 1:
+						case 2:
+						case 3:
+							work_status = STATUS_SOFT_BREAK;
+							break;
+						default:
+							work_status = STATUS_HARD_BREAK;
+							break;
+					}
 
-			ss << "{"
-				<< "\"tester\":" << tester << ","
-				<< "\"version\":\"" << EXPERT_VERSION << "\",";
+					rapidjson::Value::MemberIterator message = doc.FindMember("message");
+					if (message != doc.MemberEnd()) {
+						std::wstring_convert< std::codecvt_utf8_utf16<wchar_t> > converter;
 
-			if (!tester) {
-				account.lastUpdate = 0;
-				ss
-					<< "\"balance\":" << account.balance << ","
-					<< "\"equity\":" << account.equity << ","
-					<< "\"profit\":" << account.profit << ",";
-			}
-			ss
-				<< "\"leverage\":" << expert->accountLeverage << ","
-				<< "\"demo\":" << (expert->accountTradeMode == 0) << ","
-				<< "\"number\":" << expert->accountNumber << ","
-				<< "\"name\":\"" << expert->accountName << "\","
-				<< "\"broker\":\"" << expert->accountCompany << "\","
-				<< "\"server\":\"" << expert->accountServer << "\","
-				<< "\"currency\":\"" << expert->accountCurrency << "\""
-				<< "}";
+						auto text = message->value["text"].GetString();
+						auto url  = message->value.FindMember("url");
 
-			std::string message = ss.str();
+						if (IDOK == MessageBox(0, 
+							converter.from_bytes(text).c_str(), 
+							converter.from_bytes(EXPERT_NAME).c_str(), 
+							url != message->value.MemberEnd() ? MB_OKCANCEL : MB_OK
+						) && url != message->value.MemberEnd()) {
+							ShellExecute(NULL, L"open", converter.from_bytes(url->value.GetString()).c_str(), NULL, NULL, SW_SHOWNORMAL);
+						}
 
-			int  errorCode;
-			auto linger = 2000;
-			auto sndTimeout = 4000;
-			auto rcvTimeout = 4000;
-			auto correlate = true;
-			zmq_setsockopt(socket, ZMQ_LINGER, &linger, sizeof(linger));
-			zmq_setsockopt(socket, ZMQ_SNDTIMEO, &sndTimeout, sizeof(sndTimeout));
-			zmq_setsockopt(socket, ZMQ_RCVTIMEO, &rcvTimeout, sizeof(rcvTimeout));
-			zmq_setsockopt(socket, ZMQ_REQ_CORRELATE, &correlate, sizeof(correlate));
-
-			if (0 == connectErr) {
-				if (-1 == zmq_send(socket, message.c_str(), strlen(message.c_str()), 0)) {
-					errorCode = zmq_errno();
-					fxc::msg << "-> send error: " << errorCode << " - " << zmq_strerror(errorCode) << "\r\n" << fxc::msg_box;
-					isBlock = true;
-					work_status = STATUS_SOFT_BREAK;
-					reason = "invalid socket";
-				}
-
-				char buffer[64];
-				auto recvSize = zmq_recv(socket, &buffer, sizeof(buffer), 0);
-				if (-1 == recvSize) {
-					errorCode = zmq_errno();
-					fxc::msg << "-> receive error: " << errorCode << " - " << zmq_strerror(errorCode) << "\r\n" << fxc::msg_box;
-					isBlock = true;
-					work_status = STATUS_SOFT_BREAK;
-					reason = "server is not accessible";
+						(void) url;
+					}
+					(void) message;
 				}
 				else {
-					auto response = std::string(buffer).substr(0, recvSize);
-					fxc::msg << "-> received: [" << response << "]\r\n" << fxc::msg_box;
-
-					try {
-						auto code = std::stoi(response);
-						isChanged = account.status != code;
-						account.status = code;
-						switch (code) {
-						case 0: {
-							work_status = STATUS_OK;
-							break; }
-						case 1:
-						case 2: {
-							work_status = STATUS_SOFT_BREAK;
-							break; }
-						default: work_status = STATUS_HARD_BREAK;
-						}
-						reason = resolveError(account.status);
-						fxc::msg << "-> parsed: [" << code << "]\r\n" << fxc::msg_box;
-					}
-					catch (std::exception e) {
-						fxc::msg << "-> parse error: [" << e.what() << "]\r\n" << fxc::msg_box;
-					}
-				}
-
-				if (-1 == zmq_close(socket)) {
-					errorCode = zmq_errno();
-					fxc::msg << "-> close error: " << errorCode << " - " << zmq_strerror(errorCode) << "\r\n" << fxc::msg_box;
-				}
-
-				if (-1 == zmq_ctx_term(context)) {
-					errorCode = zmq_errno();
-					fxc::msg << "-> terminate error: " << errorCode << " - " << zmq_strerror(errorCode) << "\r\n" << fxc::msg_box;
+					work_status = STATUS_HARD_BREAK;
+					reason      = "invalid response";
+					fxc::msg << "!> can't parse response\r\n" << fxc::msg_box;
 				}
 			}
 			else {
-				fxc::msg << "-> connect error: " << connectErr << "\r\n" << fxc::msg_box;
-				isBlock = true;
-			}
-			//По мне так от isBlock можно вообще избавится и устанавливать только account.status
-			if (isBlock) {
-				work_status = STATUS_HARD_BREAK;
-				reason = "server is not accessible";
-			}
-			fxc::mutex.lock();
-			for (auto& expert : pool)
-				if (expert != nullptr) {
-					if (expert->accountTradeMode == 0 || expert->mqlTester || expert->mqlOptimization)
-						expert->setStatus(PROVIDER_SERVER, STATUS_OK, "demo/test allowed", reason);
-					else 
-						expert->setStatus(PROVIDER_SERVER, work_status, resolveStatus(work_status), reason);
+				switch (connection.getErrType()) {
+					case CONN_ERRT_SOCK:
+						work_status = STATUS_HARD_BREAK;
+						reason      = "invalid socket";
+						break;
+					case CONN_ERRT_SEND:
+						work_status = STATUS_SOFT_BREAK;
+						reason      = "server is not accessible";
+						break;
+					case CONN_ERRT_RECV:
+						work_status = STATUS_SOFT_BREAK;
+						reason      = "server is not accessible";
+						break;
+					default:
+						work_status = STATUS_HARD_BREAK;
+						reason      = "network error";
+						break;
 				}
-			fxc::mutex.unlock();
-			if (work_status == STATUS_OK)
-				break;
-#endif
+			}
 
-			std::this_thread::sleep_for(std::chrono::seconds(60));
+
+			fxc::mutex.lock();
+			for (auto& entry : pool) {
+				if (entry->mqlTester || entry->mqlOptimization) {
+					entry->setStatus(PROVIDER_SERVER, STATUS_OK, "test allowed", reason);
+				}
+				else {
+					entry->setStatus(PROVIDER_SERVER, work_status, resolveStatus(work_status), reason);
+				}
+			}
+			fxc::mutex.unlock();
+			
+		#if DEBUG == 0
+			if (work_status == STATUS_OK) {
+				std::this_thread::sleep_for(std::chrono::seconds(60 * 59));
+			}
+		#endif
+	#if DEBUG
 		}
 		catch (const std::exception& ex) {
 			fxc::msg << "!> ERROR @ checkAccessWorker(): " << ex.what() << "\r\n" << fxc::msg_box;
@@ -229,6 +232,10 @@ void checkAccessWorker()
 			fxc::msg << "!> ERROR @ checkAccessWorker(): [undefined type]\r\n" << fxc::msg_box;
 			fxc::msg << STACK_TRACE << fxc::msg_box;
 		}
+	#endif
+#endif
+
+			std::this_thread::sleep_for(std::chrono::seconds(60));
 	}
 	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
 	isAccessWorkerActive = false;
@@ -251,7 +258,8 @@ _DLLAPI void __stdcall c_setint(wchar_t* propName, int propValue)
 	
 	if (prop->Type == PropInt) {
 		*(prop->Int) = propValue;
-	} else {
+	}
+	else {
 		fxc::msg << "c_setint ERROR: int expected - " << name << fxc::msg_box;
 	}
 
@@ -269,7 +277,8 @@ _DLLAPI void __stdcall c_setdouble(wchar_t* propName, double propValue)
 
 	if (prop->Type == PropDouble) {
 		*(prop->Double) = propValue;
-	} else {
+	}
+	else {
 		fxc::msg << "c_setdouble ERROR: double expected" << fxc::msg_box;
 	}
 
@@ -307,18 +316,18 @@ _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 	auto prop = &strategy->PropertyList[name];
 
 	if (prop->Type == PropIntPtr) {
-		*(prop->IntPtr)   = (int*) pointer;
-		//fxc::msg << "pointer <" << name << ">: simbiot::[" << *(prop->IntPtr) << "] mql::[" << pointer << "]" << "\r\n" << fxc::msg_box;
-	} else if (prop->Type == PropLongPtr) {
-		*(prop->LongPtr) = (long*) pointer;
-		//fxc::msg << "pointer <" << name << ">: simbiot::[" << *(prop->LongPtr) << "] mql::[" << pointer << "]" << "\r\n" << fxc::msg_box;
-	} else if (prop->Type == PropDoublePtr) {
+		*(prop->IntPtr)    = (int*) pointer;
+	}
+	else if (prop->Type == PropLongPtr) {
+		*(prop->LongPtr)   = (long*) pointer;
+	}
+	else if (prop->Type == PropDoublePtr) {
 		*(prop->DoublePtr) = (double*) pointer;
-		//fxc::msg << "pointer <" << name << ">: simbiot::[" << *(prop->DoublePtr) << "] mql::[" << pointer << "]" << "\r\n" << fxc::msg_box;
-	} else if (prop->Type == PropBoolPtr) {
-		*(prop->BoolPtr) = (bool*) pointer;
-		//fxc::msg << "pointer <" << name << ">: simbiot::[" << *(prop->BoolPtr) << "] mql::[" << pointer << "]" << "\r\n" << fxc::msg_box;
-	} else {
+	}
+	else if (prop->Type == PropBoolPtr) {
+		*(prop->BoolPtr)   = (bool*) pointer;
+	}
+	else {
 		fxc::msg << "c_setvar ERROR: int, double or bool pointer expected" << fxc::msg_box;
 	}
 
@@ -327,24 +336,16 @@ _DLLAPI void __stdcall c_setvar(wchar_t* propName, void* pointer)
 
 _DLLAPI void __stdcall c_setactions(void* pointer, int length) {
 	fxc::mutex.lock();
-	//fxc::msg << "-> c_actions([0x" << pointer << "], " << length << ")\r\n" << fxc::msg_box;
 	strategy->mapActions(pointer, length);
 	fxc::mutex.unlock();
 }
 
 #pragma endregion
 
-//Ищет свободную ячейку в пуле и создает новый экземпляр симбиота
 _DLLAPI bool __stdcall c_init()
 {
 #if DEBUG
-	/*
-	RedirectIOToConsole();
-	msg << "Debug logging activated\r\n" << msg_box;
-	*/
-
 	if (AllocConsole()) { // Создаем консоль, у процесса не более одной.
-		//SetConsoleTitle("Debug Console");
 		// Связываем буферы консоли с предопределенными файловыми описателями.
 		freopen("conin$", "r", stdin);
 		freopen("CONOUT$", "w", stdout);
@@ -359,11 +360,11 @@ _DLLAPI bool __stdcall c_init()
 #endif
 		MARK_FUNC_IN
 		fxc::mutex.lock();
+		
 		strategy = new STRAT_CLASS();
-		stratKey = pool.size();
 		pool.push_back(strategy);
-		fxc::mutex.unlock();
 
+		fxc::mutex.unlock();
 		MARK_FUNC_OUT
 #if DEBUG
 	}
@@ -391,6 +392,16 @@ _DLLAPI void __stdcall c_postInit() {
 		MARK_FUNC_IN
 		strategy->init();
 		//strategy->setStatus(PROVIDER_SERVER, work_status, reason);
+
+		fxc::mutex.lock();
+		isGlobalWorkersAllowed = true;
+		// Если глобальные потоки еще не запущены, то запускаем
+		// Если же уже есть один поток, то второй нам не нужен
+		if (!isAccessWorkerActive) {
+			checkAccessThread = std::thread(checkAccessWorker);
+			checkAccessThread.detach();
+		}
+		fxc::mutex.unlock();
 		MARK_FUNC_OUT
 #if DEBUG
 	}
@@ -412,17 +423,20 @@ _DLLAPI void __stdcall c_postInit() {
 //Освобождает память и индекс в пуле
 _DLLAPI void __stdcall c_deinit()
 {
+	fxc::mutex.lock();
+	auto iter = std::find(pool.begin(), pool.end(), strategy);
+	if (iter != pool.end()) {
+		pool.erase(iter);
+	}
+
 	delete strategy;
 	strategy = nullptr;
-	pool.erase(pool.begin()+stratKey);
 
 	// Если у нас больше не осталось экземпляров советника, то можно прекращать передачу данных серверу
-	for (auto ptr : pool) {
-		if (ptr != nullptr) {
-			return;
-		}
+	if (!pool.size()) {
+		isGlobalWorkersAllowed = false;
 	}
-	isGlobalWorkersAllowed = false;
+	fxc::mutex.unlock();
 }
 
 _DLLAPI void __stdcall c_updateAccount(double balance, double equity, double profit) {
@@ -432,24 +446,11 @@ _DLLAPI void __stdcall c_updateAccount(double balance, double equity, double pro
 		account.profit     = profit;
 		account.lastUpdate = time(0);
 	}
-	fxc::mutex.lock();
-	isGlobalWorkersAllowed = true;
-	// Если глобальные потоки еще не запущены, то запускаем
-	// Если же уже есть один поток, то второй нам не нужен
-	if (!isAccessWorkerActive) {
-		checkAccessThread = std::thread(checkAccessWorker);
-		checkAccessThread.detach();
-	}
-	fxc::mutex.unlock();
 }
 
 //Выполняет этап алгоритма, возвращает индекс необходимого действия
 _DLLAPI int __stdcall c_getjob()
 {
-#if PROFILE
-	auto t1 = std::chrono::high_resolution_clock::now();
-#endif
-
 	auto res = 0;
 
 #if DEBUG
@@ -471,15 +472,6 @@ _DLLAPI int __stdcall c_getjob()
 	catch (...) {
 		fxc::msg << "!> ERROR @ c_getjob(): [undefined type]\r\n" << fxc::msg_box;
 		fxc::msg << STACK_TRACE << fxc::msg_box;
-	}
-#endif
-
-#if PROFILE 
-	auto t2 = std::chrono::high_resolution_clock::now();
-	auto  d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-
-	if (d > 0) {
-		fxc::msg << "$> duration @ c_getjob(): " << d << "\r\n" << fxc::msg_box;
 	}
 #endif
 
@@ -508,7 +500,7 @@ _DLLAPI void __stdcall c_refresh_chartdata(int timeframe, int length, void* poin
 	try {
 #endif
 		MARK_FUNC_IN
-			strategy->getChartData(timeframe)->update((MqlRates*)pointer, length);
+			strategy->getChartData(timeframe)->update((MqlRates*) pointer, length);
 		MARK_FUNC_OUT
 		return;
 #if DEBUG
@@ -535,7 +527,7 @@ _DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
 
 	for (int i = 0; i < length; ++i) {
 		*((int*) timeframesPtr + i) = timeframes[i];
-		*((int*)sizesPtr + i) = strategy->getChartData(timeframes[i])->getSize();
+		*((int*) sizesPtr      + i) = strategy->getChartData(timeframes[i])->getSize();
 	}
 
 	return length;
@@ -554,7 +546,7 @@ _DLLAPI void __stdcall c_tick_init_end()
 	try {
 #endif
 		MARK_FUNC_IN
-			strategy->tickInitEnd();
+		strategy->tickInitEnd();
 		MARK_FUNC_OUT
 		return;
 #if DEBUG
