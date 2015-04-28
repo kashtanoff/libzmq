@@ -59,10 +59,10 @@ std::string resolveError(int err) {
 }
 std::string resolveStatus(int status){
 	switch (status) {
-		case STATUS_OK:              return "trading allowed";
-		case STATUS_DANGER:	         return "Atention!";
-		case STATUS_SOFT_BREAK:      return "finalize trading";
-		case STATUS_HARD_BREAK:      return "trading not allowed";
+		case STATUS_OK:              return "trading is allowed";
+		case STATUS_DANGER:	         return "Attention!";
+		case STATUS_SOFT_BREAK:      return "finalizing trading";
+		case STATUS_HARD_BREAK:      return "trading is not allowed";
 		case STATUS_EMERGENCY_BREAK: return "Emergecy stop!";
 	}
 }
@@ -205,7 +205,7 @@ void checkAccessWorker()
 			fxc::mutex.lock();
 			for (auto& entry : pool) {
 				if (entry->mqlTester || entry->mqlOptimization) {
-					entry->setStatus(PROVIDER_SERVER, STATUS_OK, "test allowed", reason);
+					entry->setStatus(PROVIDER_SERVER, STATUS_OK, "test is allowed", reason);
 				}
 				else {
 					entry->setStatus(PROVIDER_SERVER, work_status, resolveStatus(work_status), reason);
@@ -481,13 +481,13 @@ _DLLAPI int __stdcall c_getjob()
 //Выдает текущее разрешение экрана (для правильного масштабирования графики)
 _DLLAPI int __stdcall c_getdpi()
 {
-	__try
-	{
-		HDC hDC  = ::GetDC(nullptr); 
-		int nDPI = ::GetDeviceCaps(hDC, LOGPIXELSX); 
+	__try {
+		auto hDC  = ::GetDC(nullptr); 
+		auto nDPI = ::GetDeviceCaps(hDC, LOGPIXELSX); 
 		ReleaseDC(nullptr, hDC);
 		return nDPI;
-	} __except(EXCEPTION_EXECUTE_HANDLER) {
+	}
+	__except(EXCEPTION_EXECUTE_HANDLER) {
 		fxc::msg << "c_getdpi ERROR: " << GetExceptionCode() << fxc::msg_box;
 	}
 

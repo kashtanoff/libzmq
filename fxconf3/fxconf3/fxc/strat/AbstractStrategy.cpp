@@ -42,11 +42,11 @@ namespace fxc {
 			k_point = (symbolDigits == 3 || symbolDigits == 5) ? 10 : 1;
 			initOrdersManager();
 			printRegisteredProps();
-			status = "trade not allowed";
+			status = "trade is not allowed";
 			reason = "cheking permissions";
 			if (!mqlTradeAllowed) {
 				msg << "autotrade not allowed\r\n" << msg_box;
-				setStatus(PROVIDER_DLL, STATUS_DANGER, "auto-tade not allowed", "press auto-trade button");
+				setStatus(PROVIDER_DLL, STATUS_DANGER, "auto-tade is not allowed", "press auto-trade button");
 			}
 			initStrategy();
 			MARK_FUNC_OUT
@@ -98,6 +98,7 @@ namespace fxc {
 			resetOrderManager();
 			MARK_FUNC_OUT
 		}
+
 		void setStatus(int _provider, int _work_status, std::string _status, std::string _reason) {
 			statuses[_provider].statusType = _work_status;
 			statuses[_provider].status = _status;

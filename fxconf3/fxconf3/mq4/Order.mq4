@@ -19,7 +19,7 @@ public:
 				Slippage, 
 				action.o_slprice, action.o_tpprice,
 				StringConcatenate(action.intret, "-", CommentText),
-				Magic, 0, colors[action.o_type]
+				magic, 0, colors[action.o_type]
 			) < 0
 		) {
 			int err = GetLastError();
@@ -76,6 +76,7 @@ public:
 			Err(err);
 		}
 	}
+
 	static void PrintOrder(TradeAction& action)
 	{
 		if(mqlOptimization)
@@ -88,12 +89,14 @@ public:
 	         ", lots: ", action.o_lots,
 	         " - ", action.comment);
 	}
+
 	static void PrintText(TradeAction& action)
 	{
 		if(mqlOptimization)
 			return;
 	   Print(action.comment);
 	}
+
 	static void DrawOrder(TradeAction& action)
 	{
 	   if(!showinfo)
@@ -103,18 +106,17 @@ public:
       info.DrawOrder(action.o_ticket, OrderType(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
       info.DelOldDraws();
 	}
+
 	static void ShowValue(TradeAction& action)  //o_type: 0-str, 1-int, 2-double; o_ticket - key; comment - label; intret - int value/digits; o_lots - double value
 	{
 		if(!showinfo)
 			return;
 		//Print("Comment: \"", ExtractString(action.comment), "\"");
 		//Print("buflen: ", StringBufferLen(action.comment), ", len: ", StringLen(action.comment));
-		switch(action.o_type) {
-			case 0: info.Set((string) action.o_ticket, action.comment); break;
-			case 1: info.Set((string) action.o_ticket, action.comment, action.intret); break;
-			case 2: info.Set((string) action.o_ticket, action.comment, action.o_lots, action.intret); break;
-		}
+
+		info.Set((string) action.o_ticket, ExtractString(action.comment));
 	}
+
 	static void MsgBox(TradeAction& action)
 	{}
 	

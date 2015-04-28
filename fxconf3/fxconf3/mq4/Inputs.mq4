@@ -32,11 +32,9 @@ extern double    Deviation       = 2;
 extern int       MinDev          = 10;
 extern int       RollBack        = 5;
 extern int       Period2         = 24;
-extern int       Magic           = 88555;
 extern string    CommentText     = "fxc";
 extern int       Slippage        = 3;
 //extern string    Skype           = "skype_name";
 extern bool      AutoMM          = false;
 extern int       MMEquity        = 20000;
 extern int       DrawHistoryDays = 14;
-

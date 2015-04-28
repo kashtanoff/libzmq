@@ -1,6 +1,7 @@
 class Look
 {
 public:
+
 	int x, y;
 	int dx, dy;
 
@@ -11,113 +12,82 @@ public:
 		textColor = text_color;
 		x         = pos_x;
 		y         = pos_y;
+		kdpi      = c_getdpi() / 72.0;
 		SetSymbolSize();
-		Init();
 	}
 
 	void Init()
 	{
 		rows = 0;
 		cols = 0;
-		dx   = cols*letterW + 10;
-		dy   = rows*letterH + 10;
+		dx   = 0;
+		dy   = 0;
+		padX = 5;
+		padY = 5;
+		headerFontSize = 12;
 		MakeRect(x, y, dx, dy, clrDarkBlue, clrBlue, "textbox");
+
+		string name = "logo";
+		if (ObjectCreate(0, name, OBJ_BITMAP_LABEL, 0, 0, 0)) {
+			ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+			ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x + padX + 2);
+			ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y + padY);
+			ObjectSetString(0, name, OBJPROP_BMPFILE, 0, "::logo.bmp");
+			logoW = ObjectGetInteger(0, name, OBJPROP_XSIZE);
+			logoH = ObjectGetInteger(0, name, OBJPROP_YSIZE);
+		}
+		
+		int ch1 = GetCharH(fontName, headerFontSize);
+		int ch2 = ch1;
+		int oy  = (logoH - ch1 - ch2) / 2;
+		MakeLabel("header1", 
+			x + padX + logoW,
+			y + padY + oy,
+			" Olsen&Cleverton", headerFontSize, textColor, fontName
+		);
+		MakeLabel("header2", 
+			x + padX + logoW,
+			y + padY + oy + ch1,
+			"", headerFontSize, textColor, fontName
+		);
+		SetHeader("");
+
+		SetSymbolSize();
+		Set("line", "--------------------------");
 	}
 
-	void Set(string name, string label)
-	{
+	void SetHeader(string label) {
+		int length = fmax(StringLen(ObjectGetString(0, "header1", OBJPROP_TEXT)), StringLen(label));
+		headerW    = logoW + length * GetCharW(fontName, headerFontSize);
+		headerH    = logoH;
+
+		ObjectSetString(0, "header2", OBJPROP_TEXT, label);
+	}
+
+	void Set(string name, string label) {
 		if (GetIndex(name) > -1) {
 			Change(name, label);
 			return;
 		}
 
-		names[rows]  = name;
-		labels[rows] = label;
-		MakeLabel(
-			name, 
-			x + 5, 
-			y + 5 + rows*letterH, 
+		names[rows] = name;
+		MakeLabel(name, 
+			x + padX, 
+			y + padY + headerH + rows * letterH, 
 			label, 
-			fontSize, 
-			textColor, 
-			fontName
+			fontSize, textColor, fontName
 		);
 		rows++;
-		ResizeBox(label);
+
+		cols = fmax(cols, StringLen(label));
+		ResizeBox();
 	}
 
-	void Set(string name, string label, int value)
-	{
-		if (GetIndex(name) > -1) {
-			Change(name, value);
-			return;
-		}
-
-		names[rows]  = name;
-		labels[rows] = label;
-		digits[rows] = 0;
-		MakeLabel(
-			name, 
-			x + 5, 
-			y + 5 + rows*letterH, 
-			label + sdts(value, 0), 
-			fontSize, 
-			textColor, 
-			fontName
-		);
-		rows++;
-		ResizeBox(label);
-	}
-
-	void Set(string name, string label, double value, int _digits = 2)
-	{
-		if (GetIndex(name) > -1) {
-			Change(name, value);
-			return;
-		}
-
-		names[rows]  = name;
-		labels[rows] = label;
-		digits[rows] = _digits;
-		MakeLabel(
-			name, 
-			x + 5, 
-			y + 5 + rows*letterH, 
-			label + sdts(value, _digits), 
-			fontSize, 
-			textColor, 
-			fontName
-		);
-		rows++;
-		ResizeBox(label);
-	}
-
-	void Change(string name, string label)
-	{
-		ChangeLabel(name, label);
-		ResizeBox(label);
-	}
-
-	void Change(string name, int value)
-	{
-		int index = GetIndex(name);
-		if (index<0)
-			return;
-
-		string s = labels[index] + sdts(value, 0);
-		ChangeLabel(name, s);
-		ResizeBox(s);
-	}
-
-	void Change(string name, double value)
-	{
-		int index = GetIndex(name);
-		if (index<0)
-			return;
-
-		string s = labels[index] + sdts(value, digits[index]);
-		ChangeLabel(name, s);
-		ResizeBox(s);
+	void Change(string name, string label) {
+		ObjectSetString(0, name, OBJPROP_TEXT, label);
+		
+		cols = fmax(cols, StringLen(label));
+		ResizeBox();
 	}
 
 	void DrawHistory()
@@ -196,40 +166,26 @@ public:
 	}
 
 private:
+
 	int    cols, rows;
 	int    letterW, letterH;
 	string names[20];
-	string labels[20];
-	int    digits[16];
-	int    spaces;
 	int    fontSize;
 	string fontName;
 	color  textColor;
 
-	void SetSymbolSize()
-	{
-		kdpi = c_getdpi() / 72.0;
-		TextSetFont(fontName, fontSize);
-		TextGetSize("-", letterW, letterH);
-		letterH = (int) round(letterH * kdpi);
-		letterW = (int) round(letterW * kdpi);
-	}
+	int padX, padY;
+	int logoW, logoH;
+	int headerH, headerW;
+	int headerFontSize;
 
-	string sdts(double value, int d)
-	{
-		int len = StringLen(DoubleToStr(value, 0));
-		spaces = fmax(spaces, len + 1);
-		string prefix;
-		StringInit(prefix, spaces - len, ' ');
-		return (prefix + DoubleToStr(value, d));
-	}
 
-	int GetIndex(string name)
-	{
-		for (int i = 0; i<rows; i++)
-			if (names[i] == name)
+	int GetIndex(string name) {
+		for (int i = 0; i < rows; i++) {
+			if (names[i] == name) {
 				return (i);
-
+			}
+		}
 		return (-1);
 	}
 
@@ -255,34 +211,51 @@ private:
 	void MakeLabel(string name, int px, int py, string text, int font_size = 10, color text_color = clrRed, string font_name = "Consolas")
 	{
 		ObjectCreate(name, OBJ_LABEL, 0, 0, 0);
-		ObjectSetInteger(0, name, OBJPROP_XDISTANCE, px);
-		ObjectSetInteger(0, name, OBJPROP_YDISTANCE, py);
-		ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-		ObjectSetString(0, name, OBJPROP_TEXT, text);
-		ObjectSetString(0, name, OBJPROP_FONT, font_name);
-		ObjectSetInteger(0, name, OBJPROP_FONTSIZE, font_size);
-		ObjectSetInteger(0, name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
-		ObjectSetInteger(0, name, OBJPROP_COLOR, text_color);
-		ObjectSetInteger(0, name, OBJPROP_BACK, false);
+		ObjectSetInteger(0, name, OBJPROP_XDISTANCE,  px);
+		ObjectSetInteger(0, name, OBJPROP_YDISTANCE,  py);
+		ObjectSetInteger(0, name, OBJPROP_CORNER,     CORNER_LEFT_UPPER);
+		ObjectSetString (0, name, OBJPROP_TEXT,       text);
+		ObjectSetString (0, name, OBJPROP_FONT,       font_name);
+		ObjectSetInteger(0, name, OBJPROP_FONTSIZE,   font_size);
+		ObjectSetInteger(0, name, OBJPROP_ANCHOR,     ANCHOR_LEFT_UPPER);
+		ObjectSetInteger(0, name, OBJPROP_COLOR,      text_color);
+		ObjectSetInteger(0, name, OBJPROP_BACK,       false);
 		ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
-		ObjectSetInteger(0, name, OBJPROP_SELECTED, false);
-		ObjectSetInteger(0, name, OBJPROP_HIDDEN, false);
-		ObjectSetInteger(0, name, OBJPROP_XSIZE, 10);
+		ObjectSetInteger(0, name, OBJPROP_SELECTED,   false);
+		ObjectSetInteger(0, name, OBJPROP_HIDDEN,     false);
+		ObjectSetInteger(0, name, OBJPROP_XSIZE,      10);
 		WindowRedraw();
 	}
 
-	void ChangeLabel(string name, string text)
-	{
-		ObjectSetString(0, name, OBJPROP_TEXT, text);
-	}
+	void ResizeBox() {
+		dx = padX * 2 + fmax(cols * letterW, headerW);
+		dy = padY * 2 + rows * letterH + headerH;
 
-	void ResizeBox(string text)
-	{
-		cols = fmax(cols, StringLen(text));
-		dx   = cols*letterW + 10;
-		dy   = rows*letterH + 10;
 		ObjectSetInteger(0, "textbox", OBJPROP_XSIZE, dx);
 		ObjectSetInteger(0, "textbox", OBJPROP_YSIZE, dy);
 		WindowRedraw();
 	}
+
+	void SetSymbolSize() {
+		letterW = GetCharW(fontName, fontSize);
+		letterH = GetCharH(fontName, fontSize);
+		Print("-> ", fontSize, " char size: ", letterW, "x", letterH);
+	}
+
+	int GetCharW(string _fontName, int _fontSize) {
+		int w, h;
+		TextSetFont(_fontName, _fontSize);
+		TextGetSize("-", w, h);
+		Print("-> ", _fontSize, " char raw size: ", w, "x", h);
+		return (int) round(w * kdpi);
+	}
+
+	int GetCharH(string _fontName, int _fontSize) {
+		int w, h;
+		TextSetFont(_fontName, _fontSize);
+		TextGetSize("-", w, h);
+		Print("-> ", _fontSize, " char raw size: ", w, "x", h);
+		return (int) round(h * kdpi);
+	}
+
 };

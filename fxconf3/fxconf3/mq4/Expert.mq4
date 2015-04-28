@@ -8,6 +8,13 @@
 #property version "{{ver}}"  
 #property description "EA FXConfidence"
 
+#resource "logo.bmp"
+
+int ocMagic  = 0x7ED80000;
+int eaMagic  = 0x00000000;
+int cfgMagic = 0x00000000;
+int magic    = ocMagic | eaMagic | cfgMagic;
+
 #include "Inputs.mq4"
 
 struct TradeAction {
@@ -19,7 +26,7 @@ struct TradeAction {
 	int    o_type;      // 4 bytes
 	int    intret;      // 4 bytes
 	int    actionId;    // 4 bytes
-	string comment;      // 12 bytes
+	string comment;     // 12 bytes
 };
 
 struct TfRates {
@@ -389,7 +396,7 @@ bool DllInit()
 	c_setint(   "MinDev",             MinDev);
 	c_setint(   "RollBack",           RollBack);
 	c_setint(   "Period2",            Period2);
-	c_setint(   "Magic",              Magic);
+	c_setint(   "Magic",              magic);
 	c_setstring("Comment",            CommentText);
 	c_setint(   "AutoMM",             AutoMM);
 	c_setint(   "MMEquity",           MMEquity);
@@ -430,9 +437,7 @@ void InitLook()
 	ObjectsDeleteAll();
 
 	info.Init();
-	info.Set("header",    "Olsen&Cleverton fxc v{{ver}}");
-	info.Set("line",      "--------------------------");
-   
+	info.SetHeader(" Single v{{ver}}");
 	
 	//ShowControlPanel(info.x + info.dx + 10, info.y);
 	info.DrawHistory();
@@ -448,7 +453,7 @@ void UpdateOrders() {
 		if (
 			!mqlOptimization &&
 			(
-				(!AverageAll && OrderMagicNumber() != Magic) || // В зависимости от настройки обрабатываем либо все, либо только наши
+				(!AverageAll && OrderMagicNumber() != magic) || // В зависимости от настройки обрабатываем либо все, либо только наши
 				(OrderSymbol() != symbolName)                       // Обрабатываем ордера только для текущего символа
 			)
 		) continue;

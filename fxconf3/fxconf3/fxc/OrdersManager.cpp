@@ -24,10 +24,12 @@ namespace fxc {
 				dillers[OP_SELL]->opposite = dillers[OP_BUY];
 				MARK_FUNC_OUT
 			}
+			
 			virtual void onOrderClose(int ticket) {};
+
 			void initOrdersManager() {
 				terminalInfoCalc();
-				if (mqlOptimization) { // ≈сли не оптимизаци€
+				if (!mqlOptimization) { // ≈сли не оптимизаци€
 					copyOrders = [&]() {
 						old_length = current_length;
 						memcpy(old_orders, current_orders, old_length); // список текущих ордеров, делаем старым
@@ -36,8 +38,8 @@ namespace fxc {
 				else {
 					copyOrders = []() {};
 				}
-				//ѕредварительна€ инициализаци€ базового лота, после получени€ параметров советника будет переопределение
-				dillers[OP_BUY]->base_lot = symbolMinLot; 
+				// ѕредварительна€ инициализаци€ базового лота, после получени€ параметров советника будет переопределение
+				dillers[OP_BUY]->base_lot  = symbolMinLot; 
 				dillers[OP_SELL]->base_lot = symbolMinLot; 
 			}
 
@@ -55,7 +57,7 @@ namespace fxc {
 
 			void resetOrderManager() {
 				copyOrders();
-				isSorted      = false;
+				isSorted       = false;
 				current_length = 0;
 				dillers[OP_BUY]->reset();
 				dillers[OP_SELL]->reset();
@@ -95,6 +97,7 @@ namespace fxc {
 			inline fxc::Diller* const getDillers() {
 				return *dillers;
 			}
+
 			//¬ыдает событи onOrderClose  дл€ закрытых ордеров
 			inline void calcClosedOrders() {
 				bool   found;
@@ -117,9 +120,10 @@ namespace fxc {
 				}
 
 			}
+
 		protected:
 
-			Diller*     dillers[2];
+			Diller* dillers[2];
 
 		private:
 
