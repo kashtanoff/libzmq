@@ -467,6 +467,12 @@ _DLLAPI void __stdcall c_postInit() {
 			checkAccessThread = std::thread(checkAccessWorker);
 			checkAccessThread.detach();
 		}
+		else if (strategy->mqlTester || strategy->mqlOptimization) {
+			strategy->setStatus(PROVIDER_SERVER, STATUS_OK, "test is allowed", reason);
+			}
+			else {
+				strategy->setStatus(PROVIDER_SERVER, work_status, resolveStatus(work_status), reason);
+			}
 		fxc::mutex.unlock();
 		MARK_FUNC_OUT
 #if DEBUG
