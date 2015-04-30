@@ -27,8 +27,6 @@ namespace fxc {
 	class ActionManager : public OrdersManager {
 
 		public:
-
-			
 			
 			void mapActions(void* arrayPtr, int length) {
 				auto ptr = (fxc::TradeAction*) arrayPtr;
@@ -173,6 +171,7 @@ namespace fxc {
 				action->actionId  = JOB_CLOSE;
 				MARK_FUNC_OUT
 			}
+
 			inline void drawOrder(int ticket) {
 				MARK_FUNC_IN
 					if (!is_visual) {
@@ -263,8 +262,10 @@ namespace fxc {
 				Mql::write2str(&action->comment, label);
 				MARK_FUNC_OUT
 			}
+
 #pragma region Checks
-			public:
+		public:
+
 			//Проверка уровня стоплосса или тейкпрофита
 			inline bool check_sl(int type, double low_price, double high_price) {
 				return !(low_price && high_price && dillers[type % 2]->delta(low_price, high_price) < deltaStopLevel);

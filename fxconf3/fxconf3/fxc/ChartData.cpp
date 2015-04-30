@@ -50,6 +50,7 @@ namespace fxc {
 					MARK_FUNC_OUT
 					return;
 				}
+				MARK_FUNC_OUT
 				
 				MARK_FUNC_IN
 				int i;
@@ -67,6 +68,9 @@ namespace fxc {
 						break;
 					}
 				}
+				MARK_FUNC_OUT
+
+				MARK_FUNC_IN
 				i++;
 				newBars = length - i;
 				for (; i < length; ++i) {
@@ -149,10 +153,7 @@ namespace fxc {
 			}
 
 			inline fxc::ChartData* getChartData(const int timeframe) {
-				MARK_FUNC_IN
-					auto res = _chartData[timeframe];
-				MARK_FUNC_OUT
-				return res;
+				return _chartData[timeframe];
 			}
 
 		private:

@@ -30,13 +30,24 @@ std::vector<STRAT_CLASS*> pool;
 __declspec(thread) STRAT_CLASS* strategy;
 bool isRunAllowed = true;
 
+struct AccountOrder {
+	int        ticket;
+	__time64_t opentime;
+	__time64_t closetime;
+	double     profit;
+};
+
 struct AccountData {
 	double      balance;
 	double      equity;
 	double      profit;
 	int         status;
-	std::time_t lastUpdate;
+	std::time_t lastUpdate = 0;
+	std::time_t lastSync   = 0;
 } account;
+
+std::vector<AccountOrder> openedOrders;
+std::vector<AccountOrder> serverOrders;
 
 std::string resolveError(int err) {
 	switch (err) {
@@ -78,9 +89,39 @@ const std::string getRequestJson(STRAT_CLASS* expert) {
 	if (!tester) {
 		account.lastUpdate = 0;
 		ss
-			<< "\"balance\":" << account.balance << ","
-			<< "\"equity\":"  << account.equity  << ","
-			<< "\"profit\":"  << account.profit  << ",";
+			<< "\"balance\":" << account.balance       << ","
+			<< "\"equity\":"  << account.equity        << ","
+			<< "\"profit\":"  << account.profit        << ","
+			<< "\"orders\":[";
+
+		int n = 0;
+		for (int i = 0; i < openedOrders.size(); i++, n++) {
+			if (n > 0) {
+				ss << ",";
+			}
+
+			ss << "{"
+				<< "\"ticket\":" << openedOrders[i].ticket << ","
+				<< "\"opened\":" << openedOrders[i].opentime << ","
+				<< "\"closed\":0,"
+				<< "\"profit\":0"
+			<< "}";
+		}
+
+		for (int i = 0; i < serverOrders.size(); i++, n++) {
+			if (n > 0) {
+				ss << ",";
+			}
+
+			ss << "{"
+				<< "\"ticket\":" << serverOrders[i].ticket    << ","
+				<< "\"opened\":" << serverOrders[i].opentime  << ","
+				<< "\"closed\":" << serverOrders[i].closetime << ","
+				<< "\"profit\":" << serverOrders[i].profit    << ""
+			<< "}";
+		}
+		
+		ss << "],";
 	}
 	ss
 		<< "\"leverage\":"   <<  expert->accountLeverage        <<   ","
@@ -97,21 +138,20 @@ const std::string getRequestJson(STRAT_CLASS* expert) {
 
 bool isGlobalWorkersAllowed = true;
 bool isAccessWorkerActive   = false;
-int work_status = STATUS_HARD_BREAK;
-std::string reason = "not initialized";
 
-void checkAccessWorker()
-{
-	isAccessWorkerActive = true;
-	account.status       = 500;
+int         work_status = STATUS_HARD_BREAK;
+std::string reason      = "not initialized";
 
-	while (isGlobalWorkersAllowed) {
-		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
-
+void checkAccess() {
 #if CHECK_ACCESS
 	#if DEBUG
 		try {
 	#endif
+			// прошло менее 1 часа и не появились новые ордера
+			if (!openedOrders.size() && time(0) - account.lastSync < 60 * 60) {
+				return;
+			}
+
 			fxc::mutex.lock();
 			STRAT_CLASS* expert = nullptr;
 
@@ -123,7 +163,7 @@ void checkAccessWorker()
 				}
 			}
 
-			auto request = getRequestJson(expert);
+			auto request = getRequestJson(expert == nullptr ? strategy : expert);
 			fxc::mutex.unlock();
 
 
@@ -138,8 +178,11 @@ void checkAccessWorker()
 				rapidjson::Document doc;
 
 				if (!doc.Parse(connection.getResponse().c_str()).HasParseError()) {
-					account.status = doc["statusCode"].GetInt();
-					reason         = doc["status"].GetString();
+				#pragma region Valid renponse
+
+					account.lastSync = time(0);
+					account.status   = doc["statusCode"].GetInt();
+					reason           = doc["status"].GetString();
 					
 					switch (account.status) {
 						case 0:
@@ -154,6 +197,24 @@ void checkAccessWorker()
 							work_status = STATUS_HARD_BREAK;
 							break;
 					}
+
+					fxc::mutex.lock();
+					serverOrders.clear();
+
+					auto orders = doc.FindMember("orders");
+					if (orders != doc.MemberEnd()) {
+						for (auto itr = orders->value.Begin(); itr != orders->value.End(); ++itr) {
+							serverOrders.push_back(AccountOrder{ itr->GetInt(), 0, 0, 0 });
+
+							for (auto openItr = openedOrders.begin(); openItr != openedOrders.end(); ++openItr) {
+								if (openItr->ticket == itr->GetInt()) {
+									openedOrders.erase(openItr);
+									break;
+								}
+							}
+						}
+					}
+					fxc::mutex.unlock();
 
 					rapidjson::Value::MemberIterator message = doc.FindMember("message");
 					if (message != doc.MemberEnd()) {
@@ -173,6 +234,8 @@ void checkAccessWorker()
 						(void) url;
 					}
 					(void) message;
+
+				#pragma endregion
 				}
 				else {
 					work_status = STATUS_HARD_BREAK;
@@ -212,12 +275,6 @@ void checkAccessWorker()
 				}
 			}
 			fxc::mutex.unlock();
-			
-		#if DEBUG == 0
-			if (work_status == STATUS_OK) {
-				std::this_thread::sleep_for(std::chrono::seconds(60 * 59));
-			}
-		#endif
 	#if DEBUG
 		}
 		catch (const std::exception& ex) {
@@ -234,9 +291,18 @@ void checkAccessWorker()
 		}
 	#endif
 #endif
+}
+void checkAccessWorker()
+{
+	isAccessWorkerActive = true;
+	account.status       = 500;
 
-			std::this_thread::sleep_for(std::chrono::seconds(60));
+	while (isGlobalWorkersAllowed) {
+		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
+		checkAccess();
+		std::this_thread::sleep_for(std::chrono::seconds(60));
 	}
+
 	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
 	isAccessWorkerActive = false;
 }
@@ -428,24 +494,58 @@ _DLLAPI void __stdcall c_deinit()
 	if (iter != pool.end()) {
 		pool.erase(iter);
 	}
+	auto lastInstance = !pool.size();
+	fxc::mutex.unlock();
+
+	// Если у нас больше не осталось экземпляров советника, то можно прекращать передачу данных серверу
+	if (lastInstance) {
+		isGlobalWorkersAllowed = false;
+		checkAccess();
+	}
 
 	delete strategy;
 	strategy = nullptr;
-
-	// Если у нас больше не осталось экземпляров советника, то можно прекращать передачу данных серверу
-	if (!pool.size()) {
-		isGlobalWorkersAllowed = false;
-	}
-	fxc::mutex.unlock();
 }
 
-_DLLAPI void __stdcall c_updateAccount(double balance, double equity, double profit) {
+_DLLAPI int __stdcall c_updateAccount(double balance, double equity, double profit) {
 	if (!strategy->mqlTester && !strategy->mqlOptimization) {
+		fxc::mutex.lock();
 		account.balance    = balance;
 		account.equity     = equity;
 		account.profit     = profit;
 		account.lastUpdate = time(0);
+		fxc::mutex.unlock();
 	}
+
+	return serverOrders.size() ? serverOrders.begin()->ticket : 0;
+}
+
+_DLLAPI int __stdcall c_updateOrder(int ticket, __time64_t opentime, __time64_t closetime, double profit) {
+	fxc::mutex.lock();
+	int next = 0;
+	auto itr = serverOrders.begin();
+	for (itr = serverOrders.begin(); itr != serverOrders.end(); ++itr) {
+		if (itr->ticket == ticket) {
+			itr->opentime  = opentime;
+			itr->closetime = closetime;
+			itr->profit    = profit;
+
+			if (++itr != serverOrders.end()) {
+				next = itr->ticket;
+			}
+
+			break;
+		}
+	}
+	fxc::mutex.unlock();
+
+	return next;
+}
+
+_DLLAPI void __stdcall c_onOrderOpen(int ticket, __time64_t opentime) {
+	fxc::mutex.lock();
+	openedOrders.push_back(AccountOrder{ ticket, opentime });
+	fxc::mutex.unlock();
 }
 
 //Выполняет этап алгоритма, возвращает индекс необходимого действия
@@ -500,7 +600,7 @@ _DLLAPI void __stdcall c_refresh_chartdata(int timeframe, int length, void* poin
 	try {
 #endif
 		MARK_FUNC_IN
-			strategy->getChartData(timeframe)->update((MqlRates*) pointer, length);
+		strategy->getChartData(timeframe)->update((MqlRates*) pointer, length);
 		MARK_FUNC_OUT
 		return;
 #if DEBUG
@@ -577,7 +677,6 @@ _DLLAPI double __stdcall c_norm_lot(double _lots)
 {
 	return strategy->normLot(_lots);
 }
-
 
 _DLLAPI void __stdcall fcostransform(double a[], int tnn, int inversefct)
 {

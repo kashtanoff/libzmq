@@ -24,7 +24,7 @@ public:
 		dy   = 0;
 		padX = 5;
 		padY = 5;
-		headerFontSize = 12;
+		headerFontSize = 10;
 		MakeRect(x, y, dx, dy, clrDarkBlue, clrBlue, "textbox");
 
 		string name = "logo";
@@ -239,14 +239,12 @@ private:
 	void SetSymbolSize() {
 		letterW = GetCharW(fontName, fontSize);
 		letterH = GetCharH(fontName, fontSize);
-		Print("-> ", fontSize, " char size: ", letterW, "x", letterH);
 	}
 
 	int GetCharW(string _fontName, int _fontSize) {
 		int w, h;
 		TextSetFont(_fontName, _fontSize);
 		TextGetSize("-", w, h);
-		Print("-> ", _fontSize, " char raw size: ", w, "x", h);
 		return (int) round(w * kdpi);
 	}
 
@@ -254,7 +252,6 @@ private:
 		int w, h;
 		TextSetFont(_fontName, _fontSize);
 		TextGetSize("-", w, h);
-		Print("-> ", _fontSize, " char raw size: ", w, "x", h);
 		return (int) round(h * kdpi);
 	}
 

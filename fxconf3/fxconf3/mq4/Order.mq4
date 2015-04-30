@@ -7,24 +7,29 @@ public:
 	{
 		if (!mqlOptimization && (!CheckConnect() || !CheckMargin(action.o_lots)))
 			return;
+
 		if (ecn_mode) {
 			action.o_slprice = 0;
 			action.o_tpprice = 0;
 		}
 
-		if (
-			OrderSend(
-				symbolName, 
-				action.o_type, action.o_lots, action.o_openprice, 
-				Slippage, 
-				action.o_slprice, action.o_tpprice,
-				StringConcatenate(action.intret, "-", CommentText),
-				magic, 0, colors[action.o_type]
-			) < 0
-		) {
+		int ticket = OrderSend(
+			symbolName,
+			action.o_type, action.o_lots, action.o_openprice,
+			Slippage,
+			action.o_slprice, action.o_tpprice,
+			StringConcatenate(action.intret, "-", CommentText),
+			magic, 0, colors[action.o_type]
+		);
+
+		if (ticket < 0) {
 			int err = GetLastError();
 			ShowActionError(action, "NewOrder critical: ", err, true);
 			Err(err);
+		}
+		else if (!mqlOptimization && !mqlTester) {
+			OrderSelect(ticket, SELECT_BY_TICKET);
+			c_onOrderOpen(ticket, OrderOpenTime());
 		}
 	}
 

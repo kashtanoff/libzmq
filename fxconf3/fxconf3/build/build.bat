@@ -18,7 +18,7 @@ for /f "delims=" %%a in ('%CD%\mthash.exe') do (
 	set mthash=%%a
 )
 
-set outfile=fxc
+set outfile=OCSingle
 set outdir=%APPDATA%\MetaQuotes\Terminal\%mthash%\MQL4\Experts\fxc
 
 :::::::::::::::
@@ -42,5 +42,8 @@ CScript "%CD%\ReplaceText.vbs" //B //nologo %indir%\%midfile%.mq4 {{build}} %bui
 :: Copy result ::
 :::::::::::::::::
 
-move /Y %indir%\%midfile%.ex4 %outdir%\%outfile%%build%.ex4
-copy /Y %dllfile% %outdir%\%outfile%%build%.dll
+:: move /Y %indir%\%midfile%.ex4 %outdir%\%outfile%%build%.ex4
+:: copy /Y %dllfile% %outdir%\%outfile%%build%.dll
+
+move /Y %indir%\%midfile%.ex4 %outdir%\%outfile%.ex4
+copy /Y %dllfile% %outdir%\%outfile%.dll

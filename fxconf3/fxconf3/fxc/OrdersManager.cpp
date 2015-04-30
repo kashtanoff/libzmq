@@ -118,7 +118,6 @@ namespace fxc {
 						onOrderClose(order->ticket);
 					}
 				}
-
 			}
 
 		protected:

@@ -1,12 +1,12 @@
 //+------------------------------------------------------------------+
 //|                                                          {{ver}}   |
-//|                                      Copyright 2013, Aurora ltd. |
-//|                                      http://www.fxconfidence.com |
+//|                                  Copyright 2015, Olsen&Cleverton |
+//|                                       http://olsencleverton.com/ |
 //+------------------------------------------------------------------+
-#property copyright "Copyright 2013, Aurora ltd."
-#property link      "http://www.fxconfidence.com"
-#property version "{{ver}}"  
-#property description "EA FXConfidence"
+#property copyright "Copyright 2015, Olsen&Cleverton"
+#property link      "http://olsencleverton.com/"
+#property version   "{{ver}}"  
+#property icon      "logo.ico"
 
 #resource "logo.bmp"
 
@@ -45,7 +45,7 @@ string ExtractString(string str) {
 	return str;
 }
 
-#import "fxc{{build}}.dll"
+#import "ocsingle.dll"
 	bool   c_init();
 	void   c_deinit();
 	void   c_postInit();
@@ -61,7 +61,9 @@ string ExtractString(string str) {
 	void   c_setvar(string prop, double& var[]);
 
 	void   c_setactions(TradeAction& var[], int length);
-	void   c_updateAccount(double balance, double equity, double profit);
+	int    c_updateAccount(double balance, double equity, double profit);
+	int    c_updateOrder(int ticket, datetime opentime, datetime closetime, double profit);
+	void   c_onOrderOpen(int ticket, datetime opentime);
 
 	int    c_add_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0);
 	double c_norm_lot(double _lots);
@@ -454,7 +456,7 @@ void UpdateOrders() {
 			!mqlOptimization &&
 			(
 				(!AverageAll && OrderMagicNumber() != magic) || // В зависимости от настройки обрабатываем либо все, либо только наши
-				(OrderSymbol() != symbolName)                       // Обрабатываем ордера только для текущего символа
+				(OrderSymbol() != symbolName)                   // Обрабатываем ордера только для текущего символа
 			)
 		) continue;
 
@@ -472,6 +474,17 @@ void UpdateOrders() {
 }
 
 void UpdateAccountInfo() {
-	c_updateAccount(AccountBalance(), AccountEquity(), AccountProfit());
+	int ticket = c_updateAccount(AccountBalance(), AccountEquity(), AccountProfit());
+
+	while (ticket) {
+		if (OrderSelect(ticket, SELECT_BY_TICKET)) {
+			datetime close = OrderCloseTime();
+			ticket = c_updateOrder(ticket, OrderOpenTime(), close, close ? OrderProfit() + OrderCommission() + OrderSwap() : 0);
+		}
+		else {
+			ticket = c_updateOrder(ticket, 0, 0, 0);
+		}
+	}
+
 	lastAccountUpdateTime = TimeGMT();
 }
