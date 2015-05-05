@@ -23,8 +23,10 @@ namespace fxc {
 			rates = manager->getChartData(timeframe);
 		}
 		//Автоматически вызываемый метод, вызывается каждый тик перед запуском стратегии
-		inline void listenChart() {
+		virtual inline void listenChart() {
 			MARK_FUNC_IN
+				if (rates->newBars > outBufferLength)
+					msg << "listenChart to mach bars!!!\r\n" << msg_box;
 			if (rates->newBars)
 				for (auto& buffer : buffers)
 					buffer->skip(rates->newBars);

@@ -33,6 +33,8 @@ namespace fxc {
 			int			        cur_av_lvl = 100;
 			double		        base_lot  = 0;
 
+			std::string			open_reason;			//для отладки, трейс причины открытия
+
 			Diller(int _type) {
 				if (type = _type) {
 					typeSign  = 1;
@@ -44,6 +46,7 @@ namespace fxc {
 					bestPrice = [](double a, double b)             { return fmax(a, b); };
 					comparer  = [](const Order* a, const Order* b) { return a->openprice > b->openprice; };
 				}
+				open_reason = "";
 			}
 			//Сброс диллеров в начале тика
 			void reset() {

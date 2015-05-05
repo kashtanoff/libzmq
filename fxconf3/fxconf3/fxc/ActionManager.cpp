@@ -91,9 +91,11 @@ namespace fxc {
 				MARK_FUNC_IN
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> CreateOrder(): actions limit exceeded\r\n" << fxc::msg_box;
+					MARK_FUNC_OUT
 					return;
 				}
 				if (check_new(type, lots, openprice, slprice, tpprice) != 0)
+					MARK_FUNC_OUT
 					return;
 				auto action = ext_tradeActions[actionsLen++];
 
@@ -115,6 +117,8 @@ namespace fxc {
 				MARK_FUNC_IN
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> ModOrder(): actions limit exceeded\r\n" << fxc::msg_box;
+					MARK_FUNC_OUT
+						return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
@@ -135,6 +139,8 @@ namespace fxc {
 				MARK_FUNC_IN
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> DeleteOrder(): actions limit exceeded\r\n" << fxc::msg_box;
+					MARK_FUNC_OUT
+						return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
@@ -154,7 +160,10 @@ namespace fxc {
 			inline void closeOrder(int ticket, double lots, double openprice) {
 				MARK_FUNC_IN
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
+#if DEBUG
 					fxc::msg << " -> CloseOrder(): actions limit exceeded\r\n" << fxc::msg_box;
+#endif
+					MARK_FUNC_OUT
 					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
@@ -175,10 +184,12 @@ namespace fxc {
 			inline void drawOrder(int ticket) {
 				MARK_FUNC_IN
 					if (!is_visual) {
+						MARK_FUNC_OUT
 						return;
 					}
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
+					MARK_FUNC_OUT
 					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
@@ -197,10 +208,12 @@ namespace fxc {
 			inline void showValue(int key, std::string value) {
 				MARK_FUNC_IN
 				if (!is_visual) {
+					MARK_FUNC_OUT
 					return;
 				}
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
+					MARK_FUNC_OUT
 					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
@@ -220,10 +233,12 @@ namespace fxc {
 			inline void showValue(int key, std::string label, int value) {
 				MARK_FUNC_IN
 				if (!is_visual) {
+					MARK_FUNC_OUT
 					return;
 				}
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
+					MARK_FUNC_OUT
 					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
@@ -243,10 +258,12 @@ namespace fxc {
 			inline void showValue(int key, std::string label, double value, int digits=5) {
 				MARK_FUNC_IN
 				if (!is_visual) {
+					MARK_FUNC_OUT
 					return;
 				}
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
+					MARK_FUNC_OUT
 					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];

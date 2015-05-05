@@ -21,6 +21,7 @@ namespace utils {
 			
 			~CircularBuffer() {
 				delete []_buffer;
+				//msg << "CircularBuffer: delete buffer\r\n" << msg_box;
 			}
 
 			void alloc(int size) {

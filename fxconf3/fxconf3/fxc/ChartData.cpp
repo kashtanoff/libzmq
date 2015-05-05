@@ -97,7 +97,12 @@ namespace fxc {
 
 			TimeSeries() {
 			}
-
+			~TimeSeries() {
+				for (auto& pair : _chartData) {
+					delete pair.second;
+				}
+				//msg << "TimeSeries: delete ChartDatas\r\n" << msg_box;
+			}
 			inline void timeSeriesReset() {
 				for (auto& pair : _chartData) {
 					pair.second->newBars = 0;
@@ -105,11 +110,13 @@ namespace fxc {
 			}
 
 			void updateFirst(const double ask, const double bid) {
+				MARK_FUNC_IN
 				for (auto& pair : _chartData) {
 					pair.second->high[0]  = max(pair.second->high[0], bid);
 					pair.second->low[0]   = min(pair.second->low[0], bid);
 					pair.second->close[0] = bid;
 				}
+				MARK_FUNC_OUT
 			}
 
 			void registerTimeframe(const int timeframe, const int length, fxc::ChartListener* const listener) {

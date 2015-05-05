@@ -41,7 +41,7 @@ namespace fxc {
 			MARK_FUNC_IN
 			k_point = (symbolDigits == 3 || symbolDigits == 5) ? 10 : 1;
 			initOrdersManager();
-			printRegisteredProps();
+			//printRegisteredProps();
 			status = "trade is not allowed";
 			reason = "cheking permissions";
 			if (!mqlTradeAllowed) {
@@ -49,6 +49,7 @@ namespace fxc {
 				setStatus(PROVIDER_DLL, STATUS_DANGER, "auto-tade is not allowed", "press auto-trade button");
 			}
 			initStrategy();
+			msg << "strategy init done\r\n" << msg_box;
 			MARK_FUNC_OUT
 		}
 
@@ -80,7 +81,7 @@ namespace fxc {
 
 			dillers[0]->mpo = dillers[1]->mpc = ask;
 			dillers[1]->mpo = dillers[0]->mpc = bid;
-			if (bypass()) {
+			if (mqlOptimization && bypass()) {  //Только в режиме оптимизации пытаемся экономить на пропуске тиков
 				MARK_FUNC_OUT
 				return true;
 			}

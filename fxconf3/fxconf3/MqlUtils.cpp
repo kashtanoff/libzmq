@@ -28,7 +28,7 @@ struct MqlRates {
 class Mql {
 	
 	public:
-
+		//TODO: результат этой функции необходимо уничтожить после использования
 		static char* str2chars(MqlString* str) {
 			auto psz = new char[wcslen(str->buffer) + 1];
 			wsprintfA(psz, "%S", str->buffer);

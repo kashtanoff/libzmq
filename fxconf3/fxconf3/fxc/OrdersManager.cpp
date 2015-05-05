@@ -24,7 +24,13 @@ namespace fxc {
 				dillers[OP_SELL]->opposite = dillers[OP_BUY];
 				MARK_FUNC_OUT
 			}
-			
+			~OrdersManager() {
+				MARK_FUNC_IN
+				delete dillers[0];
+				delete dillers[1];
+				//msg << "OrdersManager: delete dillers\r\n" << msg_box;
+				MARK_FUNC_OUT
+			}
 			virtual void onOrderClose(int ticket) {};
 
 			void initOrdersManager() {
@@ -46,6 +52,7 @@ namespace fxc {
 			inline void sortOrders() {
 				MARK_FUNC_IN
 				if (isSorted) {
+					MARK_FUNC_OUT
 					return;
 				}
 				calcClosedOrders();
@@ -56,11 +63,13 @@ namespace fxc {
 			}
 
 			void resetOrderManager() {
+				MARK_FUNC_IN
 				copyOrders();
 				isSorted       = false;
 				current_length = 0;
 				dillers[OP_BUY]->reset();
 				dillers[OP_SELL]->reset();
+				MARK_FUNC_OUT
 			}
 
 			//3.1 Добавляет новый ордер в цикле скана ордеров, в будущем возвращает код изменения

@@ -421,11 +421,14 @@ bool DllInit()
 		tfRates[i].timeframe = timeframes[i];
 		tfRates[i].length    = timeframesSize[i];
 		ArrayResize(tfRates[i].rates, timeframesSize[i]);
-
+		tfRates[i].rates[tfRates[i].length - 1].time = 0;
 		Print("-> timeframe[", i, "]: ", 
 			timeframes[i], "(", timeframesSize[i], ") -> ", 
 			tfRates[i].timeframe, "(", tfRates[i].length, ")");
 	}
+
+
+
 
 	Print("============ init dll done =============");
 	return (true);
