@@ -95,14 +95,6 @@ namespace fxc {
 
 		public:
 
-			TimeSeries() {
-			}
-			~TimeSeries() {
-				for (auto& pair : _chartData) {
-					delete pair.second;
-				}
-				//msg << "TimeSeries: delete ChartDatas\r\n" << msg_box;
-			}
 			inline void timeSeriesReset() {
 				for (auto& pair : _chartData) {
 					pair.second->newBars = 0;

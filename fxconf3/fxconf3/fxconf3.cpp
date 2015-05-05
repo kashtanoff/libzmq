@@ -162,13 +162,16 @@ void checkAccess() {
 					break;
 				}
 			}
-			std::string request;
-			//В этом потоке не может быть strategy
-			if (expert != nullptr)
-				request = getRequestJson(expert);
-			else 
+
+			if (expert == nullptr) {
+				expert = strategy;
+			}
+			// В этом потоке может не быть strategy
+			if (expert == nullptr) {
 				return;
-			//auto request = getRequestJson(expert == nullptr ? strategy : expert);
+			}
+
+			auto request = getRequestJson(expert);
 			fxc::mutex.unlock();
 
 
@@ -299,17 +302,20 @@ void checkAccess() {
 }
 void checkAccessWorker()
 {
+	STACK_TRACE_INIT
 	isAccessWorkerActive = true;
 	account.status       = 500;
-	//fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
+	account.lastSync     = 0;
+
 	while (isGlobalWorkersAllowed) {
-		
+		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
 		checkAccess();
-		std::this_thread::sleep_for(std::chrono::seconds(10));
+		std::this_thread::sleep_for(std::chrono::seconds(60));
 	}
 
-	//fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
+	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
 	isAccessWorkerActive = false;
+	STACK_TRACE_FLUSH
 }
 
 std::thread checkAccessThread;
@@ -415,18 +421,19 @@ _DLLAPI void __stdcall c_setactions(void* pointer, int length) {
 
 _DLLAPI bool __stdcall c_init()
 {
+	STACK_TRACE_INIT
+
 #if DEBUG
 	try {
-	if (AllocConsole()) { // Создаем консоль, у процесса не более одной.
-		// Связываем буферы консоли с предопределенными файловыми описателями.
-		freopen("conin$", "r", stdin);
-		freopen("CONOUT$", "w", stdout);
-		freopen("conout$", "w", stderr);
-		fxc::console = true;
-		fxc::msg << "Debug logging activated\r\n" << fxc::msg_box;
-	}
+		if (AllocConsole()) { // Создаем консоль, у процесса не более одной.
+			// Связываем буферы консоли с предопределенными файловыми описателями.
+			freopen("conin$", "r", stdin);
+			freopen("CONOUT$", "w", stdout);
+			freopen("conout$", "w", stderr);
+			fxc::console = true;
+			fxc::msg << "Debug logging activated\r\n" << fxc::msg_box;
+		}
 #endif
-
 		MARK_FUNC_IN
 		fxc::mutex.lock();
 		
@@ -464,14 +471,16 @@ _DLLAPI void __stdcall c_postInit() {
 
 		fxc::mutex.lock();
 		isGlobalWorkersAllowed = true;
+
+		fxc::msg << "-> isGlobalWorkersAllowed status: " << isGlobalWorkersAllowed << "; AccessWorker status: " << isAccessWorkerActive << "\r\n" << fxc::msg_box;
+
 		// Если глобальные потоки еще не запущены, то запускаем
 		// Если же уже есть один поток, то второй нам не нужен
 		if (!isAccessWorkerActive) {
 			checkAccessThread = std::thread(checkAccessWorker);
 			checkAccessThread.detach();
 		}
-		else{
-			//fxc::msg << "AccessWorker Active! work_status: " << work_status << "\r\n" << fxc::msg_box;
+		else {
 			if (strategy->mqlTester || strategy->mqlOptimization) {
 				strategy->setStatus(PROVIDER_SERVER, STATUS_OK, "test is allowed", reason);
 			}
@@ -480,19 +489,24 @@ _DLLAPI void __stdcall c_postInit() {
 			}
 		}
 		fxc::mutex.unlock();
-		//TEMP: временная конструкция, пока не поймем причину отказа воркера
-		if (strategy->mqlTester || strategy->mqlOptimization) 
-			strategy->setStatus(PROVIDER_SERVER, STATUS_OK, "test is allowed", reason);
-		int timer = 20;
-		if (strategy->breakStatus >= STATUS_SOFT_BREAK) {
-			fxc::msg << "Wait permissions... (" << isGlobalWorkersAllowed << ")\r\n" << fxc::msg_box;
-		}
-		while (timer-- > 0 && strategy->breakStatus >= STATUS_SOFT_BREAK) {
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-		}
-		if (strategy->breakStatus >= STATUS_SOFT_BREAK) {
-			fxc::msg << "Permissions not recived!!! (" << isGlobalWorkersAllowed << "), work_status: " << work_status << "\r\n" << fxc::msg_box;
-		}
+
+		////TEMP: временная конструкция, пока не поймем причину отказа воркера
+		//if (strategy->mqlTester || strategy->mqlOptimization) {
+		//	strategy->setStatus(PROVIDER_SERVER, STATUS_OK, "test is allowed", reason);
+		//}
+
+		//int timer = 20;
+		//if (strategy->breakStatus >= STATUS_SOFT_BREAK) {
+		//	fxc::msg << "Wait permissions... (" << isGlobalWorkersAllowed << ")\r\n" << fxc::msg_box;
+		//}
+
+		//while (timer-- > 0 && strategy->breakStatus >= STATUS_SOFT_BREAK) {
+		//	std::this_thread::sleep_for(std::chrono::seconds(1));
+		//}
+		//
+		//if (strategy->breakStatus >= STATUS_SOFT_BREAK) {
+		//	fxc::msg << "Permissions not recived!!! (" << isGlobalWorkersAllowed << "), work_status: " << work_status << "\r\n" << fxc::msg_box;
+		//}
 
 		MARK_FUNC_OUT
 #if DEBUG
@@ -520,19 +534,22 @@ _DLLAPI void __stdcall c_deinit()
 	if (iter != pool.end()) {
 		pool.erase(iter);
 	}
-	else
+	else {
 		fxc::msg << "c_deinit strategy instance not found\r\n" << fxc::msg_box;
+	}
 	auto lastInstance = !pool.size();
 	fxc::mutex.unlock();
 
 	// Если у нас больше не осталось экземпляров советника, то можно прекращать передачу данных серверу
 	if (lastInstance) {
 		isGlobalWorkersAllowed = false;
-		//checkAccess();    //Если сразу запустить еще раз робота, два процесса наложатся
+		checkAccess();
 	}
 
 	delete strategy;
 	strategy = nullptr;
+
+	STACK_TRACE_FLUSH
 }
 
 _DLLAPI int __stdcall c_updateAccount(double balance, double equity, double profit) {
