@@ -10,12 +10,11 @@
 
 #resource "logo.bmp"
 
+#include "Inputs.mq4"
+
 int ocMagic  = 0x7ED80000;
 int eaMagic  = 0x00000000;
-int cfgMagic = 0x00000000;
-int magic    = ocMagic | eaMagic | cfgMagic;
-
-#include "Inputs.mq4"
+int magic    = ocMagic | eaMagic | Magic;
 
 struct TradeAction {
 	double o_lots;      // 8 bytes
