@@ -1,17 +1,18 @@
 #pragma once
 
-#include "../fxc.h"
-#include "../Format.h"
-#include "../debug/Debug.h"
-#include "../indicators/RAIndicator.cpp"
-#include "../Parameters.cpp"
-#include "AbstractStrategy.cpp"
+#include "Defines.h"
+#include "../../fxc.h"
+#include "../../Format.h"
+#include "../../debug/Debug.h"
+#include "../../indicators/RAIndicator.cpp"
+#include "../../Parameters.cpp"
+#include "../AbstractStrategy.cpp"
 
 namespace fxc {
 
 namespace strategy {
 
-	class DefaultStrategy : 
+	class SingleStrategy : 
 		public AbstractStrategy,
 		public Parameters 
 	{
@@ -20,7 +21,7 @@ namespace strategy {
 			double wait_higher=0;
 			double wait_lower=100000;
 
-			DefaultStrategy() :  
+			SingleStrategy() :  
 				AbstractStrategy(),
 				Parameters((CPropertyList*) this)
 			{
@@ -45,7 +46,7 @@ namespace strategy {
 				MARK_FUNC_OUT
 			}
 
-			~DefaultStrategy() {
+			~SingleStrategy() {
 				delete indicator;
 			}
 

@@ -1,0 +1,41 @@
+extern string    SetName = "";
+
+extern string    ___Buy_Parameters = "=== Buy Parameters ===";
+extern bool      StopNewBuy   = false;
+extern bool      StopBuy      = false;
+extern double    BaseBuyLot   = 0.01;
+extern bool      FirstBuyFree = false;
+extern color     BuyColor     = DodgerBlue;
+
+extern string    ___Sell_Parameters = "=== Sell Parameters ===";
+extern bool      StopNewSell   = false;
+extern bool      StopSell      = false;
+extern double    BaseSellLot   = 0.01;
+extern bool      FirstSellFree = false;
+extern color     SellColor       = Red;
+
+extern string    ___Common_Parameters = "=== Common Parameters ===";
+extern int       Step            = 30;
+extern int       FirstTakeProfit = 20;
+extern int       TakeProfit      = 45;
+extern int       StopLoss        = 1000;
+extern int       MaxGridLevel    = 100;
+extern double    MaxLot          = 10000.0;
+extern double    PipsMultiplier  = 1.05;
+extern int       AveragingLevel  = 100;
+extern bool      AverageAll      = false;
+extern int       CloseMode       = 2;
+extern int       FreeLvl         = 100;
+extern int       TimeFrame       = 4;
+extern int       Period1         = 24;
+extern double    Deviation       = 2;
+extern int       MinDev          = 10;
+extern int       RollBack        = 5;
+extern int       Period2         = 24;
+extern int       Magic           = 0;
+extern string    CommentText     = "fxc";
+extern int       Slippage        = 3;
+//extern string    Skype           = "skype_name";
+extern bool      AutoMM          = false;
+extern int       MMEquity        = 20000;
+extern int       DrawHistoryDays = 14;

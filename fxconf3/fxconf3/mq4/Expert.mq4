@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
-//|                                                          {{ver}}   |
+//|                                                          {{EXPERT_VERSION}}   |
 //|                                  Copyright 2015, Olsen&Cleverton |
 //|                                       http://olsencleverton.com/ |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2015, Olsen&Cleverton"
 #property link      "http://olsencleverton.com/"
-#property version   "{{ver}}"  
+#property version   "{{EXPERT_VERSION}}"
 #property icon      "logo.ico"
 
 #resource "logo.bmp"
@@ -44,7 +44,7 @@ string ExtractString(string str) {
 	return str;
 }
 
-#import "ocsingle.dll"
+#import "{{FILE}}.dll"
 	bool   c_init();
 	void   c_deinit();
 	void   c_postInit();
@@ -441,7 +441,7 @@ void InitLook()
 	ObjectsDeleteAll();
 
 	info.Init();
-	info.SetHeader(" Single v{{ver}}");
+	info.SetHeader(" Single v{{EXPERT_VERSION}}");
 	
 	//ShowControlPanel(info.x + info.dx + 10, info.y);
 	info.DrawHistory();

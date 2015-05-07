@@ -34,12 +34,8 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -91,7 +87,7 @@
       <AdditionalLibraryDirectories>D:\work\zeromq-4.0.5\bin\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>$(ProjectDir)build\build.bat Expert $(Version) $(TargetPath)</Command>
+      <Command>$(ProjectDir)build\fxcbuild.exe Expert $(TargetPath) 0</Command>
     </PostBuildEvent>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
@@ -106,6 +102,7 @@
     <ClInclude Include="fxc\debug\Debug.h" />
     <ClInclude Include="fxc\Format.h" />
     <ClInclude Include="fxc\fxc.h" />
+    <ClInclude Include="fxc\strat\Single\Defines.h" />
     <ClInclude Include="Property.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -133,7 +130,7 @@
     <ClCompile Include="fxc\OrdersManager.cpp" />
     <ClCompile Include="fxc\ActionManager.cpp" />
     <ClCompile Include="fxc\strat\AbstractStrategy.cpp" />
-    <ClCompile Include="fxc\strat\DefaultStrategy.cpp" />
+    <ClCompile Include="fxc\strat\Single\SingleStrategy.cpp" />
     <ClCompile Include="fxc\Order.cpp" />
     <ClCompile Include="fxc\Parameters.cpp" />
     <ClCompile Include="fxc\Utils.cpp" />
@@ -148,7 +145,7 @@
     <None Include="mq4\Errors.mq4" />
     <None Include="mq4\Expert.mq4" />
     <None Include="mq4\Graph.mq4" />
-    <None Include="mq4\Inputs.mq4" />
+    <None Include="fxc\strat\Single\Inputs.mq4" />
     <None Include="mq4\Look.mq4" />
     <None Include="mq4\Order.mq4" />
   </ItemGroup>
