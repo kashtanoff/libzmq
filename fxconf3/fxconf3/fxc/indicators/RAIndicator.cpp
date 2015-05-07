@@ -44,11 +44,15 @@ namespace ra_indicator {
 
 			virtual void compute(int newBars) {
 				MARK_FUNC_IN
-					if (newBars>1)
-						msg << "oc_chanel: newBars" << newBars << "\r\n" << msg_box;
+				if (newBars > 1) {
+					msg << "oc_chanel: newBars" << newBars << "\r\n" << msg_box;
+				}
+
 				int b = min(newBars, period2);
-				if (b == 0 && manager->bid < rates->high[0] && manager->bid > rates->low[0])
-					return;  //≈сли на обновлении бара не обновлены экстремумы, нет смысла перевычисл€ть
+				if (b == 0 && manager->bid < rates->high[0] && manager->bid > rates->low[0]) {
+					// ≈сли на обновлении бара не обновлены экстремумы, нет смысла перевычисл€ть
+					return;
+				}
 				for (int i = b; i >= 0; i--) {
 					double sumw = period1 + 1;
 					double sum  = sumw * rates->close[i];
@@ -60,8 +64,8 @@ namespace ra_indicator {
 
 					double upDiff = rates->high[i] - middle[i];
 					double dnDiff = middle[i] - rates->low[i];
-					upDiff = max(upDiff, mindev);
-					dnDiff = max(dnDiff, mindev);
+					upDiff   = max(upDiff, mindev);
+					dnDiff   = max(dnDiff, mindev);
 					upDiff  *= upDiff;
 					dnDiff  *= dnDiff;
 					ups[i]   = (ups[i + 1]   * (period2 - 1) + upDiff) / period2;

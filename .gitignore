@@ -10,3 +10,5 @@
 fxconf3/StaticRelease/libzmq.lib
 fxconf3/fxconf3/mq4/Expert.compile.mq4
 .gitignore
+fxconf3/fxcbuild/bin/
+fxconf3/fxcbuild/obj/

@@ -1,21 +1,20 @@
 //+------------------------------------------------------------------+
-//|                                                          {{ver}}   |
+//|                                                          {{EXPERT_VERSION}}   |
 //|                                  Copyright 2015, Olsen&Cleverton |
 //|                                       http://olsencleverton.com/ |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2015, Olsen&Cleverton"
 #property link      "http://olsencleverton.com/"
-#property version   "{{ver}}"  
+#property version   "{{EXPERT_VERSION}}"
 #property icon      "logo.ico"
 
 #resource "logo.bmp"
 
+#include "Inputs.mq4"
+
 int ocMagic  = 0x7ED80000;
 int eaMagic  = 0x00000000;
-int cfgMagic = 0x00000000;
-int magic    = ocMagic | eaMagic | cfgMagic;
-
-#include "Inputs.mq4"
+int magic    = ocMagic | eaMagic | Magic;
 
 struct TradeAction {
 	double o_lots;      // 8 bytes
@@ -45,7 +44,7 @@ string ExtractString(string str) {
 	return str;
 }
 
-#import "ocsingle.dll"
+#import "{{FILE}}.dll"
 	bool   c_init();
 	void   c_deinit();
 	void   c_postInit();
@@ -442,7 +441,7 @@ void InitLook()
 	ObjectsDeleteAll();
 
 	info.Init();
-	info.SetHeader(" Single v{{ver}}");
+	info.SetHeader(" Single v{{EXPERT_VERSION}}");
 	
 	//ShowControlPanel(info.x + info.dx + 10, info.y);
 	info.DrawHistory();

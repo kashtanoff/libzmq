@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MtHash")]
+[assembly: AssemblyTitle("fxcbuild")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("MtHash")]
+[assembly: AssemblyProduct("fxcbuild")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("75d47a85-0544-4404-87c3-0a4e18e13fc4")]
+[assembly: Guid("cfca2a4a-3375-422f-8d0f-2fe7c7ec1b30")]
 
 // Version information for an assembly consists of the following four values:
 //

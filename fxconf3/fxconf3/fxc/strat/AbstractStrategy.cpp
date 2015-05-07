@@ -11,6 +11,7 @@
 #include <vector>
 
 namespace fxc {
+
 	struct ErrorStatus {
 		int statusType;
 		std::string	status;

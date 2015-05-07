@@ -1,17 +1,18 @@
 #pragma once
 
-#include "../fxc.h"
-#include "../Format.h"
-#include "../debug/Debug.h"
-#include "../indicators/RAIndicator.cpp"
-#include "../Parameters.cpp"
-#include "AbstractStrategy.cpp"
+#include "Defines.h"
+#include "../../fxc.h"
+#include "../../Format.h"
+#include "../../debug/Debug.h"
+#include "../../indicators/RAIndicator.cpp"
+#include "../../Parameters.cpp"
+#include "../AbstractStrategy.cpp"
 
 namespace fxc {
 
 namespace strategy {
 
-	class DefaultStrategy : 
+	class SingleStrategy : 
 		public AbstractStrategy,
 		public Parameters 
 	{
@@ -20,7 +21,7 @@ namespace strategy {
 			double wait_higher=0;
 			double wait_lower=100000;
 
-			DefaultStrategy() :  
+			SingleStrategy() :  
 				AbstractStrategy(),
 				Parameters((CPropertyList*) this)
 			{
@@ -29,20 +30,24 @@ namespace strategy {
 
 			virtual void initStrategy() {
 				MARK_FUNC_IN
+
 				paramsDeltaCalc(k_point * symbolPoint);
 				for (int i = 0, l = sizeof(profits) / sizeof(*profits); i < l; i++) {
 					profits[i] = deltaTP * pow(inputPipsMultiplier, i);
 				}
+
 				indicator = new fxc::ra_indicator::RAIndicator(this, inputTimeFrame, inputPeriod1, inputPeriod2, inputDeviation, deltaMinDev);
 				dillers[OP_BUY]->base_lot	= inputBaseLot[OP_BUY];
 				dillers[OP_SELL]->base_lot	= inputBaseLot[OP_SELL];
-				if (inputSetName.find(symbolName) == std::string::npos)
+				
+				if (inputSetName.find(symbolName) == std::string::npos) {
 					setStatus(PROVIDER_STRATEGY, STATUS_HARD_BREAK, "wrong set name", "it has to contain " + symbolName);
+				}
 				MARK_FUNC_OUT
 			}
-			~DefaultStrategy() {
+
+			~SingleStrategy() {
 				delete indicator;
-				//msg << "DefaultStrategy: delete indicator\r\n" << msg_box;
 			}
 
 		protected:
