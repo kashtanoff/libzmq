@@ -184,6 +184,8 @@ namespace strategy {
 
 				double last_weigth  = curdil->orderWeight(curdil->last->openprice, last_tpprice, curdil->last->lots);
 				double total_weight = curdil->basketWeight(last_tpprice);
+				//msg << "lastweight: " << last_weigth << "\r\n";
+				//msg << "total_weight: " << total_weight <<  "\r\n" << msg_box;
 
 				// Если вес всей сетки положителен, то удесятеряем вес последнего ордера для гарантированного закрытия всей сетки
 				if (total_weight > 0) {
@@ -191,15 +193,16 @@ namespace strategy {
 				}
 
 				for (int i = 0; i < curdil->level - 1; i++) {
-					last_weigth -= curdil->orderWeight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots);
-
+					//msg << "order[" << i << "] = " << curdil->orderWeight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots) <<  "\r\n" << msg_box;
+					last_weigth += curdil->orderWeight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots);
+					//msg << "lastweight: " << last_weigth << "\r\n" << msg_box;
 					if (last_weigth > 0 && abs(curdil->orders[i]->tpprice - last_tpprice) > min_delta) {
 						modOrder(
-							curdil->orders[i]->ticket, 
-							curdil->orders[i]->openprice, 
+							curdil->orders[i]->ticket,
+							curdil->orders[i]->openprice,
 							curdil->sl(curdil->orders[i]->openprice, deltaSL),
 							last_tpprice
-						);
+							);
 					}
 				}
 				MARK_FUNC_OUT
