@@ -75,6 +75,11 @@ namespace fxcbuild {
 			}
 
 		#if !DEBUG
+			midFile = Regex.Replace(midFile, @"\.mq4$", ".ex4", 
+					RegexOptions.Compiled 
+				  | RegexOptions.CultureInvariant 
+				  | RegexOptions.IgnoreCase
+			);
 			File.Copy(midFile, outDir + mergeDefs["FILE"] + ".ex4", true);
 			File.Copy(args[1], outDir + mergeDefs["FILE"] + ".dll", true);
 		#endif
