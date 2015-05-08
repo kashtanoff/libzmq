@@ -13,6 +13,9 @@
 	void fxc::debug::StackTrace::flush() {
 		delete _callstack;
 	}
+	void fxc::debug::StackTrace::clear() {
+		_callstack->clear();
+	}
 	void fxc::debug::StackTrace::push(const char *filename, int line, const std::string data) {
 		_callstack->push_back(SourcePoint{ filename, line, data });
 	}

@@ -682,6 +682,7 @@ _DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
 //нельзя пользоватья результатами в MQL программе до завершения цикла
 _DLLAPI bool __stdcall c_tick_init_begin(double ask, double bid, double equity, double balance)
 {
+	STACK_TRACE_FLUSH
 	return strategy->tickInitBegin(ask, bid, equity, balance);
 }
 

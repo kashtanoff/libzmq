@@ -19,6 +19,7 @@
 			public:
 				static void init();
 				static void flush();
+				static void clear();
 				static void push(const char *filename, int line, std::string data = "");
 				static void pop();
 				static std::string trace();
@@ -35,6 +36,7 @@
 	#define MARK_FUNC_OUT     fxc::debug::StackTrace::pop();
 	#define STACK_TRACE_INIT  fxc::debug::StackTrace::init();
 	#define STACK_TRACE_FLUSH fxc::debug::StackTrace::flush();
+	#define STACK_TRACE_CLEAR  fxc::debug::StackTrace::clear();
 	#define STACK_TRACE       fxc::debug::StackTrace::trace()
 #else
 	#define MARK_FUNC_IN

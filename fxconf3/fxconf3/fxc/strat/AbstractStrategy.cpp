@@ -40,6 +40,11 @@ namespace fxc {
 
 		void init() {
 			MARK_FUNC_IN
+				for (int provider = 0; provider < PROVIDERS_COUNT; provider++) {
+					statuses[provider].statusType = STATUS_OK;
+					statuses[provider].status = "";
+					statuses[provider].reason = "";
+				}
 			k_point = (symbolDigits == 3 || symbolDigits == 5) ? 10 : 1;
 			initOrdersManager();
 			//printRegisteredProps();
@@ -115,6 +120,7 @@ namespace fxc {
 					breakStatus = statuses[provider].statusType;
 				}
 			}
+			msg << "Status (" << breakStatus << "): " << status << ", " << reason << "\r\n" << msg_box;
 			/*if (new_status != breakStatus)
 				onChangeStatus(_provider);*/
 		}
