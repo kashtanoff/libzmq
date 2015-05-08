@@ -103,6 +103,7 @@
     <ClInclude Include="fxc\Format.h" />
     <ClInclude Include="fxc\fxc.h" />
     <ClInclude Include="fxc\strat\Single\Defines.h" />
+    <ClInclude Include="fxc\strat\Triplex\Defines.h" />
     <ClInclude Include="Property.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -133,6 +134,7 @@
     <ClCompile Include="fxc\strat\Single\SingleStrategy.cpp" />
     <ClCompile Include="fxc\Order.cpp" />
     <ClCompile Include="fxc\Parameters.cpp" />
+    <ClCompile Include="fxc\strat\Triplex\TriplexStrategy.cpp" />
     <ClCompile Include="fxc\Utils.cpp" />
     <ClCompile Include="MqlUtils.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -142,10 +144,12 @@
     <ClCompile Include="fxc\TerminalInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fxc\strat\Triplex\Inputs.mq4" />
     <None Include="mq4\Errors.mq4" />
     <None Include="mq4\Expert.mq4" />
     <None Include="mq4\Graph.mq4" />
     <None Include="fxc\strat\Single\Inputs.mq4" />
+    <None Include="mq4\imports.mq4" />
     <None Include="mq4\Look.mq4" />
     <None Include="mq4\Order.mq4" />
   </ItemGroup>

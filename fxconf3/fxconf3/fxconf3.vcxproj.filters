@@ -49,6 +49,9 @@
     <ClInclude Include="fxc\strat\Single\Defines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fxc\strat\Triplex\Defines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -117,6 +120,9 @@
     <ClCompile Include="fxc\strat\Single\SingleStrategy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fxc\strat\Triplex\TriplexStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mq4\Errors.mq4">
@@ -135,6 +141,12 @@
       <Filter>MT sources</Filter>
     </None>
     <None Include="fxc\strat\Single\Inputs.mq4">
+      <Filter>MT sources</Filter>
+    </None>
+    <None Include="fxc\strat\Triplex\Inputs.mq4">
+      <Filter>MT sources</Filter>
+    </None>
+    <None Include="mq4\imports.mq4">
       <Filter>MT sources</Filter>
     </None>
   </ItemGroup>

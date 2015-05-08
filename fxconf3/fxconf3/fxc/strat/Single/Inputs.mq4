@@ -39,3 +39,37 @@ extern int       Slippage        = 3;
 extern bool      AutoMM          = false;
 extern int       MMEquity        = 20000;
 extern int       DrawHistoryDays = 14;
+
+void InitParams() {
+    c_setstring("SetName",            SetName);
+	c_setint(   "StopNewBuy",         StopNewBuy);
+	c_setint(   "StopBuy",            StopBuy);
+	c_setdouble("BaseBuyLot",         BaseBuyLot);
+	c_setint(   "FirstBuyFree",       FirstBuyFree);
+	c_setint(   "StopNewSell",        StopNewSell);
+	c_setint(   "StopSell",           StopSell);
+	c_setdouble("BaseSellLot",        BaseSellLot);
+	c_setint(   "FirstSellFree",      FirstSellFree);
+
+	c_setint(   "Step",               Step);
+	c_setint(   "FirstTakeProfit",    FirstTakeProfit);
+	c_setint(   "TakeProfit",         TakeProfit);
+	c_setint(   "StopLoss",           StopLoss);
+	c_setint(   "MaxGridLevel",       MaxGridLevel);
+	c_setdouble("MaxLot",             MaxLot);
+	c_setdouble("PipsMultiplier",     PipsMultiplier);
+	c_setint(   "AveragingLevel",     AveragingLevel);
+	c_setint(   "AverageAll",         AverageAll);
+	c_setint(   "CloseMode",          CloseMode);
+	c_setint(   "FreeLvl",            FreeLvl);
+	c_setint(   "TimeFrame",          tfs[TimeFrame]);
+	c_setint(   "Period1",            Period1);
+	c_setdouble("Deviation",          Deviation);
+	c_setint(   "MinDev",             MinDev);
+	c_setint(   "RollBack",           RollBack);
+	c_setint(   "Period2",            Period2);
+	c_setint(   "Magic",              magic);
+	c_setstring("Comment",            CommentText);
+	c_setint(   "AutoMM",             AutoMM);
+	c_setint(   "MMEquity",           MMEquity);
+}
