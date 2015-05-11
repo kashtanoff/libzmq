@@ -27,6 +27,7 @@ namespace fxc {
 		int breakStatus = STATUS_HARD_BREAK;
 		std::string status; // Основной статус работы советника
 		std::string reason; // причина запрета торговых операций
+		double onTesterValue = 0;  //Оптимизационный критерий
 
 		AbstractStrategy() {
 		}
@@ -47,7 +48,7 @@ namespace fxc {
 				}
 			k_point = (symbolDigits == 3 || symbolDigits == 5) ? 10 : 1;
 			initOrdersManager();
-			//printRegisteredProps();
+			printRegisteredProps();
 			status = "trade is not allowed";
 			reason = "cheking permissions";
 			if (!mqlTradeAllowed) {
@@ -123,6 +124,9 @@ namespace fxc {
 			msg << "Status (" << breakStatus << "): " << status << ", " << reason << "\r\n" << msg_box;
 			/*if (new_status != breakStatus)
 				onChangeStatus(_provider);*/
+		}
+		virtual double getOnTester() {
+			return 0;
 		}
 
 		protected:

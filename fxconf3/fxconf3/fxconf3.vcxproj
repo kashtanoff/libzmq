@@ -133,7 +133,8 @@
     <ClCompile Include="fxc\strat\AbstractStrategy.cpp" />
     <ClCompile Include="fxc\strat\Single\SingleStrategy.cpp" />
     <ClCompile Include="fxc\Order.cpp" />
-    <ClCompile Include="fxc\Parameters.cpp" />
+    <ClCompile Include="fxc\strat\Single\Parameters.cpp" />
+    <ClCompile Include="fxc\strat\Triplex\Parameters.cpp" />
     <ClCompile Include="fxc\strat\Triplex\TriplexStrategy.cpp" />
     <ClCompile Include="fxc\Utils.cpp" />
     <ClCompile Include="MqlUtils.cpp" />

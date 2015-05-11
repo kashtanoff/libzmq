@@ -69,9 +69,6 @@
     <ClCompile Include="fxc\Order.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fxc\Parameters.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="fxc\fxc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -121,6 +118,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="fxc\strat\Triplex\TriplexStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\strat\Single\Parameters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\strat\Triplex\Parameters.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -94,9 +94,10 @@ namespace fxc {
 					MARK_FUNC_OUT
 					return;
 				}
-				if (check_new(type, lots, openprice, slprice, tpprice) != 0)
+				if (check_new(type, lots, openprice, slprice, tpprice) != 0) {
 					MARK_FUNC_OUT
-					return;
+						return;
+				}
 				auto action = ext_tradeActions[actionsLen++];
 
 #if DEBUG

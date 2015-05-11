@@ -58,5 +58,9 @@
 #define QUOTEME(s)       #s
 #define INCLUDE_FILE(f)  QUOTEME(f)
 
-#define STRAT_PATH  fxc/strat/Single/SingleStrategy.cpp
-#define STRAT_CLASS fxc::strategy::SingleStrategy
+//Single
+//#define STRAT_PATH  fxc/strat/Single/SingleStrategy.cpp
+//#define STRAT_CLASS fxc::strategy::SingleStrategy
+//Triplex
+#define STRAT_PATH  fxc/strat/Triplex/TriplexStrategy.cpp
+#define STRAT_CLASS fxc::strategy::TriplexStrategy

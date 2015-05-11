@@ -5,7 +5,7 @@
 #include "../../Format.h"
 #include "../../debug/Debug.h"
 #include "../../indicators/RAIndicator.cpp"
-#include "../../Parameters.cpp"
+#include "Parameters.cpp"
 #include "../AbstractStrategy.cpp"
 
 namespace fxc {
@@ -68,7 +68,6 @@ namespace strategy {
 			}
 			virtual void Strategy() {
 				MARK_FUNC_IN
-					
 				// Если нет ордеров в рынке
 				if (!curdil->level) {  //Если ордеров нет, то если можно, открываем первый
 					if (breakStatus == STATUS_SOFT_BREAK) {
@@ -77,7 +76,6 @@ namespace strategy {
 						MARK_FUNC_OUT
 						return;
 					}
-
 					if (!inputStopNew[curdil->type] && compSignal()) {
 /*#if DEBUG
 						if (is_visual) {

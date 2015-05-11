@@ -1,15 +1,15 @@
 #pragma once
 
 
-#include "fxc.h"
-#include "debug/Debug.h"
-#include "../Property.h"
-#include "TerminalInfo.cpp"
+#include "../../fxc.h"
+#include "../../debug/Debug.h"
+#include "../../../Property.h"
+#include "../../TerminalInfo.cpp"
 #include <vector>
 #include <string>
 
 namespace fxc {
-	//Параметры советника
+	//Параметры советника OC Single
 	class Parameters 
 	{
 		public: 

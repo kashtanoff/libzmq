@@ -27,15 +27,16 @@ namespace fxc {
 			// Автоматически вызываемый метод, вызывается каждый тик перед запуском стратегии
 			virtual inline void listenChart() {
 				MARK_FUNC_IN
-				if (rates->newBars > outBufferLength) {
-					msg << "listenChart to mach bars!!!\r\n" << msg_box;
-				}
-				if (rates->newBars) {
+					int newBars = (rates->newBars > outBufferLength) ? outBufferLength : rates->newBars;
+				//if (rates->newBars > outBufferLength) {
+				//	msg << "listenChart to mach bars!!!\r\n" << msg_box;
+				//}
+				if (newBars) {
 					for (auto& buffer : buffers) {
-						buffer->skip(rates->newBars);
+						buffer->skip(newBars);
 					}
 				}
-				compute(rates->newBars);
+				compute(newBars);
 				MARK_FUNC_OUT
 			}
 

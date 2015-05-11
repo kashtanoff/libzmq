@@ -1,3 +1,5 @@
+int eaMagic  = 0x00000100;
+
 extern string    SetName = "";
 
 extern string    ___Buy_Parameters = "=== Buy Parameters ===";
@@ -26,7 +28,7 @@ extern int       AveragingLevel  = 100;
 extern bool      AverageAll      = false;
 extern int       CloseMode       = 2;
 extern int       FreeLvl         = 100;
-extern int       TimeFrame       = 4;
+extern ENUM_TIMEFRAMES       TimeFrame       = PERIOD_H1;
 extern int       Period1         = 24;
 extern double    Deviation       = 2;
 extern int       MinDev          = 10;

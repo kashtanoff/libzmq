@@ -57,6 +57,7 @@ struct TfRates {
 	int    c_get_timeframes(int& timeframes[], int& sizes[]);
 	bool   c_tick_init_begin(double ask, double bid, double equity, double balance);
 	void   c_tick_init_end();
+	double c_get_ontester();
 #import
 string ExtractString(string str) {
 	int len = StringLen(str);
@@ -67,11 +68,14 @@ string ExtractString(string str) {
 	}
 	return str;
 }
-
+enum test_mode {
+	ProfitDD,		//Profit/DD
+	FirstPercent	//First Close Percent
+};
 #include "Inputs.mq4"
 
 int ocMagic  = 0x7ED80000;
-int eaMagic  = 0x00000000;
+
 int magic    = ocMagic | eaMagic | Magic;
 
 
@@ -251,7 +255,8 @@ void OnDeinit(const int r)
 
 double OnTester()
 {
-	return (TesterStatistics(STAT_PROFIT) / fmax(1, TesterStatistics(STAT_EQUITY_DD)));
+	double res = c_get_ontester();
+	return ((res)? res: TesterStatistics(STAT_PROFIT) / fmax(1, TesterStatistics(STAT_EQUITY_DD)));
 }
 
 void OnTimer()
@@ -263,6 +268,7 @@ void OnTimer()
 
 void OnChartEvent(const int id, const long& lparam, const double& dparam, const string& sparam)
 {
+/*
 	if (id == CHARTEVENT_OBJECT_CLICK)
 	{
 		double buylot  = BaseBuyLot;
@@ -325,7 +331,7 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 				ShowControlPanel(info.x + info.dx + 10, info.y);
 			}
 		}
-	}
+	}*/
 }
 
 //+------------------------------------------------------------------+

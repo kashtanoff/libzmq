@@ -682,7 +682,7 @@ _DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
 //нельзя пользоватья результатами в MQL программе до завершения цикла
 _DLLAPI bool __stdcall c_tick_init_begin(double ask, double bid, double equity, double balance)
 {
-	STACK_TRACE_FLUSH
+	STACK_TRACE_CLEAR
 	return strategy->tickInitBegin(ask, bid, equity, balance);
 }
 
@@ -722,6 +722,11 @@ _DLLAPI int __stdcall c_add_order(int _ticket, int _type, double _lots, double _
 _DLLAPI double __stdcall c_norm_lot(double _lots)
 {
 	return strategy->normLot(_lots);
+}
+
+_DLLAPI double __stdcall c_get_ontester()
+{
+	return strategy->getOnTester();
 }
 
 _DLLAPI void __stdcall fcostransform(double a[], int tnn, int inversefct)
