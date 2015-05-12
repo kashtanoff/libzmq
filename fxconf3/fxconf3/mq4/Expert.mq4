@@ -27,6 +27,7 @@ struct TfRates {
 	int length;
 	MqlRates rates[];
 };
+
 #import "{{FILE}}.dll"
 	bool   c_init();
 	void   c_deinit();
@@ -59,6 +60,7 @@ struct TfRates {
 	void   c_tick_init_end();
 	double c_get_ontester();
 #import
+
 string ExtractString(string str) {
 	int len = StringLen(str);
 	for (int i = 0; i < len; i++) {
@@ -68,19 +70,16 @@ string ExtractString(string str) {
 	}
 	return str;
 }
+
 enum test_mode {
 	ProfitDD,		//Profit/DD
 	FirstPercent	//First Close Percent
 };
+
 #include "Inputs.mq4"
 
 int ocMagic  = 0x7ED80000;
-
 int magic    = ocMagic | eaMagic | Magic;
-
-
-
-
 
 
 #include "Errors.mq4"
@@ -341,6 +340,7 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 bool DllInit()
 {
 	c_init();
+	c_setint(   "expertMagic",             magic);
 	c_setstring("accountCompany",          AccountCompany());
 	c_setstring("accountCurrency",         AccountCurrency());
 	c_setint(   "accountFreeMarginMode",   AccountFreeMarginMode());
@@ -381,6 +381,7 @@ bool DllInit()
 	c_setint(   "mqlVisualMode",           MQLInfoInteger(MQL_VISUAL_MODE));
 
 	InitParams();
+
 	for (int n = 0; n < 64; n++) {
 		StringInit(actList[n].comment, 26, 95);
 	}

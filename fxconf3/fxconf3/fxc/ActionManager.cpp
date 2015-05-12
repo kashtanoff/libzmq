@@ -96,7 +96,7 @@ namespace fxc {
 				}
 				if (check_new(type, lots, openprice, slprice, tpprice) != 0) {
 					MARK_FUNC_OUT
-						return;
+					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
@@ -119,7 +119,7 @@ namespace fxc {
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> ModOrder(): actions limit exceeded\r\n" << fxc::msg_box;
 					MARK_FUNC_OUT
-						return;
+					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
@@ -141,7 +141,7 @@ namespace fxc {
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> DeleteOrder(): actions limit exceeded\r\n" << fxc::msg_box;
 					MARK_FUNC_OUT
-						return;
+					return;
 				}
 				auto action = ext_tradeActions[actionsLen++];
 
@@ -184,10 +184,10 @@ namespace fxc {
 
 			inline void drawOrder(int ticket) {
 				MARK_FUNC_IN
-					if (!is_visual) {
-						MARK_FUNC_OUT
-						return;
-					}
+				if (!is_visual) {
+					MARK_FUNC_OUT
+					return;
+				}
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> showValue(): actions limit exceeded\r\n" << fxc::msg_box;
 					MARK_FUNC_OUT

@@ -25,36 +25,39 @@ namespace fxc {
 	public:
 
 		int breakStatus = STATUS_HARD_BREAK;
-		std::string status; // Основной статус работы советника
-		std::string reason; // причина запрета торговых операций
-		double onTesterValue = 0;  //Оптимизационный критерий
+		std::string status;        // Основной статус работы советника
+		std::string reason;        // причина запрета торговых операций
+		double onTesterValue = 0;  // Оптимизационный критерий
 
-		AbstractStrategy() {
-		}
+		AbstractStrategy() {}
 
-		virtual void initStrategy() {};   //Инициализация стратегии
-		virtual inline const bool bypass() { return false; }  //Функция интелектуального пропуска тиков, для ускорения оптимизации
-		virtual void Strategy() {};   // Тут, в наследнике, должен быть код стратегии
+		virtual void initStrategy() {};                       // Инициализация стратегии
+		virtual inline const bool bypass() { return false; }  // Функция интелектуального пропуска тиков, для ускорения оптимизации
+		virtual void Strategy() = 0;                          // Тут, в наследнике, должен быть код стратегии
 		virtual void showInfo() {};
 		virtual void onChangeStatus(int _provider) {}
 		//virtual bool checkErrors() { return false; }
 
 		void init() {
 			MARK_FUNC_IN
-				for (int provider = 0; provider < PROVIDERS_COUNT; provider++) {
-					statuses[provider].statusType = STATUS_OK;
-					statuses[provider].status = "";
-					statuses[provider].reason = "";
-				}
+			for (int provider = 0; provider < PROVIDERS_COUNT; provider++) {
+				statuses[provider].statusType = STATUS_OK;
+				statuses[provider].status = "";
+				statuses[provider].reason = "";
+			}
+
 			k_point = (symbolDigits == 3 || symbolDigits == 5) ? 10 : 1;
+			
 			initOrdersManager();
 			printRegisteredProps();
+			
 			status = "trade is not allowed";
 			reason = "cheking permissions";
 			if (!mqlTradeAllowed) {
 				msg << "autotrade not allowed\r\n" << msg_box;
 				setStatus(PROVIDER_DLL, STATUS_DANGER, "auto-tade is not allowed", "press auto-trade button");
 			}
+			
 			initStrategy();
 			msg << "strategy init done\r\n" << msg_box;
 			MARK_FUNC_OUT

@@ -68,7 +68,7 @@ std::string resolveError(int err) {
 	}
 	return "blocked by server";
 }
-std::string resolveStatus(int status){
+std::string resolveStatus(int status) {
 	switch (status) {
 		case STATUS_OK:              return "trading is allowed";
 		case STATUS_DANGER:	         return "Attention!";
@@ -83,8 +83,9 @@ const std::string getRequestJson(STRAT_CLASS* expert) {
 	std::stringstream ss;
 
 	ss << "{"
-		<< "\"tester\":"    << tester << ","
-		<< "\"version\":\"" << EXPERT_VERSION << "\",";
+		<< "\"tester\":"    << tester              << ","
+		<< "\"magic\":"     << expert->expertMagic << ","
+		<< "\"version\":\"" << EXPERT_VERSION      << "\",";
 
 	if (!tester) {
 		account.lastUpdate = 0;
