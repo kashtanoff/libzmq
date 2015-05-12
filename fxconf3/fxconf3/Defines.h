@@ -1,9 +1,9 @@
 #pragma once
 
-#define DEBUG          1
+#define DEBUG          0
 #define CHECK_ACCESS   1 // Включена ли сетевая проверка пользователя
 #define LOCAL          0 // Определяет сервер проверки пользователя, как локальный
-#define LIB_VERSION    1.0.1
+#define LIB_VERSION    1.0.2
 
 #define OP_BUY       0
 #define OP_SELL      1
@@ -59,8 +59,8 @@
 #define INCLUDE_FILE(f)  QUOTEME(f)
 
 //Single
-//#define STRAT_PATH  fxc/strat/Single/SingleStrategy.cpp
-//#define STRAT_CLASS fxc::strategy::SingleStrategy
+#define STRAT_PATH  fxc/strat/Single/SingleStrategy.cpp
+#define STRAT_CLASS fxc::strategy::SingleStrategy
 //Triplex
-#define STRAT_PATH  fxc/strat/Triplex/TriplexStrategy.cpp
-#define STRAT_CLASS fxc::strategy::TriplexStrategy
+//#define STRAT_PATH  fxc/strat/Triplex/TriplexStrategy.cpp
+//#define STRAT_CLASS fxc::strategy::TriplexStrategy

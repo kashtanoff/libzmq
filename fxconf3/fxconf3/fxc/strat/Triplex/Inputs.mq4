@@ -24,7 +24,7 @@ extern int       MaxLevel1       = 1;
 extern int       Period1         = 30;
 extern double    Deviation1      = 1.2;
 extern int       DevPeriod1      = 50;
-extern ENUM_TIMEFRAMES       Timeframe1      = PERIOD_M30;
+extern ENUM_TIMEFRAMES       Timeframe1      = PERIOD_M15;
 
 extern string    ___Channel2 = "=== Channel 2 ===";
 extern int		 Step2			 = 30;
@@ -38,7 +38,7 @@ extern ENUM_TIMEFRAMES       Timeframe2      = PERIOD_H1;
 extern string    ___Channel3 = "=== Channel 3 ===";
 extern int		 Step3			 = 30;
 extern int       TakeProfit3     = 45;
-extern int       MaxLevel3       = 3;
+extern int       MaxLevel3       = 100;
 extern int       Period3         = 30;
 extern double    Deviation3      = 1.2;
 extern int       DevPeriod3      = 50;

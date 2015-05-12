@@ -1,4 +1,4 @@
 #pragma once
 
 #define EXPERT_NAME    "OC Triplex"
-#define EXPERT_VERSION "1.102"
+#define EXPERT_VERSION "1.103"

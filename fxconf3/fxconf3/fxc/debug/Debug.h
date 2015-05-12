@@ -43,6 +43,7 @@
 	#define MARK_FUNC_IN_T(t) 
 	#define MARK_FUNC_OUT
 	#define STACK_TRACE_INIT
+	#define STACK_TRACE_CLEAR
 	#define STACK_TRACE_FLUSH
 	#define STACK_TRACE ""
 #endif
