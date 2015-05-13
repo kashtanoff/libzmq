@@ -56,8 +56,9 @@ namespace strategy {
 				delete indicator[2];
 			}
 			virtual double getOnTester() {
-				if (inputTestMode)
+				if (inputTestMode) {
 					return lvlGrid / totalGrid * 100;
+				}
 				return 0;
 			}
 
@@ -213,7 +214,10 @@ namespace strategy {
 
 				// Если вес всей сетки положителен, то удесятеряем вес последнего ордера для гарантированного закрытия всей сетки
 				if (total_weight > 0) {
-					last_weigth *= 10;
+					last_weigth *= 1000;
+				}
+				else {
+					msg << "move tp: partial close\r\n" << msg_box;
 				}
 
 				for (int i = 0; i < curdil->level - 1; i++) {
@@ -346,7 +350,7 @@ namespace strategy {
 
 				double slprice		= curdil->sl(openprice, deltaSL);
 				double tpprice = curdil->tp(openprice, deltaTP[channel]);
-				double nextProfit	= profits[curdil->level - 1];
+				double nextProfit = deltaTP[channel] * pow(inputPipsMultiplier, curdil->level - 1);//profits[curdil->level - 1];
 				double lots = (nextProfit * curdil->base_lot - curdil->basketWeight(tpprice, inputAveragingLevel)) / deltaTP[channel];
 
 				lots = max(lots, curdil->base_lot);
