@@ -240,7 +240,24 @@ void OnTick()
 			case 9: Order::MsgBox    (actList[i]); break;
 		}
 	}
+
 	Sleep(timeout);
+
+	if (!mqlOptimization && mqlTester) {
+		if (lastday != Day()) { //Новый день
+			FileWrite(hddlog, 
+				TimeToStr(lastdate, TIME_DATE), ";", 
+				DoubleToStr(daydd, 2), ";", 
+				DoubleToStr(daydd / (AccountEquity() / 100.0), 2), "%"
+			);
+			lastday  = Day();
+			lastdate = TimeCurrent();
+			daydd    = 0;
+		}
+		else {
+			daydd = fmax(daydd, AccountBalance() - AccountEquity());
+		}
+	}
 }
 
 void OnDeinit(const int r)
