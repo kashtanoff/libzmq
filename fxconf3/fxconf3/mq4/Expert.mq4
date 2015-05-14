@@ -126,6 +126,7 @@ color  colors[6] = {clrDodgerBlue, clrRed, clrNONE, clrNONE, clrNONE, clrNONE};
 
 int    herror, hddlog;
 double daydd;
+double daybalance;
 int    lastday;
 datetime lastdate;
 int    ticks;
@@ -177,11 +178,12 @@ int OnInit()
 	FileSeek(herror, 0, SEEK_END);
 	FileWrite(herror, "======= Start =======");
 
-	max_dd   = 0;
-	max_lvl  = 0;
-	daydd    = 0;
-	lastday  = Day();
-	lastdate = TimeCurrent();
+	max_dd     = 0;
+	max_lvl    = 0;
+	daydd      = 0;
+	daybalance = 0;
+	lastday    = Day();
+	lastdate   = TimeCurrent();
 
 	EventSetTimer(1);
 	Print("tfCount=", tfCount);
@@ -244,18 +246,21 @@ void OnTick()
 	Sleep(timeout);
 
 	if (!mqlOptimization && mqlTester) {
-		if (lastday != Day()) { //Новый день
+		if (lastday != Day()) { // Новый день
 			FileWrite(hddlog, 
 				TimeToStr(lastdate, TIME_DATE), ";", 
-				DoubleToStr(daydd, 2), ";", 
+				DoubleToStr(daybalance, 2), ";",
+				DoubleToStr(daydd, 2), ";",
 				DoubleToStr(daydd / (AccountEquity() / 100.0), 2), "%"
 			);
-			lastday  = Day();
-			lastdate = TimeCurrent();
-			daydd    = 0;
+			lastday    = Day();
+			lastdate   = TimeCurrent();
+			daydd      = 0;
+			daybalance = 0;
 		}
 		else {
-			daydd = fmax(daydd, AccountBalance() - AccountEquity());
+			daybalance = AccountBalance();
+			daydd      = fmax(daydd, daybalance - AccountEquity());
 		}
 	}
 }
