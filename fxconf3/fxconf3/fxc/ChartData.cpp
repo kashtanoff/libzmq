@@ -100,7 +100,11 @@ namespace fxc {
 					pair.second->newBars = 0;
 				}
 			}
-
+			~TimeSeries() {
+				for (auto& pair : _chartData) {
+					delete pair.second;
+				}
+			}
 			void updateFirst(const double ask, const double bid) {
 				MARK_FUNC_IN
 				for (auto& pair : _chartData) {
