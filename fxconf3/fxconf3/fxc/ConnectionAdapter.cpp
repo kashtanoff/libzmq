@@ -40,7 +40,7 @@ namespace fxc {
 					return false;
 				}
 
-				char buffer[1024];
+				char buffer[10240];
 				auto recvSize = zmq_recv(_socket, &buffer, sizeof(buffer), 0);
 
 				if (-1 == recvSize) {
