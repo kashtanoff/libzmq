@@ -52,6 +52,9 @@
     <ClInclude Include="fxc\strat\Triplex\Defines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fxc\strat\SingleT\Defines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -93,9 +96,6 @@
     <ClCompile Include="fxc\indicators\AbstractIndicator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fxc\indicators\RAIndicator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="fxc\indicators\MovingAverageIndicator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -126,6 +126,18 @@
     <ClCompile Include="fxc\strat\Triplex\Parameters.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fxc\indicators\RAIndicator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\indicators\iCCI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\strat\SingleT\Parameters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\strat\SingleT\SingleStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mq4\Errors.mq4">
@@ -150,6 +162,9 @@
       <Filter>MT sources</Filter>
     </None>
     <None Include="mq4\imports.mq4">
+      <Filter>MT sources</Filter>
+    </None>
+    <None Include="fxc\strat\SingleT\Inputs.mq4">
       <Filter>MT sources</Filter>
     </None>
   </ItemGroup>

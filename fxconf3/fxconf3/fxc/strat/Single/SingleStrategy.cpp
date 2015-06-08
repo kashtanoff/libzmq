@@ -20,6 +20,7 @@ namespace strategy {
 		public:
 			double wait_higher=0;
 			double wait_lower=100000;
+			bool block[2];
 
 			SingleStrategy() :  
 				AbstractStrategy(),
@@ -39,7 +40,9 @@ namespace strategy {
 				indicator = new fxc::ra_indicator::RAIndicator(this, inputTimeFrame, inputPeriod1, inputPeriod2, inputDeviation, deltaMinDev);
 				dillers[OP_BUY]->base_lot	= inputBaseLot[OP_BUY];
 				dillers[OP_SELL]->base_lot	= inputBaseLot[OP_SELL];
-				
+				block[OP_BUY] = false;
+				block[OP_SELL] = false;
+
 				if (inputSetName.find(symbolName) == std::string::npos) {
 					setStatus(PROVIDER_STRATEGY, STATUS_HARD_BREAK, "wrong set name", "it has to contain " + symbolName);
 				}
@@ -70,6 +73,7 @@ namespace strategy {
 				MARK_FUNC_IN
 				// Если нет ордеров в рынке
 				if (!curdil->level) {  //Если ордеров нет, то если можно, открываем первый
+					block[curdil->type] = false;
 					if (breakStatus == STATUS_SOFT_BREAK) {
 						breakStatus = STATUS_HARD_BREAK;  //После завершения усреднения, включаем полный запрет
 						status    = "trading stopped";
@@ -90,7 +94,8 @@ namespace strategy {
 							compFirstLot(),
 							curdil->mpo,
 							curdil->sl(curdil->mpo, deltaSL),
-							curdil->tp(curdil->mpo, deltaFirstTP)
+							curdil->tp(curdil->mpo, deltaFirstTP),
+							"1-" + inputCommentText
 						);
 						//curdil->open_reason = "";
 						if (inputCloseMode) {
@@ -109,6 +114,9 @@ namespace strategy {
 						if (compSignal()) {
 							wait_higher = 0;
 							openNextOrder();
+							if ((inputRallyBlockMode == 1 && curdil->level == 1) || inputRallyBlockMode == 2) {
+								block[curdil->type] = true;
+							}
 							if (inputCloseMode == 2) {
 								autoClose();
 							}
@@ -238,6 +246,9 @@ namespace strategy {
 				}
 
 				if (curdil->type) { //Продажи
+					if (block[OP_SELL] && curdil->mpo < indicator->middle[0]) {  //Пытаемся снять раллиблок
+						block[OP_SELL] = false;
+					}
 					if (curdil->step_peak) {
 						h(curdil->step_peak);   //Ждем нового пика
 						l(curdil->step_peak - deltaRollback);  //Ждем отката
@@ -255,7 +266,7 @@ namespace strategy {
 						}
 
 					}
-					else if (curdil->mpo > indicator->up[0]) {
+					else if (curdil->mpo > indicator->up[0] && !block[OP_SELL]) {
 						//curdil->open_reason += "i:" + fxc::utils::Format::decimal(indicator->up[0], 5) + "-";
 						curdil->step_peak = curdil->mpo;
 						h(curdil->step_peak);   //Ждем нового пика
@@ -267,6 +278,9 @@ namespace strategy {
 					}
 				}
 				else { //Покупки
+					if (block[OP_BUY] && curdil->mpo > indicator->middle[0]) {  //Пытаемся снять раллиблок
+						block[OP_BUY] = false;
+					}
 					if (curdil->step_peak) {
 						l(curdil->step_peak); //Ждем нового пика
 						h(curdil->step_peak + deltaRollback);  //Ждем отката
@@ -283,7 +297,7 @@ namespace strategy {
 							curdil->step_peak = min(curdil->step_peak, curdil->mpo);
 						}
 					}
-					else if (curdil->mpo < indicator->down[0]) {
+					else if (curdil->mpo < indicator->down[0] && !block[OP_BUY]) {
 						//curdil->open_reason += "i:"+fxc::utils::Format::decimal(indicator->down[0], 5) + "-";
 						curdil->step_peak = curdil->mpo;
 						l(curdil->step_peak); //Ждем нового пика
@@ -332,7 +346,7 @@ namespace strategy {
 					curdil->open_reason = "";
 				}
 #endif*/
-				createOrder(curdil->type, lots, openprice, slprice, tpprice);
+				createOrder(curdil->type, lots, openprice, slprice, tpprice, Format::decimal(curdil->level+1, 0) + "-" + inputCommentText);
 				//curdil->open_reason = "";
 				MARK_FUNC_OUT
 			}

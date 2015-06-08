@@ -27,6 +27,7 @@ extern double    PipsMultiplier  = 1.05;
 extern int       AveragingLevel  = 100;
 extern bool      AverageAll      = false;
 extern int       CloseMode       = 2;
+extern int		 RallyBlockMode  = 0;
 extern int       FreeLvl         = 100;
 extern ENUM_TIMEFRAMES       TimeFrame       = PERIOD_H1;
 extern int       Period1         = 24;
@@ -63,6 +64,7 @@ void InitParams() {
 	c_setint(   "AveragingLevel",     AveragingLevel);
 	c_setint(   "AverageAll",         AverageAll);
 	c_setint(   "CloseMode",          CloseMode);
+	c_setint(   "RallyBlockMode",     RallyBlockMode);
 	c_setint(   "FreeLvl",            FreeLvl);
 	c_setint(   "TimeFrame",          tfs[TimeFrame]);
 	c_setint(   "Period1",            Period1);

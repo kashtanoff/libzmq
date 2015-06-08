@@ -247,7 +247,7 @@ void checkAccess() {
 				#pragma endregion
 				}
 				else {
-					work_status = STATUS_HARD_BREAK;
+					work_status = STATUS_SOFT_BREAK;
 					reason      = "invalid response";
 					fxc::msg << "!> can't parse response\r\n" << fxc::msg_box;
 				}
@@ -255,7 +255,7 @@ void checkAccess() {
 			else {
 				switch (connection.getErrType()) {
 					case CONN_ERRT_SOCK:
-						work_status = STATUS_HARD_BREAK;
+						work_status = STATUS_SOFT_BREAK;
 						reason      = "invalid socket";
 						break;
 					case CONN_ERRT_SEND:
@@ -267,7 +267,7 @@ void checkAccess() {
 						reason      = "server is not accessible";
 						break;
 					default:
-						work_status = STATUS_HARD_BREAK;
+						work_status = STATUS_SOFT_BREAK;
 						reason      = "network error";
 						break;
 				}

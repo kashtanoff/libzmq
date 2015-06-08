@@ -110,9 +110,6 @@ namespace fxc {
 				deltaSL			= inputStopLoss			* oldPoint;
 				deltaRollback	= inputRollBack			* oldPoint;
 				deltaMinDev		= inputMinDev			* oldPoint;
-
 			}
-
 	};
-
 }

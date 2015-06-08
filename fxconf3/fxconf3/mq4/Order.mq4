@@ -18,7 +18,7 @@ public:
 			action.o_type, action.o_lots, action.o_openprice,
 			Slippage,
 			action.o_slprice, action.o_tpprice,
-			StringConcatenate(action.intret, "-", CommentText),
+			StringConcatenate(action.comment),
 			magic, 0, colors[action.o_type]
 		);
 

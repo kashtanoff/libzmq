@@ -337,7 +337,7 @@ namespace fxc {
 #pragma endregion
 
 			inline double normLot(double value) {
-				value = int(floor(value / symbolLotStep)) * symbolLotStep;
+				value = ceil(value / symbolLotStep) * symbolLotStep;
 				value = max(value, symbolMinLot);
 				return min(value, symbolMaxLot);
 			}

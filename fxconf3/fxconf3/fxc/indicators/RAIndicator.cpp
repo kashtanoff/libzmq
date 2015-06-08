@@ -38,15 +38,12 @@ namespace ra_indicator {
 				ups[1]   = 0;
 				downs[0] = 0;
 				downs[1] = 0;
-				msg << "oc_chanel: regBuffers" << "\r\n" << msg_box;
+				//msg << "oc_chanel: regBuffers" << "\r\n" << msg_box;
 				MARK_FUNC_OUT
 			}
 
 			virtual void compute(int newBars) {
 				MARK_FUNC_IN
-				if (newBars > 1) {
-					msg << "oc_chanel: newBars" << newBars << "\r\n" << msg_box;
-				}
 
 				int b = min(newBars, period2);
 				if (b == 0 && manager->bid < rates->high[0] && manager->bid > rates->low[0]) {

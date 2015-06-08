@@ -29,7 +29,6 @@ namespace fxc {
 			int			inputAveragingLevel;
 			int			inputAverageAll;
 			int			inputCloseMode;
-			int			inputRallyBlockMode;
 			int			inputFreeLvl;
 			int			inputTimeFrame;
 			int			inputPeriod1;
@@ -37,6 +36,8 @@ namespace fxc {
 			int			inputMinDev;
 			int			inputRollBack;
 			int			inputPeriod2;
+			int			inputMaxPower;
+			int			inputPowerPeriod;
 			int			inputMagic;
 			std::string	inputCommentText;
 			int			inputSlippage;
@@ -72,7 +73,6 @@ namespace fxc {
 				registrator->Register("AveragingLevel",  &inputAveragingLevel);
 				registrator->Register("AverageAll",      &inputAverageAll);
 				registrator->Register("CloseMode",       &inputCloseMode);
-				registrator->Register("RallyBlockMode",  &inputRallyBlockMode);
 				registrator->Register("FreeLvl",         &inputFreeLvl);
 				registrator->Register("TimeFrame",       &inputTimeFrame);
 				registrator->Register("Period1",         &inputPeriod1);
@@ -80,6 +80,8 @@ namespace fxc {
 				registrator->Register("MinDev",          &inputMinDev);
 				registrator->Register("RollBack",        &inputRollBack);
 				registrator->Register("Period2",         &inputPeriod2);
+				registrator->Register("MaxPower",        &inputMaxPower);
+				registrator->Register("PowerPeriod",     &inputPowerPeriod);
 				registrator->Register("Magic",           &inputMagic);
 				registrator->Register("Comment",		 &inputCommentText);
 				registrator->Register("AutoMM",          &inputAutoMM);
@@ -96,9 +98,7 @@ namespace fxc {
 				deltaSL			= inputStopLoss			* oldPoint;
 				deltaRollback	= inputRollBack			* oldPoint;
 				deltaMinDev		= inputMinDev			* oldPoint;
-			}
-			void paramsCheck() {
-
+				deltaMaxPower	= inputMaxPower			* oldPoint;
 			}
 
 	};

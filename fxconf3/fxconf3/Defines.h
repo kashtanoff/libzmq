@@ -3,7 +3,7 @@
 #define DEBUG          0
 #define CHECK_ACCESS   1 // Включена ли сетевая проверка пользователя
 #define LOCAL          0 // Определяет сервер проверки пользователя, как локальный
-#define LIB_VERSION    1.0.6
+#define LIB_VERSION    1.0.7
 
 #define OP_BUY       0
 #define OP_SELL      1
@@ -64,3 +64,6 @@
 //Triplex
 //#define STRAT_PATH  fxc/strat/Triplex/TriplexStrategy.cpp
 //#define STRAT_CLASS fxc::strategy::TriplexStrategy
+//Single test
+//#define STRAT_PATH  fxc/strat/SingleT/SingleStrategy.cpp
+//#define STRAT_CLASS fxc::strategy::SingleStrategy
