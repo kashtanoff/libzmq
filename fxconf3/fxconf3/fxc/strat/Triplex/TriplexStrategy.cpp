@@ -237,7 +237,7 @@ namespace strategy {
 			}
 			int compChannel() {
 				for (int i = 0; i < 3; i++) {
-					if (curdil->level <= inputMaxLevel[i]) {
+					if (curdil->level < inputMaxLevel[i]) {
 						return i;
 					}
 				}
