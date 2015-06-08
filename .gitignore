@@ -4,11 +4,11 @@
 *.ex4
 *.compile.mt4
 /fxconf3/ipch
-/fxconf3/Release
 /fxconf3/fxconf3/Debug
 /fxconf3/fxconf3/Release
-fxconf3/StaticRelease/libzmq.lib
-fxconf3/fxconf3/mq4/Expert.compile.mq4
-.gitignore
-fxconf3/fxcbuild/bin/
-fxconf3/fxcbuild/obj/
+/fxconf3/fxconf3/mq4/Inputs.mq4
+/fxconf3/fxconf3/mq4/Expert.compile.mq4
+/fxconf3/fxcbuild/bin/
+/fxconf3/fxcbuild/obj/
+/fxconf3/Release
+/fxconf3/StaticRelease/libzmq.lib
