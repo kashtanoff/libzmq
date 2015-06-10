@@ -175,7 +175,6 @@ void checkAccess() {
 			auto request = getRequestJson(expert);
 			fxc::mutex.unlock();
 
-
 			fxc::ConnectionAdapter connection(
 #if LOCAL
 				"tcp://localhost:13857"
@@ -367,18 +366,17 @@ _DLLAPI void __stdcall c_setstring(wchar_t* propName, wchar_t* propValue)
 {
 	fxc::mutex.lock();
 
-	char name[64];
-	wcstombs(name, propName, 32);
-	char buffer[512];
-	wcstombs(buffer, propValue, 256);
-
+	auto name = fxc::utils::WC2MB(propName);
 	auto prop = &strategy->PropertyList[name];
 
 	if (prop->Type == PropString) {
-		*(prop->String) = std::string(buffer);
+		*(prop->String) = std::string(fxc::utils::WC2MB(propValue));
+	}
+	else if (prop->Type == PropWString) {
+		*(prop->WString) = std::wstring(propValue);
 	}
 	else {
-		fxc::msg << "c_setstring ERROR: string expected" << fxc::msg_box;
+		fxc::msg << "c_setstring ERROR: string or wstring expected" << fxc::msg_box;
 	}
 
 	fxc::mutex.unlock();

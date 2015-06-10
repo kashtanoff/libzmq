@@ -55,6 +55,9 @@
     <ClInclude Include="fxc\strat\SingleT\Defines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fxc\Convert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -136,6 +139,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="fxc\strat\SingleT\SingleStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\Convert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

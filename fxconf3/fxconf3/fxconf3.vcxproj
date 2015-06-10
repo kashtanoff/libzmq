@@ -99,6 +99,7 @@
   <ItemGroup>
     <ClInclude Include="Defines.h" />
     <ClInclude Include="fxc\ChartListener.h" />
+    <ClInclude Include="fxc\Convert.h" />
     <ClInclude Include="fxc\debug\Debug.h" />
     <ClInclude Include="fxc\Format.h" />
     <ClInclude Include="fxc\fxc.h" />
@@ -113,6 +114,7 @@
     <ClCompile Include="fxc\indicators\iCCI.cpp" />
     <ClCompile Include="fxc\ChartData.cpp" />
     <ClCompile Include="fxc\ConnectionAdapter.cpp" />
+    <ClCompile Include="fxc\Convert.cpp" />
     <ClCompile Include="fxc\debug\Debug.cpp" />
     <ClCompile Include="fxc\Diller.cpp" />
     <ClCompile Include="dllmain.cpp">
