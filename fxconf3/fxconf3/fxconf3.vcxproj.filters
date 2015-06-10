@@ -52,6 +52,9 @@
     <ClInclude Include="fxc\strat\Triplex\Defines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fxc\Convert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -124,6 +127,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="fxc\strat\Triplex\Parameters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\Convert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

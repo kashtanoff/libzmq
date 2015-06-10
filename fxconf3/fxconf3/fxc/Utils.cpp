@@ -4,12 +4,13 @@
 #include <sstream>
 #include <iomanip>
 #include "debug/Debug.h"
+#include "Convert.h"
 #include "fxc.h"
 
 namespace fxc {
 
 namespace utils {
-	
+
 	// Реализует циклический массив-таймсерию в стиле mql4
 	template <typename T>
 	class CircularBuffer {

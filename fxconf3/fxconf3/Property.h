@@ -35,7 +35,7 @@
 #include <string>
 
 typedef enum {
-	PropString, 
+	PropString, PropWString,
 	PropBool,   PropBoolPtr,
 	PropFloat,  PropFloatPtr,
 	PropDouble, PropDoublePtr,
@@ -49,7 +49,8 @@ public:
 	TProperty        Type;
 	union
 	{
-		std::string* String;
+		std::string*  String;
+		std::wstring* WString;
 
 		bool*        Bool;
 		float*       Float;
@@ -70,19 +71,20 @@ class CPropertyList
 public:
 	std::map<std::string, CProperty> PropertyList;
 
-	void Register(std::string Name, std::string* String)  { CProperty &P = PropertyList[Name]; P.Type = PropString;    P.String = String; }
+	void Register(std::string Name, std::string*  String)  { CProperty &P = PropertyList[Name]; P.Type = PropString;   P.String  = String; }
+	void Register(std::string Name, std::wstring* String)  { CProperty &P = PropertyList[Name]; P.Type = PropWString;  P.WString = String; }
 
-	void Register(std::string Name, bool*        Bool)    { CProperty &P = PropertyList[Name]; P.Type = PropBool;      P.Bool = Bool; }
-	void Register(std::string Name, float*       Float)   { CProperty &P = PropertyList[Name]; P.Type = PropFloat;     P.Float = Float; }
+	void Register(std::string Name, bool*        Bool)    { CProperty &P = PropertyList[Name]; P.Type = PropBool;      P.Bool   = Bool; }
+	void Register(std::string Name, float*       Float)   { CProperty &P = PropertyList[Name]; P.Type = PropFloat;     P.Float  = Float; }
 	void Register(std::string Name, double*      Double)  { CProperty &P = PropertyList[Name]; P.Type = PropDouble;    P.Double = Double; }
-	void Register(std::string Name, long*        Long)    { CProperty &P = PropertyList[Name]; P.Type = PropLong;      P.Long = Long; }
-	void Register(std::string Name, int*         Int)     { CProperty &P = PropertyList[Name]; P.Type = PropInt;       P.Int = Int; }
+	void Register(std::string Name, long*        Long)    { CProperty &P = PropertyList[Name]; P.Type = PropLong;      P.Long   = Long; }
+	void Register(std::string Name, int*         Int)     { CProperty &P = PropertyList[Name]; P.Type = PropInt;       P.Int    = Int; }
 
-	void Register(std::string Name, bool**       Bool)    { CProperty &P = PropertyList[Name]; P.Type = PropBoolPtr;   P.BoolPtr = Bool; }
-	void Register(std::string Name, float**      Float)   { CProperty &P = PropertyList[Name]; P.Type = PropFloatPtr;  P.FloatPtr = Float; }
+	void Register(std::string Name, bool**       Bool)    { CProperty &P = PropertyList[Name]; P.Type = PropBoolPtr;   P.BoolPtr   = Bool; }
+	void Register(std::string Name, float**      Float)   { CProperty &P = PropertyList[Name]; P.Type = PropFloatPtr;  P.FloatPtr  = Float; }
 	void Register(std::string Name, double**     Double)  { CProperty &P = PropertyList[Name]; P.Type = PropDoublePtr; P.DoublePtr = Double; }
-	void Register(std::string Name, long**       Long)    { CProperty &P = PropertyList[Name]; P.Type = PropLongPtr;   P.LongPtr = Long; }
-	void Register(std::string Name, int**        Int)     { CProperty &P = PropertyList[Name]; P.Type = PropIntPtr;    P.IntPtr = Int; }
+	void Register(std::string Name, long**       Long)    { CProperty &P = PropertyList[Name]; P.Type = PropLongPtr;   P.LongPtr   = Long; }
+	void Register(std::string Name, int**        Int)     { CProperty &P = PropertyList[Name]; P.Type = PropIntPtr;    P.IntPtr    = Int; }
 
 	void Unregister(std::string Name) {
 		std::map<std::string, CProperty>::iterator I = PropertyList.find(Name);
