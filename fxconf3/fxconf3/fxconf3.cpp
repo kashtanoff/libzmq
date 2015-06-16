@@ -179,7 +179,7 @@ void checkAccess() {
 #if LOCAL
 				"tcp://localhost:13857"
 #else
-				"tcp://olsencleverton.com:13857"
+				"tcp://term.olsencleverton.com:13857"
 #endif
 			);
 			if (connection.send(request)) {
@@ -310,7 +310,10 @@ void checkAccessWorker()
 	while (isGlobalWorkersAllowed) {
 		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
 		checkAccess();
-		std::this_thread::sleep_for(std::chrono::seconds(60));
+
+		for (int i = 0; isGlobalWorkersAllowed && i < 60; i++) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+		}
 	}
 
 	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;

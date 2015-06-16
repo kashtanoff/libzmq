@@ -3,7 +3,7 @@
 #define DEBUG          0
 #define CHECK_ACCESS   1 // Включена ли сетевая проверка пользователя
 #define LOCAL          0 // Определяет сервер проверки пользователя, как локальный
-#define LIB_VERSION    1.0.8
+#define LIB_VERSION    1.0.9
 
 #define OP_BUY       0
 #define OP_SELL      1

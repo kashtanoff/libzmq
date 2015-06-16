@@ -30,6 +30,8 @@ namespace fxc {
 				if (0 != _connerr) {
 					_errtype = CONN_ERRT_SOCK;
 					fxc::msg << "-> connect error: " << _connerr << "\r\n" << fxc::msg_box;
+
+					destroyConnection();
 					return false;
 				}
 
@@ -37,6 +39,8 @@ namespace fxc {
 					_errtype = CONN_ERRT_SEND;
 					_errno   = zmq_errno();
 					fxc::msg << "-> send error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
+
+					destroyConnection();
 					return false;
 				}
 
@@ -47,23 +51,15 @@ namespace fxc {
 					_errtype = CONN_ERRT_RECV;
 					_errno   = zmq_errno();
 					fxc::msg << "-> receive error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
+
+					destroyConnection();
 					return false;
 				}
 
 				_response = std::string(buffer).substr(0, recvSize);
 				fxc::msg << "-> received: [" << _response << "]\r\n" << fxc::msg_box;
 
-				if (-1 == zmq_close(_socket)) {
-					_errtype = CONN_ERRT_CLOSE;
-					_errno   = zmq_errno();
-					fxc::msg << "-> close error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
-				}
-
-				if (-1 == zmq_ctx_term(_context)) {
-					_errtype = CONN_ERRT_TERM;
-					_errno   = zmq_errno();
-					fxc::msg << "-> terminate error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
-				}
+				destroyConnection();
 
 				return true;
 			}
@@ -94,6 +90,20 @@ namespace fxc {
 			int   _errno   = 0;
 
 			std::string _response;
+
+			void destroyConnection() {
+				if (-1 == zmq_close(_socket)) {
+					_errtype = CONN_ERRT_CLOSE;
+					_errno = zmq_errno();
+					fxc::msg << "-> close error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
+				}
+
+				if (-1 == zmq_ctx_term(_context)) {
+					_errtype = CONN_ERRT_TERM;
+					_errno = zmq_errno();
+					fxc::msg << "-> terminate error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
+				}
+			}
 
 	};
 
