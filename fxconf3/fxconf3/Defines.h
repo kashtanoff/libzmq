@@ -3,7 +3,7 @@
 #define DEBUG          0
 #define CHECK_ACCESS   1 // ¬ключена ли сетева€ проверка пользовател€
 #define LOCAL          0 // ќпредел€ет сервер проверки пользовател€, как локальный
-#define LIB_VERSION    1.0.8
+#define LIB_VERSION    1.0.10
 
 #define OP_BUY       0
 #define OP_SELL      1
@@ -51,6 +51,14 @@
 #define PERIOD_W1      10080 // 1 недел€
 #define PERIOD_MN1     43200 // 1 мес€ц
 
+#define PRICE_CLOSE		1
+#define PRICE_OPEN		2
+#define PRICE_HIGH		3
+#define PRICE_LOW		4
+#define PRICE_MEDIAN	5
+#define PRICE_TYPICAL	6
+#define PRICE_WEIGHTED	7
+
 #define NUM_ORDERS   100
 #define MAX_BARS     100
 #define PI           3.14159265358979323846
@@ -59,8 +67,11 @@
 #define INCLUDE_FILE(f)  QUOTEME(f)
 
 //Single
-#define STRAT_PATH  fxc/strat/Single/SingleStrategy.cpp
-#define STRAT_CLASS fxc::strategy::SingleStrategy
+//#define STRAT_PATH  fxc/strat/Single/SingleStrategy.cpp
+//#define STRAT_CLASS fxc::strategy::SingleStrategy
 //Triplex
 //#define STRAT_PATH  fxc/strat/Triplex/TriplexStrategy.cpp
 //#define STRAT_CLASS fxc::strategy::TriplexStrategy
+//Single test
+#define STRAT_PATH  fxc/strat/Single/SingleStrategy.cpp
+#define STRAT_CLASS fxc::strategy::SingleStrategy

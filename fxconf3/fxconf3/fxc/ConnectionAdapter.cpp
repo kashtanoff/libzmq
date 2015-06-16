@@ -25,6 +25,9 @@ namespace fxc {
 				zmq_setsockopt(_socket, ZMQ_RCVTIMEO,      &rcvTimeout, sizeof(rcvTimeout));
 				zmq_setsockopt(_socket, ZMQ_REQ_CORRELATE, &correlate,  sizeof(correlate));
 			}
+			~ConnectionAdapter() {
+				zmq_ctx_term(_context);
+			}
 
 			const bool send(std::string message) {
 				if (0 != _connerr) {
@@ -66,6 +69,9 @@ namespace fxc {
 				}
 
 				return true;
+			}
+			void terminate() {
+				zmq_ctx_term(_context);
 			}
 
 			const int& getErrNo() {

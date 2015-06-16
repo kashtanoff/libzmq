@@ -22,6 +22,8 @@ namespace strategy {
 			double wait_higher=0;
 			double wait_lower=100000;
 			bool block[2];
+			double prevprice[2];
+			ChartData*		  rates;
 
 			SingleStrategy() :  
 				AbstractStrategy(),
@@ -37,16 +39,17 @@ namespace strategy {
 				for (int i = 0, l = sizeof(profits) / sizeof(*profits); i < l; i++) {
 					profits[i] = deltaTP * pow(inputPipsMultiplier, i);
 				}
-
+				
 				indicator = new fxc::ra_indicator::RAIndicator(this, inputTimeFrame, inputPeriod1, inputPeriod2, inputDeviation, deltaMinDev);
-				if (inputRallyBlockMode > 2) {
-					fastma = new fxc::iLWMA(this, inputTimeFrame, inputRallyBlockMode, PRICE_TYPICAL);
-				}
-				dillers[OP_BUY]->base_lot	= inputBaseLot[OP_BUY];
+				ma = new iLWMA(this, inputTimeFrame, inputMaxPower, PRICE_TYPICAL);
+				rates = getChartData(inputTimeFrame); 
+				dillers[OP_BUY]->base_lot = inputBaseLot[OP_BUY];
 				dillers[OP_SELL]->base_lot	= inputBaseLot[OP_SELL];
 				block[OP_BUY] = false;
 				block[OP_SELL] = false;
-
+				prevprice[OP_BUY] = 1000;
+				prevprice[OP_SELL] = 0;
+				
 				if (inputSetName.find(symbolName) == std::string::npos) {
 					setStatus(PROVIDER_STRATEGY, STATUS_HARD_BREAK, "wrong set name", "it has to contain " + symbolName);
 				}
@@ -55,7 +58,7 @@ namespace strategy {
 
 			~SingleStrategy() {
 				delete indicator;
-				delete fastma;
+				delete ma;
 			}
 
 		protected:
@@ -78,13 +81,14 @@ namespace strategy {
 				MARK_FUNC_IN
 				// Если нет ордеров в рынке
 				if (!curdil->level) {  //Если ордеров нет, то если можно, открываем первый
-					block[curdil->type] = false;
-					if (breakStatus < STATUS_SOFT_BREAK) {
+					//block[curdil->type] = false;
+					if (breakStatus == STATUS_SOFT_BREAK) {
+						breakStatus = STATUS_HARD_BREAK;  //После завершения усреднения, включаем полный запрет
+						status    = "trading stopped";
 						MARK_FUNC_OUT
-							return;
+						return;
 					}
-
-					if (!inputStopNew[curdil->type] && compSignal()) {
+					if (!inputStopNew[curdil->type] && compSignal() && curdil->delta(indicator->middle[0], indicator->middle[inputPowerPeriod]) < deltaMaxPower) {
 /*#if DEBUG
 						if (is_visual) {
 							curdil->open_reason = "0-" + curdil->open_reason;
@@ -118,9 +122,7 @@ namespace strategy {
 						if (compSignal()) {
 							wait_higher = 0;
 							openNextOrder();
-							if ((inputRallyBlockMode == 1 && curdil->level == 1) || inputRallyBlockMode == 2) {
-								block[curdil->type] = true;
-							}
+							//block[curdil->type] = true;
 							if (inputCloseMode == 2) {
 								autoClose();
 							}
@@ -131,6 +133,7 @@ namespace strategy {
 						delStopLimitOrders();
 					}
 				}
+				prevprice[curdil->type] = curdil->mpo;
 				MARK_FUNC_OUT
 			}
 			virtual void onOrderClose(int ticket) {
@@ -176,20 +179,13 @@ namespace strategy {
 			inline void moveTP() {
 				MARK_FUNC_IN
 				double tp = (curdil->level == 1) ? deltaFirstTP : deltaTP;
-				MARK_FUNC_IN
 				double last_tpprice = curdil->tp(curdil->last->openprice, tp);
-				MARK_FUNC_IN
 				double min_delta = max(symbolPoint, deltaStopLevel);
-				MARK_FUNC_IN
 				if (curdil->type) //Продажи
 					l(last_tpprice);  //ждем тейкпрофита
 				else  //Покупки
 					h(last_tpprice); //ждем тейкпрофита
-				MARK_FUNC_OUT
-					MARK_FUNC_OUT
-					MARK_FUNC_OUT
 				// Если у последнего ордера еще не установлен тейкпрофит, то ставим его
-				MARK_FUNC_IN
 				if (abs(curdil->last->tpprice - last_tpprice) > min_delta) {
 					modOrder(
 						curdil->last->ticket, 
@@ -198,13 +194,12 @@ namespace strategy {
 						last_tpprice
 					);
 				}
-				MARK_FUNC_OUT
 				// Если в рынке один ордер, то нечего и двигать
 				if (curdil->level < 2) {
 					MARK_FUNC_OUT
 					return;
 				}
-				MARK_FUNC_IN
+
 				double last_weigth  = curdil->orderWeight(curdil->last->openprice, last_tpprice, curdil->last->lots);
 				double total_weight = curdil->basketWeight(last_tpprice);
 				//msg << "lastweight: " << last_weigth << "\r\n";
@@ -214,8 +209,7 @@ namespace strategy {
 				if (total_weight > 0) {
 					last_weigth *= 10;
 				}
-				MARK_FUNC_OUT
-					MARK_FUNC_IN
+
 				for (int i = 0; i < curdil->level - 1; i++) {
 					//msg << "order[" << i << "] = " << curdil->orderWeight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots) <<  "\r\n" << msg_box;
 					last_weigth += curdil->orderWeight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots);
@@ -230,38 +224,39 @@ namespace strategy {
 					}
 				}
 				MARK_FUNC_OUT
-				MARK_FUNC_OUT
 			}
 
 			double compFirstLot() {
 				MARK_FUNC_IN
-				//Если включен манименеджмент
-				if (inputAutoMM > 0) {
-					curdil->base_lot = normLot(floor(equity / inputMMEquity) * symbolLotStep);
-				}
+					//Если включен манименеджмент
+					if (inputAutoMM > 0) {
+						curdil->base_lot = normLot(floor(balance / inputMMEquity) * symbolLotStep);
+					}
 				MARK_FUNC_OUT
-				return min(curdil->base_lot, inputMaxLot);
+					return min(curdil->base_lot, inputMaxLot);
 			}
 
 			bool compSignal() {
 				MARK_FUNC_IN
 
-				//Первый ордер открываем в любом случае
-				if (inputFirstFree[curdil->type] && curdil->level == 0) {
-					//curdil->open_reason += "FirstFree";
-					MARK_FUNC_OUT
-					return true;
-				}
+					//Первый ордер открываем в любом случае
+					if (inputFirstFree[curdil->type] && curdil->level == 0) {
+						//curdil->open_reason += "FirstFree";
+						MARK_FUNC_OUT
+							return true;
+					}
 
 				if (curdil->level >= inputFreeLvl) {
 					//curdil->open_reason += "FreeLvl:" + fxc::utils::Format::decimal(inputFreeLvl, 0);
 					MARK_FUNC_OUT
-					return true;
+						return true;
 				}
 
 				if (curdil->type) { //Продажи
-					if (block[OP_SELL] && curdil->mpo < indicator->middle[0]) {  //Пытаемся снять раллиблок
+					if (block[OP_SELL] && curdil->mpo < indicator->middle[0]) {
 						block[OP_SELL] = false;
+						//MARK_FUNC_OUT
+						//return true;
 					}
 					if (curdil->step_peak) {
 						h(curdil->step_peak);   //Ждем нового пика
@@ -269,19 +264,18 @@ namespace strategy {
 						if (
 							(curdil->step_peak - curdil->mpo >= deltaRollback) ||
 							(deltaRollback == 0)
-						) {
+							) {
 							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->step_peak, 5);
 							curdil->step_peak = 0;
 							MARK_FUNC_OUT
-							return true;
+								return true;
 						}
 						else {
 							curdil->step_peak = max(curdil->step_peak, curdil->mpo);
 						}
 
 					}
-					else if (curdil->mpo > indicator->up[0] && !block[OP_SELL] && 
-						(inputRallyBlockMode<3 || fastma->ma[0] < indicator->up[0])) {
+					else if (curdil->mpo > indicator->up[0] && !block[OP_SELL] && ma->ma[0] < indicator->up[0]) {
 						//curdil->open_reason += "i:" + fxc::utils::Format::decimal(indicator->up[0], 5) + "-";
 						curdil->step_peak = curdil->mpo;
 						h(curdil->step_peak);   //Ждем нового пика
@@ -293,9 +287,12 @@ namespace strategy {
 					}
 				}
 				else { //Покупки
-					if (block[OP_BUY] && curdil->mpo > indicator->middle[0]) {  //Пытаемся снять раллиблок
+					if (block[OP_BUY] && curdil->mpo > indicator->middle[0]) {
 						block[OP_BUY] = false;
+						//MARK_FUNC_OUT
+						//return true;
 					}
+
 					if (curdil->step_peak) {
 						l(curdil->step_peak); //Ждем нового пика
 						h(curdil->step_peak + deltaRollback);  //Ждем отката
@@ -312,8 +309,7 @@ namespace strategy {
 							curdil->step_peak = min(curdil->step_peak, curdil->mpo);
 						}
 					}
-					else if (curdil->mpo < indicator->down[0] && !block[OP_BUY] &&
-						(inputRallyBlockMode<3 || fastma->ma[0] > indicator->down[0])) {
+					else if (curdil->mpo < indicator->down[0] && !block[OP_BUY] && ma->ma[0] > indicator->down[0]) {
 						//curdil->open_reason += "i:"+fxc::utils::Format::decimal(indicator->down[0], 5) + "-";
 						curdil->step_peak = curdil->mpo;
 						l(curdil->step_peak); //Ждем нового пика
@@ -325,14 +321,14 @@ namespace strategy {
 					}
 				}
 				MARK_FUNC_OUT
-				return false;
+					return false;
 			}
 
 		private:
 
 			double profits[50];
 			fxc::ra_indicator::RAIndicator* indicator;
-			fxc::iLWMA* fastma;
+			fxc::iLWMA* ma;
 
 			inline void openNextOrder() {
 				MARK_FUNC_IN
@@ -371,7 +367,7 @@ namespace strategy {
 			inline void autoClose() {
 				MARK_FUNC_IN
 
-				if (curdil->opposite->basketCost() > 0) {
+				if (curdil->opposite->basketCost() > 0 || inputCloseMode == 3) {
 					for (int i = 0; i < curdil->opposite->level; i++) {
 						closeOrder(
 							curdil->opposite->orders[i]->ticket,

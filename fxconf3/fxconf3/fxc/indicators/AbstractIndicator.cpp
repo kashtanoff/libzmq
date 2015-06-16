@@ -47,6 +47,41 @@ namespace fxc {
 				buffer->alloc(outBufferLength);
 				buffers.push_back(buffer);
 			}
+			std::function<double(int)> getPriceMethod(int price_type){
+				switch (price_type) {
+				case PRICE_CLOSE:
+					return [&](int index)->double {
+						return rates->close[index];
+					};
+				case PRICE_OPEN:
+					return[&](int index)->double {
+						return rates->open[index];
+					};
+				case PRICE_HIGH:
+					return[&](int index)->double {
+						return rates->open[index];
+					};
+				case PRICE_LOW:
+					return[&](int index)->double {
+						return rates->low[index];
+					};
+				case PRICE_MEDIAN:
+					return[&](int index)->double {
+						return (rates->high[index] + rates->low[index]) / 2;
+					};
+				case PRICE_TYPICAL:
+					return[&](int index)->double {
+						return (rates->high[index] + rates->low[index] + rates->close[index]) / 3;
+					};
+				case PRICE_WEIGHTED:
+					return[&](int index)->double {
+						return (rates->high[index] + rates->low[index] + rates->close[index] +rates->close[index]) / 4;
+					};
+				}
+				return [&](int index)->double {
+					return rates->close[index];
+				};
+			}
 
 		protected:
 

@@ -298,19 +298,30 @@ void checkAccess() {
 			fxc::msg << STACK_TRACE << fxc::msg_box;
 		}
 	#endif
+#else
+fxc::mutex.lock();
+for (auto& entry : pool) {
+	entry->setStatus(PROVIDER_SERVER, STATUS_OK, "no server", "connection off");
+}
+fxc::mutex.unlock();
 #endif
 }
 void checkAccessWorker()
 {
+	int timeout;
 	STACK_TRACE_INIT
 	isAccessWorkerActive = true;
 	account.status       = 500;
 	account.lastSync     = 0;
+	
 
 	while (isGlobalWorkersAllowed) {
 		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
 		checkAccess();
-		std::this_thread::sleep_for(std::chrono::seconds(60));
+		timeout = 600;
+		while (isGlobalWorkersAllowed && timeout-- > 0) {  //Это для того, чтобы в случае выгрузки длл быстро выйти
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
 	}
 
 	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
@@ -542,7 +553,7 @@ _DLLAPI void __stdcall c_deinit()
 	// Если у нас больше не осталось экземпляров советника, то можно прекращать передачу данных серверу
 	if (lastInstance) {
 		isGlobalWorkersAllowed = false;
-		checkAccess();
+		//checkAccess();  //Вслучае выгрузки длл надо быстро выйти иначе терминал упадет
 	}
 
 	delete strategy;
