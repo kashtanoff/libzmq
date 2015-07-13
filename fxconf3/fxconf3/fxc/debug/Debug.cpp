@@ -6,22 +6,23 @@
 #if DEBUG
 
 	__declspec(thread) std::vector< fxc::debug::SourcePoint >* fxc::debug::StackTrace::_callstack;
-	__declspec(thread) fxc::debug::SourcePoint *fxc::debug::StackTrace::_sourcepoint;
+	__declspec(thread) fxc::debug::SourcePoint* fxc::debug::StackTrace::_sourcepoint;
 
 	void fxc::debug::StackTrace::init() {
-		_callstack = new std::vector < fxc::debug::SourcePoint >;
+		_callstack   = new std::vector < fxc::debug::SourcePoint >;
 		_sourcepoint = new SourcePoint();
 	}
 	void fxc::debug::StackTrace::flush() {
 		delete _callstack;
+		delete _sourcepoint;
 	}
 	void fxc::debug::StackTrace::clear() {
 		_callstack->clear();
 	}
-	void fxc::debug::StackTrace::push(const char *filename, int line, const std::string data) {
-		_callstack->push_back(SourcePoint{ filename, line, data });
+	void fxc::debug::StackTrace::push(char* filename, int line, const std::string data) {
+		_callstack->push_back(SourcePoint { filename, line, data });
 	}
-	void fxc::debug::StackTrace::last(const char *filename, const int line, const std::string data) {
+	void fxc::debug::StackTrace::last(char* filename, int line, const std::string data) {
 		_sourcepoint->filename = filename;
 		_sourcepoint->line = line;
 		_sourcepoint->data = data;

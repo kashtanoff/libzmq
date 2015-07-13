@@ -9,10 +9,11 @@
 
 	namespace debug {
 
-		struct SourcePoint {
-			const char *filename;
-			const int line;
-			const std::string data;
+		class SourcePoint {
+			public:
+				char *filename;
+				int line;
+				std::string data;
 		};
 
 		class StackTrace {
@@ -20,8 +21,8 @@
 				static void init();
 				static void flush();
 				static void clear();
-				static void push(const char *filename, int line, std::string data = "");
-				static void last(const char *filename, int line, std::string data = "");
+				static void push(char *filename, int line, std::string data = "");
+				static void last(char *filename, int line, std::string data = "");
 				static void pop();
 				static std::string trace();
 			private:
