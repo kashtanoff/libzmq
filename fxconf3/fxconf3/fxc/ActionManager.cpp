@@ -348,7 +348,7 @@ namespace fxc {
 
 		private:
 			
-			int actionsLen;
+			unsigned actionsLen;
 			std::vector<TradeAction*> ext_tradeActions;
 
 	};

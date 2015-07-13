@@ -61,6 +61,12 @@
     <ClInclude Include="fxc\strat\SingleT2\Defines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fxc\strat\SingleT3\Defines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fxc\indicators\Defines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -156,6 +162,12 @@
     <ClCompile Include="fxc\strat\SingleT2\SingleStrategy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fxc\strat\SingleT3\Parameters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fxc\strat\SingleT3\SingleStrategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mq4\Errors.mq4">
@@ -186,6 +198,12 @@
       <Filter>MT sources</Filter>
     </None>
     <None Include="fxc\strat\SingleT2\Inputs.mq4">
+      <Filter>MT sources</Filter>
+    </None>
+    <None Include="fxc\strat\SingleT3\Inputs.mq4">
+      <Filter>MT sources</Filter>
+    </None>
+    <None Include="fxc\indicators\Inputs.mq4">
       <Filter>MT sources</Filter>
     </None>
   </ItemGroup>

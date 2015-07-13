@@ -7,6 +7,10 @@
 #include "Convert.h"
 #include "fxc.h"
 
+#include <cstdio>
+//#include <string>
+
+
 namespace fxc {
 
 namespace utils {
@@ -208,7 +212,7 @@ namespace utils {
 			int _cellspacing = 1;
 
 			std::vector< std::vector<std::string> > _cells;
-			std::vector< int > _colSizes;
+			std::vector< unsigned > _colSizes;
 			std::vector< int > _colAlign;
 
 			inline const int getWidth() {
@@ -221,6 +225,8 @@ namespace utils {
 
 	};
 
+
 }
+
 
 }

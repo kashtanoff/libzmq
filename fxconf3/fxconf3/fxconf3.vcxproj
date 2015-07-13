@@ -103,7 +103,9 @@
     <ClInclude Include="fxc\debug\Debug.h" />
     <ClInclude Include="fxc\Format.h" />
     <ClInclude Include="fxc\fxc.h" />
+    <ClInclude Include="fxc\indicators\Defines.h" />
     <ClInclude Include="fxc\strat\SingleT2\Defines.h" />
+    <ClInclude Include="fxc\strat\SingleT3\Defines.h" />
     <ClInclude Include="fxc\strat\SingleT\Defines.h" />
     <ClInclude Include="fxc\strat\Single\Defines.h" />
     <ClInclude Include="fxc\strat\Triplex\Defines.h" />
@@ -139,6 +141,8 @@
     <ClCompile Include="fxc\indicators\iLWMA.cpp" />
     <ClCompile Include="fxc\strat\SingleT2\Parameters.cpp" />
     <ClCompile Include="fxc\strat\SingleT2\SingleStrategy.cpp" />
+    <ClCompile Include="fxc\strat\SingleT3\Parameters.cpp" />
+    <ClCompile Include="fxc\strat\SingleT3\SingleStrategy.cpp" />
     <ClCompile Include="fxc\strat\SingleT\Parameters.cpp" />
     <ClCompile Include="fxc\strat\SingleT\SingleStrategy.cpp" />
     <ClCompile Include="fxc\strat\Single\SingleStrategy.cpp" />
@@ -155,7 +159,9 @@
     <ClCompile Include="fxc\TerminalInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fxc\indicators\Inputs.mq4" />
     <None Include="fxc\strat\SingleT2\Inputs.mq4" />
+    <None Include="fxc\strat\SingleT3\Inputs.mq4" />
     <None Include="fxc\strat\SingleT\Inputs.mq4" />
     <None Include="fxc\strat\Triplex\Inputs.mq4" />
     <None Include="mq4\Errors.mq4" />

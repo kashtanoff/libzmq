@@ -70,6 +70,9 @@ class CPropertyList
 {
 public:
 	std::map<std::string, CProperty> PropertyList;
+	bool params_good = true;
+	std::string params_err1;
+	std::string params_err2;
 
 	void Register(std::string Name, std::string*  String)  { CProperty &P = PropertyList[Name]; P.Type = PropString;   P.String  = String; }
 	void Register(std::string Name, std::wstring* String)  { CProperty &P = PropertyList[Name]; P.Type = PropWString;  P.WString = String; }
@@ -91,4 +94,29 @@ public:
 		if (I != PropertyList.end())
 			PropertyList.erase(I);
 	}
+	void Check(std::string Name, double min_val, double max_val) {
+		CProperty &P = PropertyList[Name];
+		if (*P.Double < min_val || *P.Double > max_val) {
+			params_good = false;
+			std::stringstream s;
+			s << "Param " << Name << "=" << *P.Double << " wrong";
+			params_err1 = s.str();
+			std::stringstream s2;
+			s2 << "must be " << min_val << ":" << max_val;
+			params_err2 = s2.str();
+		}
+	}
+	void Check(std::string Name, int min_val, int max_val) {
+		CProperty &P = PropertyList[Name];
+		if (*P.Long < min_val || *P.Long > max_val) {
+			params_good = false;
+			std::stringstream s;
+			s << "Param " << Name << "=" << *P.Long << " wrong";
+			params_err1 = s.str();
+			std::stringstream s2;
+			s2 << "must be " << min_val << ":" << max_val;
+			params_err2 = s2.str();
+		}
+	}
+
 };

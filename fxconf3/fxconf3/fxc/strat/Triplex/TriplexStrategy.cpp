@@ -271,28 +271,28 @@ namespace strategy {
 				}
 
 				if (curdil->type) { //ѕродажи
-					if (curdil->step_peak) {
-						h(curdil->step_peak);   //∆дем нового пика
-						l(curdil->step_peak - deltaRollback);  //∆дем отката
+					if (curdil->trail_in_peak) {
+						h(curdil->trail_in_peak);   //∆дем нового пика
+						l(curdil->trail_in_peak - deltaRollback);  //∆дем отката
 						if (
-							(curdil->step_peak - curdil->mpo >= deltaRollback) ||
+							(curdil->trail_in_peak - curdil->mpo >= deltaRollback) ||
 							(deltaRollback == 0)
 						) {
-							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->step_peak, 5);
-							curdil->step_peak = 0;
+							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->trail_in_peak, 5);
+							curdil->trail_in_peak = 0;
 							MARK_FUNC_OUT
 							return true;
 						}
 						else {
-							curdil->step_peak = max(curdil->step_peak, curdil->mpo);
+							curdil->trail_in_peak = max(curdil->trail_in_peak, curdil->mpo);
 						}
 
 					}
 					else if (curdil->mpo > indicator[channel]->up[0]) {
 						//curdil->open_reason += "i:" + fxc::utils::Format::decimal(indicator->up[0], 5) + "-";
-						curdil->step_peak = curdil->mpo;
-						h(curdil->step_peak);   //∆дем нового пика
-						l(curdil->step_peak - deltaRollback);  //∆дем отката
+						curdil->trail_in_peak = curdil->mpo;
+						h(curdil->trail_in_peak);   //∆дем нового пика
+						l(curdil->trail_in_peak - deltaRollback);  //∆дем отката
 					}
 					else {
 						h(indicator[channel]->up[0]);  //∆дем пробо€ канала
@@ -300,27 +300,27 @@ namespace strategy {
 					}
 				}
 				else { //ѕокупки
-					if (curdil->step_peak) {
-						l(curdil->step_peak); //∆дем нового пика
-						h(curdil->step_peak + deltaRollback);  //∆дем отката
+					if (curdil->trail_in_peak) {
+						l(curdil->trail_in_peak); //∆дем нового пика
+						h(curdil->trail_in_peak + deltaRollback);  //∆дем отката
 						if (
-							(curdil->mpo - curdil->step_peak >= deltaRollback) ||
+							(curdil->mpo - curdil->trail_in_peak >= deltaRollback) ||
 							(deltaRollback == 0)
 							) {
-							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->step_peak, 5);
-							curdil->step_peak = 0;
+							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->trail_in_peak, 5);
+							curdil->trail_in_peak = 0;
 							MARK_FUNC_OUT
 								return true;
 						}
 						else {
-							curdil->step_peak = min(curdil->step_peak, curdil->mpo);
+							curdil->trail_in_peak = min(curdil->trail_in_peak, curdil->mpo);
 						}
 					}
 					else if (curdil->mpo < indicator[channel]->down[0]) {
 						//curdil->open_reason += "i:"+fxc::utils::Format::decimal(indicator->down[0], 5) + "-";
-						curdil->step_peak = curdil->mpo;
-						l(curdil->step_peak); //∆дем нового пика
-						h(curdil->step_peak + deltaRollback);  //∆дем отката
+						curdil->trail_in_peak = curdil->mpo;
+						l(curdil->trail_in_peak); //∆дем нового пика
+						h(curdil->trail_in_peak + deltaRollback);  //∆дем отката
 					}
 					else {
 						l(indicator[channel]->down[0]);  //∆дем пробо€ канала
@@ -344,7 +344,7 @@ namespace strategy {
 				//–ассто€ние до будущего ордера, если отрицательное, то проехали
 				if (curdil->delta(curdil->sl(curdil->last->openprice, deltaStep[channel]), openprice) > 0) {
 					//ѕока не можем выставить не отложку не по рынку
-					curdil->step_peak = 0;
+					curdil->trail_in_peak = 0;
 					MARK_FUNC_OUT
 					return;
 				}

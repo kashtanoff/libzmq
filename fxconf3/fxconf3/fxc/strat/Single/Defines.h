@@ -1,4 +1,4 @@
 #pragma once
 
-#define EXPERT_NAME    "OC Single"
-#define EXPERT_VERSION "3.317"
+#define EXPERT_NAME    "OC Single debug"
+#define EXPERT_VERSION "3.322"

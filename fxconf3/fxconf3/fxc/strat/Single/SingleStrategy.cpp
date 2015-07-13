@@ -17,10 +17,7 @@ namespace strategy {
 		public AbstractStrategy,
 		public Parameters 
 	{
-
 		public:
-			double wait_higher=0;
-			double wait_lower=100000;
 			bool block[2];
 
 			SingleStrategy() :  
@@ -32,11 +29,14 @@ namespace strategy {
 
 			virtual void initStrategy() {
 				MARK_FUNC_IN
-
+					if (!paramsCheck((CPropertyList*) this)) {
+						setStatus(PROVIDER_STRATEGY, STATUS_EMERGENCY_BREAK, params_err1, params_err2);
+					}
 				paramsDeltaCalc(k_point * symbolPoint);
 				for (int i = 0, l = sizeof(profits) / sizeof(*profits); i < l; i++) {
 					profits[i] = deltaTP * pow(inputPipsMultiplier, i);
 				}
+
 
 				indicator = new fxc::ra_indicator::RAIndicator(this, inputTimeFrame, inputPeriod1, inputPeriod2, inputDeviation, deltaMinDev);
 				if (inputRallyBlockMode > 2) {
@@ -59,40 +59,17 @@ namespace strategy {
 			}
 
 		protected:
-			inline virtual const bool bypass() {	
-				/*if (wait_higher <= ask || wait_lower >= bid) {
-					wait_higher = 100000;
-					wait_lower = 0;
-					return false;
-				}
-				return true;	*/
-				return false;
-			}
-			inline void h(double high){
-				wait_higher = min(wait_higher, high);
-			}
-			inline void l(double low){
-				wait_lower = max(wait_lower, low);
-			}
 			virtual void Strategy() {
 				MARK_FUNC_IN
 				// Если нет ордеров в рынке
 				if (!curdil->level) {  //Если ордеров нет, то если можно, открываем первый
 					block[curdil->type] = false;
-					if (breakStatus < STATUS_SOFT_BREAK) {
+					if (breakStatus >= STATUS_SOFT_BREAK) {
 						MARK_FUNC_OUT
 							return;
 					}
 
 					if (!inputStopNew[curdil->type] && compSignal()) {
-/*#if DEBUG
-						if (is_visual) {
-							curdil->open_reason = "0-" + curdil->open_reason;
-							msg << "open: " << curdil->type << " - " << curdil->open_reason << "\r\n" << msg_box;
-							curdil->open_reason = "";
-						}
-#endif*/
-						wait_higher = 0;
 						createOrder(
 							curdil->type,
 							compFirstLot(),
@@ -101,34 +78,20 @@ namespace strategy {
 							curdil->tp(curdil->mpo, deltaFirstTP),
 							"1-" + inputCommentText
 						);
-						//curdil->open_reason = "";
-						if (inputCloseMode) {
-							autoClose();
-						}
+						autoClose();
 					}
 				}
 				else {  //Если есть ордера в рынке
 					moveTP();
-					if (curdil->type) //Продажи
-						h(curdil->last->openprice + deltaStep);  //Ждем минимального шага
-					else
-						l(curdil->last->openprice - deltaStep);  //Ждем минимального шага
 					// Если есть базовый ордер и разрешено усреднять и максимальный уровень не достигнут
 					if (!inputStop[curdil->type] && curdil->level < inputMaxGridLevel) {
 						if (compSignal()) {
-							wait_higher = 0;
 							openNextOrder();
 							if ((inputRallyBlockMode == 1 && curdil->level == 1) || inputRallyBlockMode == 2) {
 								block[curdil->type] = true;
 							}
-							if (inputCloseMode == 2) {
-								autoClose();
-							}
+							autoClose();
 						}
-					}
-					// Если есть ордера, но не разрешено усреднять -> удалить отложки
-					else {
-						delStopLimitOrders();
 					}
 				}
 				MARK_FUNC_OUT
@@ -141,7 +104,7 @@ namespace strategy {
 				MARK_FUNC_IN
 				using namespace fxc::utils;
 
-				AsciiTable table;
+				/*AsciiTable table;
 				table
 					.setCell("BuyLevel:") .right().setCell(Format::decimal(dillers[0]->level,      0) + "   ").reserv(8).down() // Уровень сетки на покупку
 					.setCell("BuyLots:")  .right().setCell(Format::decimal(dillers[0]->total_lots, 2)).down()         // Суммарная лотность на покупку
@@ -149,12 +112,14 @@ namespace strategy {
 					.setCell("SellLevel:").right().setCell(Format::decimal(dillers[1]->level,      0) + "   ").down() // Уровень сетки на продажу
 					.setCell("SellLots:") .right().setCell(Format::decimal(dillers[1]->total_lots, 2)).down()         // Суммарная лотность на продажу
 					.setCell("SellDD:")   .right().setCell(Format::decimal(dillers[1]->open_dd,    2)).down()         // Просадка на продажу
-					.setCell("SymbolDD:") .right().setCell(Format::decimal(dillers[0]->open_dd 
+					.setCell("SymbolDD:") .right().setCell(Format::decimal(dillers[0]->open_dd
 					                                                     + dillers[1]->open_dd,    2)).down()        // Общая просадка
 #if DEBUG
 					.setCell("up:").right().setCell(Format::decimal(indicator->up[0], 5)).down()
 					.setCell("down:").right().setCell(Format::decimal(indicator->down[0], 5)).down()
-					.setCell("close:").right().setCell(Format::decimal(getChartData(inputTimeFrame)->close[0], 5)).down()
+					//.setCell("ma:").right().setCell(Format::decimal(fastma->ma[0], 5)).down()
+					//.setCell("speed:").right().setCell(Format::decimal(abs(fastma->ma[1] - fastma->ma[0]), 5)).down()
+					//.setCell("close:").right().setCell(Format::decimal(getChartData(inputTimeFrame)->close[0], 5)).down()
 #endif
 					//.setCell("PrevProfit:") .right().setCell("0").down()  // Прибыль за прошлый период
 					//.setCell("Profit:")     .right().setCell("0").down()  // Прибыль за текущий период
@@ -166,7 +131,16 @@ namespace strategy {
 
 				while (std::getline(ss, line, '\n')) {
 					showValue(i++, line);
-				}
+				}*/
+				int i = 0;
+				showValue(i++, Format::sformat("BuyLevel:  %*d",    9,    dillers[0]->level));
+				showValue(i++, Format::sformat("BuyLots:   %*.*f", 12, 2, dillers[0]->total_lots));
+				showValue(i++, Format::sformat("BuyDD:     %*.*f", 12, 2, dillers[0]->open_dd));
+				showValue(i++, Format::sformat("SellLevel: %*d",    9,    dillers[1]->level));
+				showValue(i++, Format::sformat("SellLots:  %*.*f", 12, 2, dillers[1]->total_lots));
+				showValue(i++, Format::sformat("SellDD:    %*.*f", 12, 2, dillers[1]->open_dd));
+				showValue(i++, Format::sformat("SymbolDD:  %*.*f", 12, 2, dillers[0]->open_dd + dillers[1]->open_dd));
+
 
 				showValue(i++, status); // Статус
 				showValue(i++, reason); // Причина
@@ -180,12 +154,6 @@ namespace strategy {
 				double last_tpprice = curdil->tp(curdil->last->openprice, tp);
 				MARK_FUNC_IN
 				double min_delta = max(symbolPoint, deltaStopLevel);
-				MARK_FUNC_IN
-				if (curdil->type) //Продажи
-					l(last_tpprice);  //ждем тейкпрофита
-				else  //Покупки
-					h(last_tpprice); //ждем тейкпрофита
-				MARK_FUNC_OUT
 					MARK_FUNC_OUT
 					MARK_FUNC_OUT
 				// Если у последнего ордера еще не установлен тейкпрофит, то ставим его
@@ -252,8 +220,7 @@ namespace strategy {
 					MARK_FUNC_OUT
 					return true;
 				}
-
-				if (curdil->level >= inputFreeLvl) {
+				if (curdil->level == 0 && curdil->opposite->level >= inputFreeLvl) {
 					//curdil->open_reason += "FreeLvl:" + fxc::utils::Format::decimal(inputFreeLvl, 0);
 					MARK_FUNC_OUT
 					return true;
@@ -263,65 +230,49 @@ namespace strategy {
 					if (block[OP_SELL] && curdil->mpo < indicator->middle[0]) {  //Пытаемся снять раллиблок
 						block[OP_SELL] = false;
 					}
-					if (curdil->step_peak) {
-						h(curdil->step_peak);   //Ждем нового пика
-						l(curdil->step_peak - deltaRollback);  //Ждем отката
+					if (curdil->trail_in_peak) {
 						if (
-							(curdil->step_peak - curdil->mpo >= deltaRollback) ||
+							(curdil->trail_in_peak - curdil->mpo >= deltaRollback) ||
 							(deltaRollback == 0)
 						) {
-							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->step_peak, 5);
-							curdil->step_peak = 0;
+							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->trail_in_peak, 5);
+							curdil->trail_in_peak = 0;
 							MARK_FUNC_OUT
 							return true;
 						}
 						else {
-							curdil->step_peak = max(curdil->step_peak, curdil->mpo);
+							curdil->trail_in_peak = max(curdil->trail_in_peak, curdil->mpo);
 						}
 
 					}
 					else if (curdil->mpo > indicator->up[0] && !block[OP_SELL] && 
 						(inputRallyBlockMode<3 || fastma->ma[0] < indicator->up[0])) {
 						//curdil->open_reason += "i:" + fxc::utils::Format::decimal(indicator->up[0], 5) + "-";
-						curdil->step_peak = curdil->mpo;
-						h(curdil->step_peak);   //Ждем нового пика
-						l(curdil->step_peak - deltaRollback);  //Ждем отката
-					}
-					else {
-						h(indicator->up[0]);  //Ждем пробоя канала
-						h(getChartData(inputTimeFrame)->high[0]);  //Ждем обновление максимума
+						curdil->trail_in_peak = curdil->mpo;
 					}
 				}
 				else { //Покупки
 					if (block[OP_BUY] && curdil->mpo > indicator->middle[0]) {  //Пытаемся снять раллиблок
 						block[OP_BUY] = false;
 					}
-					if (curdil->step_peak) {
-						l(curdil->step_peak); //Ждем нового пика
-						h(curdil->step_peak + deltaRollback);  //Ждем отката
+					if (curdil->trail_in_peak) {
 						if (
-							(curdil->mpo - curdil->step_peak >= deltaRollback) ||
+							(curdil->mpo - curdil->trail_in_peak >= deltaRollback) ||
 							(deltaRollback == 0)
 							) {
-							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->step_peak, 5);
-							curdil->step_peak = 0;
+							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->trail_in_peak, 5);
+							curdil->trail_in_peak = 0;
 							MARK_FUNC_OUT
 								return true;
 						}
 						else {
-							curdil->step_peak = min(curdil->step_peak, curdil->mpo);
+							curdil->trail_in_peak = min(curdil->trail_in_peak, curdil->mpo);
 						}
 					}
 					else if (curdil->mpo < indicator->down[0] && !block[OP_BUY] &&
 						(inputRallyBlockMode<3 || fastma->ma[0] > indicator->down[0])) {
 						//curdil->open_reason += "i:"+fxc::utils::Format::decimal(indicator->down[0], 5) + "-";
-						curdil->step_peak = curdil->mpo;
-						l(curdil->step_peak); //Ждем нового пика
-						h(curdil->step_peak + deltaRollback);  //Ждем отката
-					}
-					else {
-						l(indicator->down[0]);  //Ждем пробоя канала
-						l(getChartData(inputTimeFrame)->low[0]);  //Ждем обновление минимума
+						curdil->trail_in_peak = curdil->mpo;
 					}
 				}
 				MARK_FUNC_OUT
@@ -342,7 +293,7 @@ namespace strategy {
 				//Расстояние до будущего ордера, если отрицательное, то проехали
 				if (curdil->delta(curdil->sl(curdil->last->openprice, deltaStep), openprice) > 0) {
 					//Пока не можем выставить не отложку не по рынку
-					curdil->step_peak = 0;
+					curdil->trail_in_peak = 0;
 					MARK_FUNC_OUT
 					return;
 				}
@@ -355,14 +306,6 @@ namespace strategy {
 				lots = max(lots, curdil->base_lot);
 
 				lots = min(lots, inputMaxLot);
-				/*
-#if DEBUG
-				if (is_visual) {
-					curdil->open_reason = Format::decimal(curdil->level + 1, 0) + "-" + curdil->open_reason;
-					msg << "open: " << curdil->type << " - " << curdil->open_reason << "\r\n" << msg_box;
-					curdil->open_reason = "";
-				}
-#endif*/
 				createOrder(curdil->type, lots, openprice, slprice, tpprice, Format::decimal(curdil->level+1, 0) + "-" + inputCommentText);
 				//curdil->open_reason = "";
 				MARK_FUNC_OUT
@@ -370,23 +313,21 @@ namespace strategy {
 
 			inline void autoClose() {
 				MARK_FUNC_IN
-
-				if (curdil->opposite->basketCost() > 0) {
-					for (int i = 0; i < curdil->opposite->level; i++) {
-						closeOrder(
-							curdil->opposite->orders[i]->ticket,
-							curdil->opposite->orders[i]->lots,
-							curdil->opposite->mpc
-						);
-					}
+					bool flag = false;
+				switch (inputCloseMode) {
+				case 0: break; //Не закрывать оппозитно
+				case 1: if (curdil->opposite->level == 1 && curdil->opposite->basketCost() > 0) {//Закрывать если один ордер
+					flag = true;
 				}
-				MARK_FUNC_OUT
-			}
-
-			inline void delStopLimitOrders() {
-				MARK_FUNC_IN
-				if (curdil->ord_stop) {
-					deleteOrder(curdil->ord_stop->ticket);
+						break;
+				case 2: if (curdil->opposite->basketCost() > 0) {//Закрывать если сетка в плюс
+					flag = true;
+				}
+						break;
+				case 3: flag = true; //Закрывать сетку даже в убыток
+				}
+				if (flag) {
+					closeAll(curdil->opposite);
 				}
 				MARK_FUNC_OUT
 			}

@@ -185,8 +185,7 @@ int OnInit()
 	lastday    = Day();
 	lastdate   = TimeCurrent();
 
-	EventSetTimer(1);
-	Print("tfCount=", tfCount);
+	if (!SetTimer(1)) return INIT_FAILED;
 	return (INIT_SUCCEEDED);
 }
 
@@ -282,6 +281,9 @@ double OnTester()
 
 void OnTimer()
 {
+	if (showinfo) {
+		c_setint(   "mqlTradeAllowed",         IsTradeAllowed());
+	}
 	if (TimeGMT() - lastAccountUpdateTime >= 60) {
 		UpdateAccountInfo();
 	}
@@ -479,7 +481,6 @@ void UpdateOrders() {
 
 void UpdateAccountInfo() {
 	int ticket = c_updateAccount(AccountBalance(), AccountEquity(), AccountProfit());
-
 	while (ticket) {
 		if (OrderSelect(ticket, SELECT_BY_TICKET)) {
 			datetime close = OrderCloseTime();
@@ -489,6 +490,18 @@ void UpdateAccountInfo() {
 			ticket = c_updateOrder(ticket, 0, 0, 0);
 		}
 	}
-
+	
 	lastAccountUpdateTime = TimeGMT();
+	//Print("end update");
+}
+
+bool SetTimer(int t) {
+	bool res;
+	int itry=0;
+	do {
+		res = EventSetTimer(t);
+		Sleep(100);
+	}
+	while (!res && itry++ < 100);
+	return res;
 }

@@ -54,6 +54,7 @@ public:
 
 		SetSymbolSize();
 		Set("line", "--------------------------");
+		Set("0", "wait first tick...");
 	}
 
 	void SetHeader(string label) {

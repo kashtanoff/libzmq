@@ -140,7 +140,7 @@ namespace strategy {
 			virtual void showInfo() {
 				MARK_FUNC_IN
 				using namespace fxc::utils;
-
+				/*
 				AsciiTable table;
 				table
 					.setCell("BuyLevel:") .right().setCell(Format::decimal(dillers[0]->level,      0) + "   ").reserv(8).down() // ”ровень сетки на покупку
@@ -166,7 +166,15 @@ namespace strategy {
 
 				while (std::getline(ss, line, '\n')) {
 					showValue(i++, line);
-				}
+				}*/
+				int i = 0;
+				showValue(i++, Format::sformat("BuyLevel: %*d", 7, dillers[0]->level));
+				showValue(i++, Format::sformat("BuyLots: %*.*f", 2, 10, dillers[0]->total_lots));
+				showValue(i++, Format::sformat("BuyDD: %*d", 2, 10, dillers[0]->open_dd));
+				showValue(i++, Format::sformat("SellLevel: %*d", 7, dillers[1]->level));
+				showValue(i++, Format::sformat("SellLots: %*d", 2, 10, dillers[1]->total_lots));
+				showValue(i++, Format::sformat("SellDD: %*d", 2, 10, dillers[1]->open_dd));
+				showValue(i++, Format::sformat("SymbolDD: %*d", 2, 10, dillers[0]->open_dd + dillers[1]->open_dd));
 
 				showValue(i++, status); // —татус
 				showValue(i++, reason); // ѕричина
@@ -287,28 +295,28 @@ namespace strategy {
 						//MARK_FUNC_OUT
 						//return true;
 					}
-					if (curdil->step_peak) {
-						h(curdil->step_peak);   //∆дем нового пика
-						l(curdil->step_peak - deltaRollback);  //∆дем отката
+					if (curdil->trail_in_peak) {
+						h(curdil->trail_in_peak);   //∆дем нового пика
+						l(curdil->trail_in_peak - deltaRollback);  //∆дем отката
 						if (
-							(curdil->step_peak - curdil->mpo >= deltaRollback) ||
+							(curdil->trail_in_peak - curdil->mpo >= deltaRollback) ||
 							(deltaRollback == 0)
 							) {
-							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->step_peak, 5);
-							curdil->step_peak = 0;
+							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->trail_in_peak, 5);
+							curdil->trail_in_peak = 0;
 							MARK_FUNC_OUT
 								return true;
 						}
 						else {
-							curdil->step_peak = max(curdil->step_peak, curdil->mpo);
+							curdil->trail_in_peak = max(curdil->trail_in_peak, curdil->mpo);
 						}
 
 					}
 					else if (curdil->mpo > indicator->up[0] && !block[OP_SELL]) {
 						//curdil->open_reason += "i:" + fxc::utils::Format::decimal(indicator->up[0], 5) + "-";
-						curdil->step_peak = curdil->mpo;
-						h(curdil->step_peak);   //∆дем нового пика
-						l(curdil->step_peak - deltaRollback);  //∆дем отката
+						curdil->trail_in_peak = curdil->mpo;
+						h(curdil->trail_in_peak);   //∆дем нового пика
+						l(curdil->trail_in_peak - deltaRollback);  //∆дем отката
 					}
 					else {
 						h(indicator->up[0]);  //∆дем пробо€ канала
@@ -322,27 +330,27 @@ namespace strategy {
 						//return true;
 					}
 
-					if (curdil->step_peak) {
-						l(curdil->step_peak); //∆дем нового пика
-						h(curdil->step_peak + deltaRollback);  //∆дем отката
+					if (curdil->trail_in_peak) {
+						l(curdil->trail_in_peak); //∆дем нового пика
+						h(curdil->trail_in_peak + deltaRollback);  //∆дем отката
 						if (
-							(curdil->mpo - curdil->step_peak >= deltaRollback) ||
+							(curdil->mpo - curdil->trail_in_peak >= deltaRollback) ||
 							(deltaRollback == 0)
 							) {
-							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->step_peak, 5);
-							curdil->step_peak = 0;
+							//curdil->open_reason += "p:" + fxc::utils::Format::decimal(curdil->trail_in_peak, 5);
+							curdil->trail_in_peak = 0;
 							MARK_FUNC_OUT
 								return true;
 						}
 						else {
-							curdil->step_peak = min(curdil->step_peak, curdil->mpo);
+							curdil->trail_in_peak = min(curdil->trail_in_peak, curdil->mpo);
 						}
 					}
 					else if (curdil->mpo < indicator->down[0] && !block[OP_BUY]) {
 						//curdil->open_reason += "i:"+fxc::utils::Format::decimal(indicator->down[0], 5) + "-";
-						curdil->step_peak = curdil->mpo;
-						l(curdil->step_peak); //∆дем нового пика
-						h(curdil->step_peak + deltaRollback);  //∆дем отката
+						curdil->trail_in_peak = curdil->mpo;
+						l(curdil->trail_in_peak); //∆дем нового пика
+						h(curdil->trail_in_peak + deltaRollback);  //∆дем отката
 					}
 					else {
 						l(indicator->down[0]);  //∆дем пробо€ канала
@@ -366,7 +374,7 @@ namespace strategy {
 				//–ассто€ние до будущего ордера, если отрицательное, то проехали
 				if (curdil->delta(curdil->sl(curdil->last->openprice, deltaStep), openprice) > 0) {
 					//ѕока не можем выставить не отложку не по рынку
-					curdil->step_peak = 0;
+					curdil->trail_in_peak = 0;
 					MARK_FUNC_OUT
 					return;
 				}

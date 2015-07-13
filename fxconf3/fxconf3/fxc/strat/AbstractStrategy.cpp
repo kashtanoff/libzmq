@@ -28,6 +28,7 @@ namespace fxc {
 		std::string status;        // Основной статус работы советника
 		std::string reason;        // причина запрета торговых операций
 		double onTesterValue = 0;  // Оптимизационный критерий
+		double mm_const = 0;
 
 		AbstractStrategy() {}
 
@@ -47,17 +48,13 @@ namespace fxc {
 			}
 
 			k_point = (symbolDigits == 3 || symbolDigits == 5) ? 10 : 1;
+			mm_const = (STANDART_CONTRACT / symbolLotSize) * symbolLotStep;
 			
 			initOrdersManager();
-			printRegisteredProps();
+			//printRegisteredProps();
 			
 			status = "trade is not allowed";
 			reason = "cheking permissions";
-			if (!mqlTradeAllowed) {
-				msg << "autotrade not allowed\r\n" << msg_box;
-				setStatus(PROVIDER_DLL, STATUS_DANGER, "auto-tade is not allowed", "press auto-trade button");
-			}
-			
 			initStrategy();
 			msg << "strategy init done\r\n" << msg_box;
 			MARK_FUNC_OUT
@@ -68,14 +65,26 @@ namespace fxc {
 			MARK_FUNC_IN
 			resetActionManager();
 			sortOrders();
+			
+
 			if (breakStatus != STATUS_HARD_BREAK) {
 				for (int i = 0; i < 2; i++) {
 					curdil = dillers[i];
-					Strategy(); // Тут в наследнике должна быть вся торговая логика
+					if (breakStatus < STATUS_SOFT_BREAK || curdil->level) 
+					{
+						Strategy(); // Тут в наследнике должна быть вся торговая логика
+					}
 				}
 			}
-			if (is_visual)
+			if (is_visual) {
+				if (mqlTradeAllowed) {
+					setStatus(PROVIDER_TERMINAL, STATUS_OK, "auto-trade allowed", "all ok");
+				}
+				else {
+					setStatus(PROVIDER_TERMINAL, STATUS_DANGER, "auto-trade not allowed", "press auto-trade button");
+				}
 				showInfo();
+			}
 			MARK_FUNC_OUT
 			return getActionsStackSize();
 		}
@@ -131,7 +140,32 @@ namespace fxc {
 		virtual double getOnTester() {
 			return 0;
 		}
-
+		//Закрывает все ордера для указанного диллера
+		inline void closeAll(Diller* dil) {
+			for (int i = 0; i < dil->level; i++) {
+				closeOrder(
+					dil->orders[i]->ticket,
+					dil->orders[i]->lots,
+					dil->mpc
+					);
+			}
+		}
+		//Закрывает все ордера текущего диллера
+		inline void closeAll() {
+			closeAll(curdil);
+		}
+		//Расчитывает лот для разных режимов манименеджмента
+		inline double calcMMLot(int MMType, double MMDD, double minLot = 0.01) {
+			switch (MMType){
+			case MM_NOMM:
+				return normLot(minLot);
+			case MM_BALANCE:
+				return normLot(floor(balance / MMDD) * mm_const);
+			case MM_EQUITY:
+				return normLot(floor(equity / MMDD) * mm_const);
+			}
+			return symbolMinLot;
+		}
 		protected:
 			ErrorStatus statuses[PROVIDERS_COUNT];
 			Diller* curdil;

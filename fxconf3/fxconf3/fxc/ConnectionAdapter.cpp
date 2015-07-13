@@ -63,7 +63,6 @@ namespace fxc {
 				fxc::msg << "-> received: [" << _response << "]\r\n" << fxc::msg_box;
 
 				destroyConnection();
-
 				return true;
 			}
 			const int& getErrNo() {
@@ -97,13 +96,13 @@ namespace fxc {
 				if (-1 == zmq_close(_socket)) {
 					_errtype = CONN_ERRT_CLOSE;
 					_errno = zmq_errno();
-					fxc::msg << "-> close error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
+					//fxc::msg << "-> close error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
 				}
 
 				if (-1 == zmq_ctx_term(_context)) {
 					_errtype = CONN_ERRT_TERM;
 					_errno = zmq_errno();
-					fxc::msg << "-> terminate error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
+					//fxc::msg << "-> terminate error: " << _errno << " - " << zmq_strerror(_errno) << "\r\n" << fxc::msg_box;
 				}
 			}
 

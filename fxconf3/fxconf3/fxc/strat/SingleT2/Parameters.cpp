@@ -29,6 +29,7 @@ namespace fxc {
 			int			inputAveragingLevel;
 			int			inputAverageAll;
 			int			inputCloseMode;
+			int			inputRallyBlockMode;
 			int			inputFreeLvl;
 			int			inputTimeFrame;
 			int			inputPeriod1;
@@ -36,6 +37,9 @@ namespace fxc {
 			int			inputMinDev;
 			int			inputRollBack;
 			int			inputPeriod2;
+			int			inputFastTimeFrame;
+			int			inputFastPeriod;
+			double		inputFastSpeed;
 			int			inputMaxPower;
 			int			inputPowerPeriod;
 			int			inputMagic;
@@ -73,6 +77,7 @@ namespace fxc {
 				registrator->Register("AveragingLevel",  &inputAveragingLevel);
 				registrator->Register("AverageAll",      &inputAverageAll);
 				registrator->Register("CloseMode",       &inputCloseMode);
+				registrator->Register("RallyBlockMode",  &inputRallyBlockMode);
 				registrator->Register("FreeLvl",         &inputFreeLvl);
 				registrator->Register("TimeFrame",       &inputTimeFrame);
 				registrator->Register("Period1",         &inputPeriod1);
@@ -80,6 +85,9 @@ namespace fxc {
 				registrator->Register("MinDev",          &inputMinDev);
 				registrator->Register("RollBack",        &inputRollBack);
 				registrator->Register("Period2",         &inputPeriod2);
+				registrator->Register("FastTimeFrame",	 &inputFastTimeFrame);
+				registrator->Register("FastPeriod",		 &inputFastPeriod);
+				registrator->Register("FastSpeed",		 &inputFastSpeed);
 				registrator->Register("MaxPower",        &inputMaxPower);
 				registrator->Register("PowerPeriod",     &inputPowerPeriod);
 				registrator->Register("Magic",           &inputMagic);
@@ -99,6 +107,7 @@ namespace fxc {
 				deltaRollback	= inputRollBack			* oldPoint;
 				deltaMinDev		= inputMinDev			* oldPoint;
 				deltaMaxPower	= inputMaxPower			* oldPoint;
+				deltaStep		+= deltaRollback;
 			}
 
 	};

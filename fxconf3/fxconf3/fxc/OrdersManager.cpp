@@ -38,7 +38,7 @@ namespace fxc {
 				if (!mqlOptimization) { // ≈сли не оптимизаци€
 					copyOrders = [&]() {
 						old_length = current_length;
-						memcpy(old_orders, current_orders, old_length); // список текущих ордеров, делаем старым
+						memcpy(old_orders, current_orders, old_length * sizeof(Order)); // список текущих ордеров, делаем старым
 					};
 				}
 				else {

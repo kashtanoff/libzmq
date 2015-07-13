@@ -8,6 +8,49 @@
 #include "Order.cpp"
 
 namespace fxc {
+	class CascadRule{
+	public:
+		bool rule_done;
+		//int type;
+		CascadRule* next;
+		std::function<bool()> rule;
+
+
+		CascadRule(std::function<bool()> rule, CascadRule* next = nullptr) :
+			//type(type),
+			rule(rule),
+			next(next)
+		{
+			rule_done = false;
+		}
+		~CascadRule() {
+			if (next != nullptr)
+				delete next;
+		}
+		//virtual bool rule() { return false; }
+		bool check() {
+			if (rule_done) {
+				if (next->check()) {
+					rule_done = false;
+					return true;
+				}
+			}
+			else {
+				if (rule()) {
+					if (next != nullptr) {
+						if (next->check()) {
+							return true;
+						}
+						rule_done = true;
+					}
+					else {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+	};
 
 	class Diller {
 
@@ -23,8 +66,17 @@ namespace fxc {
 			double				total_lots;				//общая лотность диллера в рынке
 			double				open_dd;				//открытая просадка по диллеру
 
-			double		        step_peak  = 0;			//пик трейлинг шага
-			double		        tp_peak    = 0;			//пик трейлинга тейкпрофита
+			int					trail_in_mode;
+			CascadRule*			c_rule;
+			double		        trail_in_peak	= 0;	//пик трейлинг входа
+			double				trail_in_delta	= 0;
+			std::function<bool()>	trail_in_rule;
+			std::function<void()>	trail_in_callback;
+			double		        trail_out_peak	= 0;	//пик трейлинга выхода
+			double				trail_out_delta = 0;
+			std::function<void()>	trail_out_callback;
+			__time64_t	ban_bar;
+
 			Order*              last       = nullptr;	//последний ордер диллера в рынке
 			Order*              first      = nullptr;	//первый ордер диллера в рынке
 			int			        prev_lvl   = 0;			//уровень предыдущей сетки
@@ -47,6 +99,12 @@ namespace fxc {
 					comparer  = [](const Order* a, const Order* b) { return a->openprice > b->openprice; };
 				}
 				open_reason = "";
+				trail_in_mode = 0;
+			}
+			~Diller() {
+				if (c_rule != nullptr) {
+					delete c_rule;
+				}
 			}
 			//Сброс диллеров в начале тика
 			void reset() {
@@ -86,6 +144,56 @@ namespace fxc {
 			inline Order* getOrder(int index) {
 				return orders[index];
 			}
+			inline void trail_in_init(double delta) {
+				trail_in_delta = delta;
+				trail_in_peak = 0;
+			}
+			inline void trail_in_reset(){
+				trail_in_peak = 0;
+			}
+			inline void trail_in_start() {
+				trail_in_peak = mpo;
+			}
+			inline bool trail_in_stop() {
+				if (trail_in_peak == 0)
+					return false;
+				if (type) { //Продажи
+					if (trail_in_peak - mpo >= trail_in_delta) {
+						trail_in_peak = 0;
+						return true;
+					}
+					else {
+						trail_in_peak = fmax(trail_in_peak, mpo);
+						return false;
+					}
+				}
+				else {
+					if (mpo - trail_in_peak >= trail_in_delta) {
+						trail_in_peak = 0;
+						return true;
+					}
+					else {
+						trail_in_peak = fmin(trail_in_peak, mpo);
+						return false;
+					}
+				}
+				return false;
+			}
+			inline double check_peak(double rollback) {
+				if (delta(trail_in_peak, mpo) >= rollback) {
+					trail_in_mode = 0;
+					return true;
+				}
+				else {
+					if (type) {
+						trail_in_peak = fmax(trail_in_peak, mpo);
+					}
+					else {
+						trail_in_peak = fmin(trail_in_peak, mpo);
+					}
+				}
+				return false;
+			}
 
 #pragma region Простые сервисные функции
 
@@ -106,8 +214,11 @@ namespace fxc {
 			inline double orderWeight(double open_price, double close_price, double _lots) {
 				return (open_price - close_price) * _lots * typeSign;
 			}
+			inline double orderWeight(Order* order, double close_price) {
+				return (order->openprice - close_price) * order->lots * typeSign;
+			}
 
-			// Возвращает дельту цены с учетом типа операции
+			// Возвращает дельту цены с учетом типа операции buy(high-low)
 			inline double delta(double low_price, double high_price) {
 				return (low_price - high_price) * typeSign;
 			}

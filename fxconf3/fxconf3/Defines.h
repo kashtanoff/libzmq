@@ -1,9 +1,10 @@
 #pragma once
 
-#define DEBUG          0
+#define DEBUG          1
 #define CHECK_ACCESS   1 // Включена ли сетевая проверка пользователя
 #define LOCAL          0 // Определяет сервер проверки пользователя, как локальный
-#define LIB_VERSION    1.0.10
+#define LIB_VERSION    1.0.13
+#define PARTNER_CODE   0
 
 #define OP_BUY       0
 #define OP_SELL      1
@@ -40,6 +41,12 @@
 #define SHOW_STR_VALUE		0
 #define SHOW_INT_VALUE		1
 #define SHOW_DOUBLE_VALUE	2
+
+#define MM_NOMM			0
+#define MM_BALANCE		1
+#define MM_EQUITY		2
+
+#define STANDART_CONTRACT	100000
 
 #define PERIOD_M1      1     // 1 минута
 #define PERIOD_M5      5     // 5 минут

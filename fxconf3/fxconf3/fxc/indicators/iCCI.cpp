@@ -38,7 +38,7 @@ namespace fxc {
 					int b = newBars;
 				int i;
 				if (b > period && price[b] == 0) {//Первичная инициализация
-					for (int i = b; i > b - period; i--) {
+					for (i = b; i > b - period; i--) {
 						cci[i] = 0;
 						price[i] = (rates->high[i] + rates->low[i] + rates->close[i]) / 3;
 						mov[i] = 0;

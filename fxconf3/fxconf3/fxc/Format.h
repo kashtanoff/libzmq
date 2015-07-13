@@ -11,6 +11,7 @@ namespace utils {
 		public:
 
 			static std::string decimal(double n, unsigned precision);
+			static std::string sformat(const char *fmt, ...);
 
 	};
 

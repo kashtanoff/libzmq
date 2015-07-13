@@ -75,6 +75,7 @@ std::string resolveStatus(int status) {
 		case STATUS_SOFT_BREAK:      return "finalizing trading";
 		case STATUS_HARD_BREAK:      return "trading is not allowed";
 		case STATUS_EMERGENCY_BREAK: return "Emergecy stop!";
+		default: return "Unknown status";
 	}
 }
 
@@ -314,14 +315,17 @@ void checkAccessWorker()
 	account.status       = 500;
 	account.lastSync     = 0;
 	
-
+#if CHECK_ACCESS
 	while (isGlobalWorkersAllowed) {
 		fxc::msg << "-> checkAccessWorker()\r\n" << fxc::msg_box;
 		checkAccess();
 		for (int i = 0; isGlobalWorkersAllowed && i < 600; i++) 	{  //Ёто дл€ того, чтобы в случае выгрузки длл быстро выйти
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 	}
+#else
+	checkAccess();
+#endif
 
 	fxc::msg << "~> checkAccessWorker()\r\n" << fxc::msg_box;
 	isAccessWorkerActive = false;
