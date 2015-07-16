@@ -42,6 +42,18 @@
 	#define STACK_TRACE_FLUSH fxc::debug::StackTrace::flush();
 	#define STACK_TRACE_CLEAR fxc::debug::StackTrace::clear();
 	#define STACK_TRACE       fxc::debug::StackTrace::trace()
+
+	#define DEBUG_TRY try {
+	#define DEBUG_CATCH(MSG) } catch (const std::exception& ex) {\
+		fxc::msg << "!> ERROR @ " << MSG << ": " << ex.what() << "\r\n" << fxc::msg_box;\
+		fxc::msg << STACK_TRACE << fxc::msg_box;\
+	} catch (const std::string& ex) {\
+		fxc::msg << "!> ERROR @ " << MSG << ": " << ex << "\r\n" << fxc::msg_box;\
+		fxc::msg << STACK_TRACE << fxc::msg_box;\
+	} catch (...) {\
+		fxc::msg << "!> ERROR @ " << MSG << ": [undefined type]\r\n" << fxc::msg_box;\
+		fxc::msg << STACK_TRACE << fxc::msg_box; }
+
 #else
 	#define MARK_FUNC_IN
 	#define MARK_FUNC_IN_T(t) 
@@ -51,4 +63,8 @@
 	#define STACK_TRACE_CLEAR
 	#define STACK_TRACE_FLUSH
 	#define STACK_TRACE ""
+
+	#define DEBUG_TRY
+	#define DEBUG_CATCH(MSG)
 #endif
+

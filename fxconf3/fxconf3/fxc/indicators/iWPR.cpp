@@ -40,7 +40,7 @@ namespace fxc {
 					dMinLow = Lowest(i, period, rates->low);
 					if (dMaxHigh - dMinLow <= 0) {
 						msg << "delta wrong: " << dMaxHigh - dMinLow << "\r\n" << msg_box;
-						throw "WPR delta wrong";
+						throw std::logic_error("WPR delta wrong");
 					}
 					wpr[i] = -100 * (dMaxHigh - rates->close[i]) / (dMaxHigh - dMinLow);
 				}

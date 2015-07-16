@@ -701,40 +701,28 @@ _DLLAPI bool __stdcall c_tick_init_begin(double ask, double bid, double equity, 
 
 _DLLAPI void __stdcall c_tick_init_end()
 {
-#if DEBUG
-	try {
-#endif
+	DEBUG_TRY
 		MARK_FUNC_IN
 		strategy->tickInitEnd();
 		MARK_FUNC_OUT
 		return;
-#if DEBUG
-	}
-	catch (const std::exception& ex) {
-		fxc::msg << "!> ERROR @ c_tick_init_end(): " << ex.what() << "\r\n" << fxc::msg_box;
-		fxc::msg << STACK_TRACE << fxc::msg_box;
-	}
-	catch (const std::string& ex) {
-		fxc::msg << "!> ERROR @ c_tick_init_end(): " << ex << "\r\n" << fxc::msg_box;
-		fxc::msg << STACK_TRACE << fxc::msg_box;
-	}
-	catch (...) {
-		fxc::msg << "!> ERROR @ c_tick_init_end(): [undefined type]\r\n" << fxc::msg_box;
-		fxc::msg << STACK_TRACE << fxc::msg_box;
-	}
-#endif
+	DEBUG_CATCH("c_tick_init_end()")
 }
 
 //Добавляет новый ордер в цикле скана ордеров, в будущем возвращает код изменения
 _DLLAPI int __stdcall c_add_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0)
 {
-	return strategy->addOrder(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
+	DEBUG_TRY
+		return strategy->addOrder(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
+	DEBUG_CATCH("c_add_order")
 }
 
 //Нормализация лота для ручных операций
 _DLLAPI double __stdcall c_norm_lot(double _lots)
 {
-	return strategy->normLot(_lots);
+	DEBUG_TRY
+		return strategy->normLot(_lots);
+	DEBUG_CATCH("c_norm_lot")
 }
 
 _DLLAPI double __stdcall c_get_ontester()

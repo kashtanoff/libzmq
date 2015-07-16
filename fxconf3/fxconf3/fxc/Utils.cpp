@@ -29,7 +29,6 @@ namespace utils {
 			
 			~CircularBuffer() {
 				delete []_buffer;
-				//msg << "CircularBuffer: delete buffer\r\n" << msg_box;
 			}
 
 			void alloc(int size) {
@@ -39,8 +38,7 @@ namespace utils {
 					memset(_buffer, 0, sizeof(T) * size);
 				}
 				else {
-					msg << "CircularBuffer second allocation!\r\n" << msg_box;
-					//throw "CircularBuffer second allocation!";
+					//msg << "CircularBuffer second allocation!\r\n" << msg_box;
 					auto b = new T[size];
 					/*
 					if (size > _size - _index) {
@@ -53,6 +51,7 @@ namespace utils {
 
 					delete []_buffer;
 					_buffer = b;
+					memset(_buffer, 0, sizeof(T) * size);
 				}
 				_size  = size;
 				_index = 0;
@@ -63,8 +62,7 @@ namespace utils {
 				_index = _index ? _index-1 : _size-1;
 #if DEBUG
 				if (_index < 0 || _index >= _size) {
-					msg << "CircularBuffer add index wrong: " << _index << "\r\n" << msg_box;
-					throw "CircularBuffer add index wrong";
+					throw std::out_of_range("CircularBuffer add index wrong");
 				}
 #endif
 				_buffer[_index] = value;
@@ -81,8 +79,7 @@ namespace utils {
 					_index - i;
 #if DEBUG
 				if (_index < 0 || _index >= _size) {
-					msg << "CircularBuffer skip index wrong: " << _index << "\r\n" << msg_box;
-					throw "CircularBuffer skip index wrong";
+					throw std::out_of_range("CircularBuffer skip index wrong");
 				}
 #endif
 
@@ -91,13 +88,11 @@ namespace utils {
 			inline T& operator[](const int i) {
 #if DEBUG
 				if (i < 0 || i >= _size) {
-					msg << "CircularBuffer input index wrong: " << i << "\r\n" << msg_box;
-					throw "CircularBuffer input index wrong";
+					throw std::out_of_range("CircularBuffer input index wrong");
 				}
 				int ii = (_index + i) % _size;
 				if (ii < 0 || ii >= _size) {
-					msg << "CircularBuffer output index wrong: " << ii << "\r\n" << msg_box;
-					throw "CircularBuffer output index wrong";
+					throw std::out_of_range("CircularBuffer output index wrong");
 				}
 #endif
 				return _buffer[(_index+i) % _size];
