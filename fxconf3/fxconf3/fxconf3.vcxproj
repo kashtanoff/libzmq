@@ -133,6 +133,7 @@
     <ClCompile Include="fxconf3.cpp" />
     <ClCompile Include="fxc\indicators\AbstractIndicator.cpp" />
     <ClCompile Include="fxc\indicators\DefaultIndicator.cpp" />
+    <ClCompile Include="fxc\indicators\iWPR.cpp" />
     <ClCompile Include="fxc\indicators\MovingAverageIndicator.cpp" />
     <ClCompile Include="fxc\indicators\RAIndicator.cpp" />
     <ClCompile Include="fxc\OrdersManager.cpp" />

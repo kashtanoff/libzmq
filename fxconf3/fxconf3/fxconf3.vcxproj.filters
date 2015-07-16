@@ -168,6 +168,9 @@
     <ClCompile Include="fxc\strat\SingleT3\SingleStrategy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fxc\indicators\iWPR.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mq4\Errors.mq4">

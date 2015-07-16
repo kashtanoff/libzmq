@@ -29,6 +29,7 @@ namespace strategy {
 
 			virtual void initStrategy() {
 				MARK_FUNC_IN
+					fxc::mutex.lock();
 					if (!paramsCheck((CPropertyList*) this)) {
 						setStatus(PROVIDER_STRATEGY, STATUS_EMERGENCY_BREAK, params_err1, params_err2);
 					}
@@ -50,6 +51,7 @@ namespace strategy {
 				if (inputSetName.find(symbolName) == std::string::npos) {
 					setStatus(PROVIDER_STRATEGY, STATUS_HARD_BREAK, "wrong set name", "it has to contain " + symbolName);
 				}
+				fxc::mutex.unlock();
 				MARK_FUNC_OUT
 			}
 
@@ -150,14 +152,9 @@ namespace strategy {
 			inline void moveTP() {
 				MARK_FUNC_IN
 				double tp = (curdil->level == 1) ? deltaFirstTP : deltaTP;
-				MARK_FUNC_IN
 				double last_tpprice = curdil->tp(curdil->last->openprice, tp);
-				MARK_FUNC_IN
 				double min_delta = max(symbolPoint, deltaStopLevel);
-					MARK_FUNC_OUT
-					MARK_FUNC_OUT
 				// Если у последнего ордера еще не установлен тейкпрофит, то ставим его
-				MARK_FUNC_IN
 				if (abs(curdil->last->tpprice - last_tpprice) > min_delta) {
 					modOrder(
 						curdil->last->ticket, 
@@ -166,13 +163,11 @@ namespace strategy {
 						last_tpprice
 					);
 				}
-				MARK_FUNC_OUT
 				// Если в рынке один ордер, то нечего и двигать
 				if (curdil->level < 2) {
 					MARK_FUNC_OUT
 					return;
 				}
-				MARK_FUNC_IN
 				double last_weigth  = curdil->orderWeight(curdil->last->openprice, last_tpprice, curdil->last->lots);
 				double total_weight = curdil->basketWeight(last_tpprice);
 				//msg << "lastweight: " << last_weigth << "\r\n";
@@ -182,8 +177,6 @@ namespace strategy {
 				if (total_weight > 0) {
 					last_weigth *= 10;
 				}
-				MARK_FUNC_OUT
-					MARK_FUNC_IN
 				for (int i = 0; i < curdil->level - 1; i++) {
 					//msg << "order[" << i << "] = " << curdil->orderWeight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots) <<  "\r\n" << msg_box;
 					last_weigth += curdil->orderWeight(curdil->orders[i]->openprice, last_tpprice, curdil->orders[i]->lots);
@@ -197,7 +190,6 @@ namespace strategy {
 							);
 					}
 				}
-				MARK_FUNC_OUT
 				MARK_FUNC_OUT
 			}
 

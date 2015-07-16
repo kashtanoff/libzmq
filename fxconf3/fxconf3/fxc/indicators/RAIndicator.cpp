@@ -44,8 +44,8 @@ namespace ra_indicator {
 
 			virtual void compute(int newBars) {
 				MARK_FUNC_IN
-
-				int b = min(newBars, period2);
+					try {
+				int b = min(newBars, outBufferLength - period1 - 1);
 				if (b == 0 && manager->bid < rates->high[0] && manager->bid > rates->low[0]) {
 					// ≈сли на обновлении бара не обновлены экстремумы, нет смысла перевычисл€ть
 					return;
@@ -69,6 +69,19 @@ namespace ra_indicator {
 					downs[i] = (downs[i + 1] * (period2 - 1) + dnDiff) / period2;
 					up[i]    = middle[i] + sqrt(ups[i])   * deviation;
 					down[i]  = middle[i] - sqrt(downs[i]) * deviation;
+				}
+				}
+				catch (const std::exception& ex) {
+					fxc::msg << "!> ERROR @ RAIndicator compute(): " << ex.what() << "\r\n" << fxc::msg_box;
+					fxc::msg << STACK_TRACE << fxc::msg_box;
+				}
+				catch (const std::string& ex) {
+					fxc::msg << "!> ERROR @ RAIndicator compute(): " << ex << "\r\n" << fxc::msg_box;
+					fxc::msg << STACK_TRACE << fxc::msg_box;
+				}
+				catch (...) {
+					fxc::msg << "!> ERROR @ RAIndicator compute(): [undefined type]\r\n" << fxc::msg_box;
+					fxc::msg << STACK_TRACE << fxc::msg_box;
 				}
 				MARK_FUNC_OUT
 			}

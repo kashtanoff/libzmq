@@ -16,7 +16,7 @@ namespace fxc {
 				int period,
 				int price_type
 			) :
-				AbstractIndicator(manager, timeframe, period + 2),
+				AbstractIndicator(manager, timeframe, period + 3),
 				period(period),
 				price_type(price_type)
 			{
@@ -28,7 +28,8 @@ namespace fxc {
 
 			virtual void compute(int newBars) {
 				MARK_FUNC_IN
-				int b = min(newBars, period);
+					try{
+				int b = min(newBars, outBufferLength - period - 1);
 				for (int i = b; i >= 0; i--) {
 					double sumw = period + 1;
 					double sum  = sumw * price(i);
@@ -38,6 +39,20 @@ namespace fxc {
 					}
 					ma[i] = sum / sumw;
 				}
+				}
+				catch (const std::exception& ex) {
+					fxc::msg << "!> ERROR @ iLWMA compute(): " << ex.what() << "\r\n" << fxc::msg_box;
+					fxc::msg << STACK_TRACE << fxc::msg_box;
+				}
+				catch (const std::string& ex) {
+					fxc::msg << "!> ERROR @ iLWMA compute(): " << ex << "\r\n" << fxc::msg_box;
+					fxc::msg << STACK_TRACE << fxc::msg_box;
+				}
+				catch (...) {
+					fxc::msg << "!> ERROR @ iLWMA compute(): [undefined type]\r\n" << fxc::msg_box;
+					fxc::msg << STACK_TRACE << fxc::msg_box;
+				}
+
 				MARK_FUNC_OUT
 			}
 			

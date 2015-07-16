@@ -82,6 +82,37 @@ namespace fxc {
 					return rates->close[index];
 				};
 			}
+			// MA on array
+			double SimpleMA(const int position, const int period, utils::CircularBuffer<double> price)
+			{
+				double result = 0.0;
+				double end = period + position;
+				if (end > outBufferLength) throw "SimpleMA wrong index";
+				for (int i = position; i < end; i++) {
+					result += price[i];
+				}
+				return result / period;
+			}
+			double Highest(const int position, const int period, utils::CircularBuffer<double> price)
+			{
+				double result = price[position];
+				double end = period + position;
+				if (end > outBufferLength) throw "Highest wrong index";
+				for (int i = position; i < end; i++) {
+					result = (result < price[i])? price[i]: result;
+				}
+				return result;
+			}
+			double Lowest(const int position, const int period, utils::CircularBuffer<double> price)
+			{
+				double result = price[position];
+				double end = period + position;
+				if (end > outBufferLength) throw "Lowest wrong index";
+				for (int i = position; i < end; i++) {
+					result = (result > price[i]) ? price[i] : result;
+				}
+				return result;
+			}
 
 		protected:
 

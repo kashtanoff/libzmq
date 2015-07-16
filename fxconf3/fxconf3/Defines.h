@@ -80,5 +80,5 @@
 //#define STRAT_PATH  fxc/strat/Triplex/TriplexStrategy.cpp
 //#define STRAT_CLASS fxc::strategy::TriplexStrategy
 //Single test
-#define STRAT_PATH  fxc/strat/Single/SingleStrategy.cpp
+#define STRAT_PATH  fxc/strat/SingleT3/SingleStrategy.cpp
 #define STRAT_CLASS fxc::strategy::SingleStrategy

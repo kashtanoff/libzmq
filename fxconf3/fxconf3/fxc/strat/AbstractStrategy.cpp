@@ -25,6 +25,7 @@ namespace fxc {
 	public:
 
 		int breakStatus = STATUS_HARD_BREAK;
+		int oldTradeAllowed;
 		std::string status;        // Основной статус работы советника
 		std::string reason;        // причина запрета торговых операций
 		double onTesterValue = 0;  // Оптимизационный критерий
@@ -77,11 +78,16 @@ namespace fxc {
 				}
 			}
 			if (is_visual) {
-				if (mqlTradeAllowed) {
-					setStatus(PROVIDER_TERMINAL, STATUS_OK, "auto-trade allowed", "all ok");
-				}
-				else {
-					setStatus(PROVIDER_TERMINAL, STATUS_DANGER, "auto-trade not allowed", "press auto-trade button");
+				if (mqlTradeAllowed != oldTradeAllowed) {
+					oldTradeAllowed = mqlTradeAllowed;
+					fxc::mutex.lock();
+					if (mqlTradeAllowed) {
+						setStatus(PROVIDER_TERMINAL, STATUS_OK, "auto-trade allowed", "all ok");
+					}
+					else {
+						setStatus(PROVIDER_TERMINAL, STATUS_DANGER, "auto-trade not allowed", "press auto-trade button");
+					}
+					fxc::mutex.unlock();
 				}
 				showInfo();
 			}
@@ -133,7 +139,7 @@ namespace fxc {
 					breakStatus = statuses[provider].statusType;
 				}
 			}
-			msg << "Status (" << breakStatus << "): " << status << ", " << reason << "\r\n" << msg_box;
+			//msg << "Status (" << breakStatus << "): " << status << ", " << reason << "\r\n" << msg_box;
 			/*if (new_status != breakStatus)
 				onChangeStatus(_provider);*/
 		}

@@ -22,6 +22,9 @@ namespace utils {
 		public:
 
 			CircularBuffer() {
+				_buffer = nullptr;
+				_size = 0;
+				_index = 0;
 			}
 			
 			~CircularBuffer() {
@@ -36,15 +39,17 @@ namespace utils {
 					memset(_buffer, 0, sizeof(T) * size);
 				}
 				else {
+					msg << "CircularBuffer second allocation!\r\n" << msg_box;
+					//throw "CircularBuffer second allocation!";
 					auto b = new T[size];
-					
+					/*
 					if (size > _size - _index) {
 						memcpy(b, _buffer + _index, _size - _index);
 						memcpy(b + _size - _index, _buffer, size - _size + _index);
 					}
 					else {
 						memcpy(b, _buffer + _index, size);
-					}
+					}*/
 
 					delete []_buffer;
 					_buffer = b;
@@ -56,6 +61,12 @@ namespace utils {
 
 			inline void add(T value) {
 				_index = _index ? _index-1 : _size-1;
+#if DEBUG
+				if (_index < 0 || _index >= _size) {
+					msg << "CircularBuffer add index wrong: " << _index << "\r\n" << msg_box;
+					throw "CircularBuffer add index wrong";
+				}
+#endif
 				_buffer[_index] = value;
 			}
 			
@@ -68,9 +79,27 @@ namespace utils {
 				_index = i > _index ? 
 					_index - i + _size : 
 					_index - i;
+#if DEBUG
+				if (_index < 0 || _index >= _size) {
+					msg << "CircularBuffer skip index wrong: " << _index << "\r\n" << msg_box;
+					throw "CircularBuffer skip index wrong";
+				}
+#endif
+
 			}
 			
 			inline T& operator[](const int i) {
+#if DEBUG
+				if (i < 0 || i >= _size) {
+					msg << "CircularBuffer input index wrong: " << i << "\r\n" << msg_box;
+					throw "CircularBuffer input index wrong";
+				}
+				int ii = (_index + i) % _size;
+				if (ii < 0 || ii >= _size) {
+					msg << "CircularBuffer output index wrong: " << ii << "\r\n" << msg_box;
+					throw "CircularBuffer output index wrong";
+				}
+#endif
 				return _buffer[(_index+i) % _size];
 			}
 

@@ -6,6 +6,7 @@
 #include "../../debug/Debug.h"
 #include "../../indicators/RAIndicator.cpp"
 #include "../../indicators/iLWMA.cpp"
+#include "../../indicators/iWPR.cpp"
 #include "Parameters.cpp"
 #include "../AbstractStrategy.cpp"
 
@@ -24,6 +25,12 @@ namespace fxc {
 			ChartData*		  rates;
 			double baseProfit;
 			double profit[2];  //эксп неваляшка
+			double profits[50];
+			ra_indicator::RAIndicator* channel;
+			iLWMA* fastma[3];
+			iLWMA* slowma;
+			iWPR* wpr;
+
 
 			SingleStrategy() :
 				AbstractStrategy(),
@@ -45,6 +52,7 @@ namespace fxc {
 				fastma[1] = new fxc::iLWMA(this, inputFastTimeFrame, inputFastPeriod, PRICE_TYPICAL);
 				//fastma[2] = new fxc::iLWMA(this, inputFastTimeFrame, inputFastPeriod, PRICE_TYPICAL);
 				slowma = new fxc::iLWMA(this, inputTimeFrame, inputPowerPeriod, PRICE_TYPICAL);
+				wpr = new iWPR(this, inputTimeFrame, inputPowerPeriod);
 				
 				for (int op = OP_BUY; op <= OP_SELL; op++) {
 					dillers[op]->base_lot = inputBaseLot[op];
@@ -65,6 +73,7 @@ namespace fxc {
 				delete fastma[1];
 				//delete fastma[2];
 				delete slowma;
+				delete wpr;
 			}
 
 		protected:
@@ -107,41 +116,17 @@ namespace fxc {
 			virtual void showInfo() {
 				MARK_FUNC_IN
 					using namespace fxc::utils;
-
-				AsciiTable table;
-				table
-					.setCell("BuyLevel:").right().setCell(Format::decimal(dillers[0]->level, 0) + "   ").reserv(8).down() // Уровень сетки на покупку
-					.setCell("BuyLots:").right().setCell(Format::decimal(dillers[0]->total_lots, 2)).down()         // Суммарная лотность на покупку
-					.setCell("BuyDD:").right().setCell(Format::decimal(dillers[0]->open_dd, 2)).down()         // Просадка на покупку
-					.setCell("SellLevel:").right().setCell(Format::decimal(dillers[1]->level, 0) + "   ").down() // Уровень сетки на продажу
-					.setCell("SellLots:").right().setCell(Format::decimal(dillers[1]->total_lots, 2)).down()         // Суммарная лотность на продажу
-					.setCell("SellDD:").right().setCell(Format::decimal(dillers[1]->open_dd, 2)).down()         // Просадка на продажу
-					.setCell("SymbolDD:").right().setCell(Format::decimal(dillers[0]->open_dd
-					+ dillers[1]->open_dd, 2)).down()        // Общая просадка
-#if DEBUG
-					.setCell("up:").right().setCell(Format::decimal(channel->up[0], 5)).down()
-					.setCell("down:").right().setCell(Format::decimal(channel->down[0], 5)).down()
-					//.setCell("ma:").right().setCell(Format::decimal(fastma->ma[0], 5)).down()
-					//.setCell("speed:").right().setCell(Format::decimal(abs(fastma->ma[1] - fastma->ma[0]), 5)).down()
-					.setCell("close:").right().setCell(Format::decimal(rates->close[0], 5)).down()
-					.setCell("deltaTP:").right().setCell(Format::decimal(deltaTP, 5)).down()
-					//.setCell("price | channel:").right().setCell(Format::decimal((int)price_channel(), 0) + "   ").down()
-					//.setCell("rollback:").right().setCell(Format::decimal((int)rollback(), 0) + "   ").down()
-					.setCell("buy mode:").right().setCell(Format::decimal((int)dillers[0]->trail_in_mode, 0) + "   ").down()
-					.setCell("sell mode:").right().setCell(Format::decimal((int)dillers[1]->trail_in_mode, 0) + "   ").down()
-#endif
-					//.setCell("PrevProfit:") .right().setCell("0").down()  // Прибыль за прошлый период
-					//.setCell("Profit:")     .right().setCell("0").down()  // Прибыль за текущий период
-					//.setCell("O&C Balance:").right().setCell("0").down(); // Баланс средств у нас
-					;
-				std::stringstream ss(table.setAlign(1, AsciiTable::ALIGN_RIGHT).toString());
-				std::string line;
 				int i = 0;
-
-				while (std::getline(ss, line, '\n')) {
-					showValue(i++, line);
-				}
-
+				showValue(i++, Format::sformat("BuyLevel:  %*d", 9, dillers[0]->level));
+				showValue(i++, Format::sformat("BuyLots:   %*.*f", 12, 2, dillers[0]->total_lots));
+				showValue(i++, Format::sformat("BuyDD:     %*.*f", 12, 2, dillers[0]->open_dd));
+				showValue(i++, Format::sformat("SellLevel: %*d", 9, dillers[1]->level));
+				showValue(i++, Format::sformat("SellLots:  %*.*f", 12, 2, dillers[1]->total_lots));
+				showValue(i++, Format::sformat("SellDD:    %*.*f", 12, 2, dillers[1]->open_dd));
+				showValue(i++, Format::sformat("SymbolDD:  %*.*f", 12, 2, dillers[0]->open_dd + dillers[1]->open_dd));
+#if DEBUG
+				showValue(i++, Format::sformat("iWPR: %*.*f", 12, 5, wpr->wpr[0]));
+#endif
 				showValue(i++, status); // Статус
 				showValue(i++, reason); // Причина
 				MARK_FUNC_OUT
@@ -464,10 +449,6 @@ namespace fxc {
 
 		private:
 
-			double profits[50];
-			fxc::ra_indicator::RAIndicator* channel;
-			fxc::iLWMA* fastma[3];
-			fxc::iLWMA* slowma;
 
 			inline void openNextOrder() {
 				MARK_FUNC_IN
