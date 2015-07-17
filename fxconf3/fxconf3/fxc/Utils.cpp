@@ -32,13 +32,18 @@ namespace utils {
 			}
 
 			void alloc(int size) {
+				if (size == _size) {
+					return;
+				}
 				MARK_FUNC_IN
 				if (_buffer == nullptr) {
 					_buffer = new T[size];
 					memset(_buffer, 0, sizeof(T) * size);
 				}
 				else {
-					//msg << "CircularBuffer second allocation!\r\n" << msg_box;
+#if DEBUG
+					msg << "CircularBuffer second allocation!" << _size << " -> " << size << "\r\n" << msg_box;
+#endif
 					auto b = new T[size];
 					/*
 					if (size > _size - _index) {
@@ -61,6 +66,9 @@ namespace utils {
 			inline void add(T value) {
 				_index = _index ? _index-1 : _size-1;
 #if DEBUG
+				if (_buffer == nullptr) {
+					throw std::runtime_error("CircularBuffer add _buffer not init");
+				}
 				if (_index < 0 || _index >= _size) {
 					throw std::out_of_range("CircularBuffer add index wrong");
 				}
@@ -69,6 +77,11 @@ namespace utils {
 			}
 			
 			inline void update(T value) {
+#if DEBUG
+				if (_buffer == nullptr) {
+					throw std::runtime_error("CircularBuffer update _buffer not init");
+				}
+#endif
 				_buffer[_index] = value;
 			}
 
@@ -78,6 +91,9 @@ namespace utils {
 					_index - i + _size : 
 					_index - i;
 #if DEBUG
+				if (i < 0 || i >= _size) {
+					throw std::out_of_range("CircularBuffer skip input index wrong");
+				}
 				if (_index < 0 || _index >= _size) {
 					throw std::out_of_range("CircularBuffer skip index wrong");
 				}
@@ -87,6 +103,9 @@ namespace utils {
 			
 			inline T& operator[](const int i) {
 #if DEBUG
+				if (_buffer == nullptr) {
+					throw std::runtime_error("CircularBuffer [] _buffer not init");
+				}
 				if (i < 0 || i >= _size) {
 					throw std::out_of_range("CircularBuffer input index wrong");
 				}

@@ -87,7 +87,7 @@ namespace fxc {
 			{
 				double result = 0.0;
 				double end = period + position;
-				if (end > outBufferLength) throw "SimpleMA wrong index";
+				if (end > outBufferLength) throw std::out_of_range("SimpleMA wrong index");
 				for (int i = position; i < end; i++) {
 					result += price[i];
 				}
@@ -97,7 +97,7 @@ namespace fxc {
 			{
 				double result = price[position];
 				double end = period + position;
-				if (end > outBufferLength) throw "Highest wrong index";
+				if (end > outBufferLength) throw std::out_of_range("Highest wrong index");
 				for (int i = position; i < end; i++) {
 					result = (result < price[i])? price[i]: result;
 				}
@@ -107,7 +107,7 @@ namespace fxc {
 			{
 				double result = price[position];
 				double end = period + position;
-				if (end > outBufferLength) throw "Lowest wrong index";
+				if (end > outBufferLength) throw std::out_of_range("Lowest wrong index");
 				for (int i = position; i < end; i++) {
 					result = (result > price[i]) ? price[i] : result;
 				}

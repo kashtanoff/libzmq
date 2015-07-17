@@ -6,6 +6,7 @@
 #include "../../debug/Debug.h"
 #include "../../indicators/RAIndicator.cpp"
 #include "../../indicators/iLWMA.cpp"
+#include "../../indicators/iWPR.cpp"
 #include "Parameters.cpp"
 #include "../AbstractStrategy.cpp"
 
@@ -19,6 +20,7 @@ namespace strategy {
 	{
 		public:
 			bool block[2];
+			iWPR* wpr;
 
 			SingleStrategy() :  
 				AbstractStrategy(),
@@ -43,6 +45,7 @@ namespace strategy {
 				if (inputRallyBlockMode > 2) {
 					fastma = new fxc::iLWMA(this, inputTimeFrame, inputRallyBlockMode, PRICE_TYPICAL);
 				}
+				wpr = new iWPR(this, inputTimeFrame, inputPeriod1);
 				dillers[OP_BUY]->base_lot	= inputBaseLot[OP_BUY];
 				dillers[OP_SELL]->base_lot	= inputBaseLot[OP_SELL];
 				block[OP_BUY] = false;
@@ -58,6 +61,7 @@ namespace strategy {
 			~SingleStrategy() {
 				delete indicator;
 				delete fastma;
+				delete wpr;
 			}
 
 		protected:
@@ -142,6 +146,9 @@ namespace strategy {
 				showValue(i++, Format::sformat("SellLots:  %*.*f", 12, 2, dillers[1]->total_lots));
 				showValue(i++, Format::sformat("SellDD:    %*.*f", 12, 2, dillers[1]->open_dd));
 				showValue(i++, Format::sformat("SymbolDD:  %*.*f", 12, 2, dillers[0]->open_dd + dillers[1]->open_dd));
+#if DEBUG
+				showValue(i++, Format::sformat("iWPR: %*.*f", 12, 5, wpr->wpr[0]));
+#endif
 
 
 				showValue(i++, status); // Статус
