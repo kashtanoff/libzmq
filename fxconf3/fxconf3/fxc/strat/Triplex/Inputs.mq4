@@ -1,6 +1,4 @@
 //OC Triplex
-int eaMagic  = 0x00000300;
-
 extern string    SetName = "";
 
 extern string    ___Buy_Parameters = "=== Buy Parameters ===";

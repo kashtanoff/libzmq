@@ -37,7 +37,6 @@ namespace fxc {
 			int			inputMinDev;
 			int			inputRollBack;
 			int			inputPeriod2;
-			int			inputMagic;
 			std::string	inputCommentText;
 			int			inputSlippage;
 			int			inputAutoMM;
@@ -80,7 +79,6 @@ namespace fxc {
 				registrator->Register("MinDev",          &inputMinDev);				
 				registrator->Register("RollBack",        &inputRollBack);			
 				registrator->Register("Period2",         &inputPeriod2);			
-				registrator->Register("Magic",           &inputMagic);				
 				registrator->Register("Comment",		 &inputCommentText);
 				registrator->Register("AutoMM",          &inputAutoMM);
 				registrator->Register("MMEquity",        &inputMMEquity);			
@@ -114,7 +112,6 @@ namespace fxc {
 				registrator->Check("MinDev", 0, 100);
 				registrator->Check("RollBack", 0, 100);
 				registrator->Check("Period2", 3, 500);
-				//registrator->Check("Magic", 0, 10);
 				registrator->Check("MMEquity", 0, 100000);
 				return registrator->params_good;
 			}

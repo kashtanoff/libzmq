@@ -63,7 +63,6 @@ namespace fxc {
 			bool		is_visual;
 	
 			TerminalInfo() {
-				Register("expertMagic",             &expertMagic);
 				Register("accountCompany",          &accountCompany);
 				Register("accountCurrency",         &accountCurrency);
 				Register("accountFreeMarginMode",   &accountFreeMarginMode);
