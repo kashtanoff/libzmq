@@ -1,5 +1,3 @@
-int eaMagic  = 0x00000100;
-
 extern string    SetName = "";
 
 extern string    ___Buy_Parameters = "=== Buy Parameters ===";
@@ -72,7 +70,6 @@ void InitParams() {
 	c_setint(   "MinDev",             MinDev);
 	c_setint(   "RollBack",           RollBack);
 	c_setint(   "Period2",            Period2);
-	c_setint(   "Magic",              magic);
 	c_setstring("Comment",            CommentText);
 	c_setint(   "AutoMM",             AutoMM);
 	c_setint(   "MMEquity",           MMEquity);

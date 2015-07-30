@@ -474,6 +474,12 @@ _DLLAPI bool __stdcall c_init()
 	return true;
 }
 
+_DLLAPI int  __stdcall c_get_magic(int usermagic) {
+	usermagic = (usermagic) % 255;
+	strategy->expertMagic = MAGIC_OC | MAGIC_EA | usermagic;
+	return strategy->expertMagic;
+}
+
 _DLLAPI void __stdcall c_postInit() {
 #if DEBUG
 	try {

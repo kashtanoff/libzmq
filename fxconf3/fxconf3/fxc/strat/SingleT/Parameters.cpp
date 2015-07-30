@@ -38,7 +38,6 @@ namespace fxc {
 			int			inputPeriod2;
 			int			inputMaxPower;
 			int			inputPowerPeriod;
-			int			inputMagic;
 			std::string	inputCommentText;
 			int			inputSlippage;
 			int			inputAutoMM;
@@ -82,7 +81,6 @@ namespace fxc {
 				registrator->Register("Period2",         &inputPeriod2);
 				registrator->Register("MaxPower",        &inputMaxPower);
 				registrator->Register("PowerPeriod",     &inputPowerPeriod);
-				registrator->Register("Magic",           &inputMagic);
 				registrator->Register("Comment",		 &inputCommentText);
 				registrator->Register("AutoMM",          &inputAutoMM);
 				registrator->Register("MMEquity",        &inputMMEquity);

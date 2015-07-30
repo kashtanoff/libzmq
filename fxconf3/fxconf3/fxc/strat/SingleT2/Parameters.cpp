@@ -42,7 +42,6 @@ namespace fxc {
 			double		inputFastSpeed;
 			int			inputMaxPower;
 			int			inputPowerPeriod;
-			int			inputMagic;
 			std::string	inputCommentText;
 			int			inputSlippage;
 			int			inputAutoMM;
@@ -90,7 +89,6 @@ namespace fxc {
 				registrator->Register("FastSpeed",		 &inputFastSpeed);
 				registrator->Register("MaxPower",        &inputMaxPower);
 				registrator->Register("PowerPeriod",     &inputPowerPeriod);
-				registrator->Register("Magic",           &inputMagic);
 				registrator->Register("Comment",		 &inputCommentText);
 				registrator->Register("AutoMM",          &inputAutoMM);
 				registrator->Register("MMEquity",        &inputMMEquity);

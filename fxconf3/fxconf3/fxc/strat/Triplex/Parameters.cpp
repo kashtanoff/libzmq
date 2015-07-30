@@ -36,7 +36,6 @@ namespace fxc {
 			int			inputFreeLvl;
 			int			inputMinDev;
 			int			inputRollBack;
-			int			inputMagic;
 			std::string	inputCommentText;
 			int			inputSlippage;
 			int			inputAutoMM;
@@ -93,7 +92,6 @@ namespace fxc {
 				registrator->Register("FreeLvl",         &inputFreeLvl);
 				registrator->Register("MinDev",          &inputMinDev);
 				registrator->Register("RollBack",        &inputRollBack);
-				registrator->Register("Magic",           &inputMagic);
 				registrator->Register("Comment",		 &inputCommentText);
 				registrator->Register("AutoMM",          &inputAutoMM);
 				registrator->Register("MMEquity",        &inputMMEquity);

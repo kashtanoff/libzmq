@@ -59,6 +59,7 @@ struct TfRates {
 	bool   c_tick_init_begin(double ask, double bid, double equity, double balance);
 	void   c_tick_init_end();
 	double c_get_ontester();
+	int    c_get_magic(int usermagic);
 #import
 
 string ExtractString(string str) {
@@ -78,8 +79,7 @@ enum test_mode {
 
 #include "Inputs.mq4"
 
-int ocMagic  = 0x7ED80000;
-int magic    = ocMagic | eaMagic | Magic;
+int magic = 0;
 
 
 #include "Errors.mq4"
@@ -363,7 +363,8 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 bool DllInit()
 {
 	c_init();
-	c_setint(   "expertMagic",             magic);
+	magic = c_get_magic(Magic);
+
 	c_setstring("accountCompany",          AccountCompany());
 	c_setstring("accountCurrency",         AccountCurrency());
 	c_setint(   "accountFreeMarginMode",   AccountFreeMarginMode());
