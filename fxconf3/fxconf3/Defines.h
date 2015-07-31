@@ -4,9 +4,9 @@
 #define CHECK_ACCESS   1 // Включена ли сетевая проверка пользователя
 #define LOCAL          0 // Определяет сервер проверки пользователя, как локальный
 #define LIB_VERSION    1.0.15
-#define PARTNER_CODE   0
+#define PARTNER_ID     0
 
-#define MAGIC_OC 0x7ED80000
+#define MAGIC_OC     0x7ED80000
 
 #define OP_BUY       0
 #define OP_SELL      1
