@@ -88,9 +88,9 @@ const std::string getRequestJson(STRAT_CLASS* expert) {
 		<< "\"magic\":"     << expert->expertMagic << ","
 		<< "\"version\":\"" << EXPERT_VERSION      << "\",";
 
-#if PARTNER_ID
+//#if PARTNER_ID != ""
 	ss << "\"partner\":" << PARTNER_ID << ",";
-#endif
+//#endif
 
 	if (!tester) {
 		account.lastUpdate = 0;

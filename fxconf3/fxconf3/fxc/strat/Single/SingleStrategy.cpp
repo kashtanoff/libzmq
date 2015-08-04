@@ -312,22 +312,22 @@ namespace strategy {
 
 			inline void autoClose() {
 				MARK_FUNC_IN
-					bool flag = false;
+				bool flag = false;
 				switch (inputCloseMode) {
 				case 0: break; //Не закрывать оппозитно
 				case 1: if (curdil->opposite->level == 1 && curdil->opposite->basketCost() > 0) {//Закрывать если один ордер
-					flag = true;
-				}
+							flag = true;
+						}
 						break;
 				case 2: if (curdil->opposite->basketCost() > 0) {//Закрывать если сетка в плюс
-					flag = true;
-				}
+							flag = true;
+						}
 						break;
 				case 3: flag = true; //Закрывать сетку даже в убыток
-				}
-				if (flag) {
-					closeAll(curdil->opposite);
-				}
+						}
+						if (flag) {
+							closeAll(curdil->opposite);
+						}
 				MARK_FUNC_OUT
 			}
 
