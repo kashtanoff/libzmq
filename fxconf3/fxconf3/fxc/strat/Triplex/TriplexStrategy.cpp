@@ -31,6 +31,12 @@ namespace strategy {
 				
 			}
 
+			~TriplexStrategy() {
+				delete indicator[0];
+				delete indicator[1];
+				delete indicator[2];
+			}
+
 			virtual void initStrategy() {
 				MARK_FUNC_IN
 
@@ -50,11 +56,12 @@ namespace strategy {
 				MARK_FUNC_OUT
 			}
 
-			~TriplexStrategy() {
-				delete indicator[0];
-				delete indicator[1];
-				delete indicator[2];
+			virtual void filterOrders() {
+				if (!inputAverageAll) {
+					AbstractStrategy::filterOrders();
+				}
 			}
+
 			virtual double getOnTester() {
 				if (inputTestMode) {
 					return (double)lvlGrid / (double)totalGrid * 100;

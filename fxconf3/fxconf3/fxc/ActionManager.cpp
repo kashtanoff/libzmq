@@ -19,6 +19,7 @@ namespace fxc {
 		int       ticket;    // 4 bytes
 		int       type;      // 4 bytes
 		int       intret;    // 4 bytes
+		int       magic;     // 4 bytes
 		int       actionId;  // 4 bytes
 		MqlString comment;   // 12 bytes
 	};
@@ -87,14 +88,14 @@ namespace fxc {
 				return actionsLen;
 			}
 
-			inline void createOrder(int type, double lots, double openprice, double slprice, double tpprice, std::string comment = "") {
+			inline void createOrder(int type, double lots, double openPrice, double slPrice, double tpPrice, std::string comment = "", unsigned char cfgMagic = 0) {
 				MARK_FUNC_IN
 				if (actionsLen + 1 >= ext_tradeActions.size()) {
 					fxc::msg << " -> CreateOrder(): actions limit exceeded\r\n" << fxc::msg_box;
 					MARK_FUNC_OUT
 					return;
 				}
-				if (check_new(type, lots, openprice, slprice, tpprice) != 0) {
+				if (check_new(type, lots, openPrice, slPrice, tpPrice) != 0) {
 					MARK_FUNC_OUT
 					return;
 				}
@@ -106,10 +107,12 @@ namespace fxc {
 #endif
 				action->type      = type;
 				action->lots      = lots;
-				action->openprice = openprice;
-				action->slprice   = slprice;
-				action->tpprice   = tpprice;
+				action->openprice = openPrice;
+				action->slprice   = slPrice;
+				action->tpprice   = tpPrice;
+				action->magic     = expertMagic | (cfgMagic << 8);
 				action->actionId  = JOB_CREATE;
+
 				Mql::write2str(&action->comment, comment);
 				MARK_FUNC_OUT
 			}

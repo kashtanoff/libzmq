@@ -31,6 +31,10 @@ namespace strategy {
 				
 			}
 
+			~SingleStrategy() {
+				delete indicator;
+			}
+
 			virtual void initStrategy() {
 				MARK_FUNC_IN
 
@@ -54,8 +58,10 @@ namespace strategy {
 				MARK_FUNC_OUT
 			}
 
-			~SingleStrategy() {
-				delete indicator;
+			virtual void filterOrders() {
+				if (!inputAverageAll) {
+					AbstractStrategy::filterOrders();
+				}
 			}
 
 		protected:

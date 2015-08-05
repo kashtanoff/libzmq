@@ -84,9 +84,10 @@ const std::string getRequestJson(STRAT_CLASS* expert) {
 	std::stringstream ss;
 
 	ss << "{"
-		<< "\"tester\":"    << tester              << ","
-		<< "\"magic\":"     << expert->expertMagic << ","
-		<< "\"version\":\"" << EXPERT_VERSION      << "\",";
+		<< "\"tester\":"    <<  tester                     << ","
+		<< "\"magic\":"     <<  expert->expertMagic        << ","
+		<< "\"expert\":"    << (expert->expertMagic >> 16) << ","
+		<< "\"version\":\"" <<  EXPERT_VERSION             << "\",";
 
 #if PARTNER_ID
 	ss << "\"partner\":" << PARTNER_ID << ",";
@@ -478,10 +479,9 @@ _DLLAPI bool __stdcall c_init()
 	return true;
 }
 
-_DLLAPI int  __stdcall c_get_magic(int usermagic) {
-	usermagic = (usermagic) % 255;
+_DLLAPI void __stdcall c_set_usermagic(int usermagic) {
+	usermagic = usermagic % 0xff;
 	strategy->expertMagic = MAGIC_OC | MAGIC_EA | usermagic;
-	return strategy->expertMagic;
 }
 
 _DLLAPI void __stdcall c_postInit() {
@@ -720,10 +720,10 @@ _DLLAPI void __stdcall c_tick_init_end()
 }
 
 //Добавляет новый ордер в цикле скана ордеров, в будущем возвращает код изменения
-_DLLAPI int __stdcall c_add_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0)
+_DLLAPI int __stdcall c_add_order(int _ticket, int _magic, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0)
 {
 	DEBUG_TRY
-		return strategy->addOrder(_ticket, _type, _lots, _openprice, _tp, _sl, _profit);
+	return strategy->addOrder(_ticket, _magic, _type, _lots, _openprice, _tp, _sl, _profit);
 	DEBUG_CATCH("c_add_order")
 }
 

@@ -38,6 +38,15 @@ namespace fxc {
 			{
 			}
 
+			~SingleStrategy() {
+				delete channel;
+				delete fastma[0];
+				delete fastma[1];
+				//delete fastma[2];
+				delete slowma;
+				delete wpr;
+			}
+
 			virtual void initStrategy() {
 				MARK_FUNC_IN
 					paramsDeltaCalc(k_point * symbolPoint);
@@ -67,13 +76,10 @@ namespace fxc {
 				MARK_FUNC_OUT
 			}
 
-			~SingleStrategy() {
-				delete channel;
-				delete fastma[0];
-				delete fastma[1];
-				//delete fastma[2];
-				delete slowma;
-				delete wpr;
+			virtual void filterOrders() {
+				if (!inputAverageAll) {
+					AbstractStrategy::filterOrders();
+				}
 			}
 
 		protected:

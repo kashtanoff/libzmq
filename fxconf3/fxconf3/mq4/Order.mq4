@@ -19,7 +19,7 @@ public:
 			Slippage,
 			action.o_slprice, action.o_tpprice,
 			StringConcatenate(action.comment),
-			magic, 0, colors[action.o_type]
+			action.magic, 0, colors[action.o_type]
 		);
 
 		if (ticket < 0) {

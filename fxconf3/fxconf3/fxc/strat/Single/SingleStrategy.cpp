@@ -29,6 +29,12 @@ namespace strategy {
 				
 			}
 
+			~SingleStrategy() {
+				delete indicator;
+				delete fastma;
+				delete wpr;
+			}
+
 			virtual void initStrategy() {
 				MARK_FUNC_IN
 					fxc::mutex.lock();
@@ -58,10 +64,10 @@ namespace strategy {
 				MARK_FUNC_OUT
 			}
 
-			~SingleStrategy() {
-				delete indicator;
-				delete fastma;
-				delete wpr;
+			virtual void filterOrders() {
+				if (!inputAverageAll) {
+					AbstractStrategy::filterOrders();
+				}
 			}
 
 		protected:
@@ -312,7 +318,7 @@ namespace strategy {
 
 			inline void autoClose() {
 				MARK_FUNC_IN
-					bool flag = false;
+				bool flag = false;
 				switch (inputCloseMode) {
 				case 0: break; //Не закрывать оппозитно
 				case 1: if (curdil->opposite->level == 1 && curdil->opposite->basketCost() > 0) {//Закрывать если один ордер

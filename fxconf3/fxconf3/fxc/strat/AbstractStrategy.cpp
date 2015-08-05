@@ -40,6 +40,27 @@ namespace fxc {
 		virtual void onChangeStatus(int _provider) {}
 		//virtual bool checkErrors() { return false; }
 
+		virtual void filterOrders() {
+			auto ptr    = getOrdersPtr();
+			auto length = getOrdersLength();
+			int  offset = 0;
+
+			for (int i = 0; i < length; i++) {
+				auto order = ptr + i;
+
+				if ((order->magic & MAGIC_MASK) != (expertMagic & MAGIC_MASK)) {
+					offset++;
+				}
+				else if (offset > 0) {
+					*(order - offset) = *order;
+				}
+			}
+
+			if (offset > 0) {
+				length -= offset;
+			}
+		}
+
 		void init() {
 			MARK_FUNC_IN
 			for (int provider = 0; provider < PROVIDERS_COUNT; provider++) {
@@ -65,6 +86,7 @@ namespace fxc {
 		int getJob() {
 			MARK_FUNC_IN
 			resetActionManager();
+			filterOrders();
 			sortOrders();
 			
 
@@ -113,12 +135,12 @@ namespace fxc {
 			timeSeriesReset();
 
 			MARK_FUNC_OUT
-				return false;
+			return false;
 		}
 
 		void tickInitEnd() {
 			MARK_FUNC_IN
-				updateFirst(ask, bid);
+			updateFirst(ask, bid);
 			//msg << "newBars: " << (int)getChartData(3)->newBars << "\r\n" << msg_box;
 			invokeListeners();
 			resetOrderManager();

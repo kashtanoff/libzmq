@@ -18,6 +18,7 @@ struct TradeAction {
 	int    o_ticket;    // 4 bytes
 	int    o_type;      // 4 bytes
 	int    intret;      // 4 bytes
+	int    magic;       // 4 bytes
 	int    actionId;    // 4 bytes
 	string comment;     // 12 bytes
 };
@@ -48,7 +49,7 @@ struct TfRates {
 	int    c_updateOrder(int ticket, datetime opentime, datetime closetime, double profit);
 	void   c_onOrderOpen(int ticket, datetime opentime);
 
-	int    c_add_order(int _ticket, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0);
+	int    c_add_order(int _ticket, int magic, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0);
 	double c_norm_lot(double _lots);
 	int    c_getjob();
 	int    c_getdpi();
@@ -59,7 +60,7 @@ struct TfRates {
 	bool   c_tick_init_begin(double ask, double bid, double equity, double balance);
 	void   c_tick_init_end();
 	double c_get_ontester();
-	int    c_get_magic(int usermagic);
+	void   c_set_usermagic(int usermagic);
 #import
 
 string ExtractString(string str) {
@@ -78,10 +79,6 @@ enum test_mode {
 };
 
 #include "Inputs.mq4"
-
-int magic = 0;
-
-
 #include "Errors.mq4"
 #include "Order.mq4"
 #include "Graph.mq4"
@@ -363,7 +360,7 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 bool DllInit()
 {
 	c_init();
-	magic = c_get_magic(Magic);
+	c_set_usermagic(Magic);
 
 	c_setstring("accountCompany",          AccountCompany());
 	c_setstring("accountCurrency",         AccountCurrency());
@@ -430,9 +427,6 @@ bool DllInit()
 			tfRates[i].timeframe, "(", tfRates[i].length, ")");
 	}
 
-
-
-
 	Print("============ init dll done =============");
 	return (true);
 }
@@ -453,23 +447,19 @@ void InitLook()
 
 void UpdateOrders() {
 	int orders_total = OrdersTotal();
-	int _type;
 	for (int pos = 0; pos < orders_total; pos++) {
 		if (!OrderSelect(pos, SELECT_BY_POS))
 			continue; // Обрабатываем только успешные выборки
 
 		if (
 			!mqlOptimization &&
-			(
-				(!AverageAll && OrderMagicNumber() != magic) || // В зависимости от настройки обрабатываем либо все, либо только наши
-				(OrderSymbol() != symbolName)                   // Обрабатываем ордера только для текущего символа
-			)
+			OrderSymbol() != symbolName // Обрабатываем ордера только для текущего символа
 		) continue;
 
-		_type = OrderType();
 		c_add_order(
-			OrderTicket(), 
-			_type, 
+			OrderTicket(),
+			OrderMagicNumber(), 
+			OrderType(),
 			OrderLots(), 
 			OrderOpenPrice(), 
 			OrderTakeProfit(), 
