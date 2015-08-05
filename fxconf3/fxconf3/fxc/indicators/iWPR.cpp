@@ -29,20 +29,20 @@ namespace fxc {
 
 		virtual void compute(int newBars) {
 			DEBUG_TRY
-				MARK_FUNC_IN
-				int b = min(newBars, outBufferLength-period -1);
-				double dMaxHigh;
-				double dMinLow;
-				double d;
-				for (int i = b; i >= 0; i--) {
-					dMaxHigh = Highest(i, period, rates->high);
-					dMinLow = Lowest(i, period, rates->low);
-					if (dMaxHigh - dMinLow <= 0) {
-						throw std::logic_error("WPR delta wrong");
-					}
-					wpr[i] = -100 * (dMaxHigh - rates->close[i]) / (dMaxHigh - dMinLow);
+			MARK_FUNC_IN
+			int b = min(newBars, outBufferLength-period -1);
+			double dMaxHigh;
+			double dMinLow;
+			double d;
+			for (int i = b; i >= 0; i--) {
+				dMaxHigh = Highest(i, period, rates->high);
+				dMinLow = Lowest(i, period, rates->low);
+				if (dMaxHigh - dMinLow <= 0) {
+					throw std::logic_error("WPR delta wrong");
 				}
-				MARK_FUNC_OUT
+				wpr[i] = -100 * (dMaxHigh - rates->close[i]) / (dMaxHigh - dMinLow);
+			}
+			MARK_FUNC_OUT
 			DEBUG_CATCH("iWPR compute")
 		}
 		

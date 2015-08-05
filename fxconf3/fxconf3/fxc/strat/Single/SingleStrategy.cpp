@@ -20,7 +20,7 @@ namespace strategy {
 	{
 		public:
 			bool block[2];
-			iWPR* wpr;
+			//iWPR* wpr;
 
 			SingleStrategy() :  
 				AbstractStrategy(),
@@ -32,15 +32,15 @@ namespace strategy {
 			~SingleStrategy() {
 				delete indicator;
 				delete fastma;
-				delete wpr;
+				//delete wpr;
 			}
 
 			virtual void initStrategy() {
 				MARK_FUNC_IN
-					fxc::mutex.lock();
-					if (!paramsCheck((CPropertyList*) this)) {
-						setStatus(PROVIDER_STRATEGY, STATUS_EMERGENCY_BREAK, params_err1, params_err2);
-					}
+				fxc::mutex.lock();
+				if (!paramsCheck((CPropertyList*) this)) {
+					setStatus(PROVIDER_STRATEGY, STATUS_EMERGENCY_BREAK, params_err1, params_err2);
+				}
 				paramsDeltaCalc(k_point * symbolPoint);
 				for (int i = 0, l = sizeof(profits) / sizeof(*profits); i < l; i++) {
 					profits[i] = deltaTP * pow(inputPipsMultiplier, i);
@@ -51,7 +51,7 @@ namespace strategy {
 				if (inputRallyBlockMode > 2) {
 					fastma = new fxc::iLWMA(this, inputTimeFrame, inputRallyBlockMode, PRICE_TYPICAL);
 				}
-				wpr = new iWPR(this, inputTimeFrame, inputPeriod1);
+				//wpr = new iWPR(this, inputTimeFrame, inputPeriod1);
 				dillers[OP_BUY]->base_lot	= inputBaseLot[OP_BUY];
 				dillers[OP_SELL]->base_lot	= inputBaseLot[OP_SELL];
 				block[OP_BUY] = false;
@@ -153,7 +153,7 @@ namespace strategy {
 				showValue(i++, Format::sformat("SellDD:    %*.*f", 12, 2, dillers[1]->open_dd));
 				showValue(i++, Format::sformat("SymbolDD:  %*.*f", 12, 2, dillers[0]->open_dd + dillers[1]->open_dd));
 #if DEBUG
-				showValue(i++, Format::sformat("iWPR: %*.*f", 12, 5, wpr->wpr[0]));
+				//showValue(i++, Format::sformat("iWPR: %*.*f", 12, 5, wpr->wpr[0]));
 #endif
 
 

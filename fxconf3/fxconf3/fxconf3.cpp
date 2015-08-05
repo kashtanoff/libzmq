@@ -625,7 +625,7 @@ _DLLAPI int __stdcall c_getjob()
 	try {
 #endif
 		MARK_FUNC_IN
-			res = strategy->getJob();
+		res = strategy->getJob();
 		MARK_FUNC_OUT
 #if DEBUG
 	}
@@ -706,33 +706,37 @@ _DLLAPI int __stdcall c_get_timeframes(void* timeframesPtr, void* sizesPtr)
 _DLLAPI bool __stdcall c_tick_init_begin(double ask, double bid, double equity, double balance)
 {
 	STACK_TRACE_CLEAR
-	return strategy->tickInitBegin(ask, bid, equity, balance);
+	auto res = strategy->tickInitBegin(ask, bid, equity, balance);
+	return res;
 }
 
 _DLLAPI void __stdcall c_tick_init_end()
 {
 	DEBUG_TRY
-		MARK_FUNC_IN
-		strategy->tickInitEnd();
-		MARK_FUNC_OUT
-		return;
+	MARK_FUNC_IN
+	strategy->tickInitEnd();
+	MARK_FUNC_OUT
 	DEBUG_CATCH("c_tick_init_end()")
 }
 
 //Добавляет новый ордер в цикле скана ордеров, в будущем возвращает код изменения
 _DLLAPI int __stdcall c_add_order(int _ticket, int _magic, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0)
 {
+	int result;
 	DEBUG_TRY
-	return strategy->addOrder(_ticket, _magic, _type, _lots, _openprice, _tp, _sl, _profit);
-	DEBUG_CATCH("c_add_order")
+	result = strategy->addOrder(_ticket, _magic, _type, _lots, _openprice, _tp, _sl, _profit);
+	DEBUG_CATCH("c_add_order()")
+	return result;
 }
 
 //Нормализация лота для ручных операций
 _DLLAPI double __stdcall c_norm_lot(double _lots)
 {
+	double result;
 	DEBUG_TRY
-		return strategy->normLot(_lots);
-	DEBUG_CATCH("c_norm_lot")
+	result = strategy->normLot(_lots);
+	DEBUG_CATCH("c_norm_lot()")
+	return result;
 }
 
 _DLLAPI double __stdcall c_get_ontester()

@@ -3,7 +3,7 @@
 #include "../strat/AbstractStrategy.cpp" 
 
 namespace fxc {
-
+	
 	class AbstractIndicator :
 		ChartListener 
 	{
@@ -27,7 +27,7 @@ namespace fxc {
 			// Автоматически вызываемый метод, вызывается каждый тик перед запуском стратегии
 			virtual inline void listenChart() {
 				MARK_FUNC_IN
-					unsigned newBars = (rates->newBars > outBufferLength) ? outBufferLength : rates->newBars;
+				unsigned newBars = (rates->newBars > outBufferLength) ? outBufferLength : rates->newBars;
 				//if (rates->newBars > outBufferLength) {
 				//	msg << "listenChart to mach bars!!!\r\n" << msg_box;
 				//}

@@ -28,17 +28,18 @@ namespace fxc {
 
 			virtual void compute(int newBars) {
 				MARK_FUNC_IN
-					try{
-				int b = min(newBars, outBufferLength - period - 1);
-				for (int i = b; i >= 0; i--) {
-					double sumw = period + 1;
-					double sum  = sumw * price(i);
-					for (int j = 1, k = period; j <= period; j++, k--) {
-						sum  += k * price(i + j);
-						sumw += k;
+
+				try {
+					int b = min(newBars, outBufferLength - period - 1);
+					for (int i = b; i >= 0; i--) {
+						double sumw = period + 1;
+						double sum  = sumw * price(i);
+						for (int j = 1, k = period; j <= period; j++, k--) {
+							sum  += k * price(i + j);
+							sumw += k;
+						}
+						ma[i] = sum / sumw;
 					}
-					ma[i] = sum / sumw;
-				}
 				}
 				catch (const std::exception& ex) {
 					fxc::msg << "!> ERROR @ iLWMA compute(): " << ex.what() << "\r\n" << fxc::msg_box;
