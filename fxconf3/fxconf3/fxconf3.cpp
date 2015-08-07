@@ -149,6 +149,30 @@ bool isAccessWorkerActive   = false;
 int         work_status = STATUS_HARD_BREAK;
 std::string reason      = "not initialized";
 
+std::string* serverKey =
+#if SERVER_KEY
+	new std::string(SERVER_KEY)
+#else
+	nullptr
+#endif
+;
+
+std::string* getServerKey() {
+	if (serverKey == nullptr) {
+		fxc::ConnectionAdapter connection(
+#if LOCAL
+			"tcp://localhost:13857"
+#else
+			"tcp://term.olsencleverton.com:13857"
+#endif
+		);
+
+		if (connection.send(std::string("get-server-key"))) {
+			serverKey = new std::string(connection.getResponse().c_str());
+		}
+	}
+	return serverKey;
+}
 void checkAccess() {
 #if CHECK_ACCESS
 	#if DEBUG
@@ -181,100 +205,108 @@ void checkAccess() {
 			auto request = getRequestJson(expert);
 			fxc::mutex.unlock();
 
-			fxc::ConnectionAdapter connection(
+			auto skey = getServerKey();
+			if (skey == nullptr) {
+				work_status = STATUS_SOFT_BREAK;
+				reason      = "invalid server key";
+			}
+			else {
+				fxc::ConnectionAdapter connection(
 #if LOCAL
-				"tcp://localhost:13857"
+					"tcp://localhost:13813"
 #else
-				"tcp://term.olsencleverton.com:13857"
+					"tcp://term.olsencleverton.com:13813"
 #endif
-			);
-			if (connection.send(request)) {
-				rapidjson::Document doc;
+				, *skey);
 
-				if (!doc.Parse(connection.getResponse().c_str()).HasParseError()) {
-				#pragma region Valid renponse
+				if (connection.send(request)) {
+					rapidjson::Document doc;
 
-					account.lastSync = time(0);
-					account.status   = doc["statusCode"].GetInt();
-					reason           = doc["status"].GetString();
+					if (!doc.Parse(connection.getResponse().c_str()).HasParseError()) {
+					#pragma region Valid renponse
+
+						account.lastSync = time(0);
+						account.status   = doc["statusCode"].GetInt();
+						reason           = doc["status"].GetString();
 					
-					switch (account.status) {
-						case 0:
-							work_status = STATUS_OK;
-							break;
-						case 1:
-						case 2:
-						case 3:
-							work_status = STATUS_SOFT_BREAK;
-							break;
-						default:
-							work_status = STATUS_HARD_BREAK;
-							break;
-					}
+						switch (account.status) {
+							case 0:
+								work_status = STATUS_OK;
+								break;
+							case 1:
+							case 2:
+							case 3:
+								work_status = STATUS_SOFT_BREAK;
+								break;
+							default:
+								work_status = STATUS_HARD_BREAK;
+								break;
+						}
 
-					fxc::mutex.lock();
-					serverOrders.clear();
+						fxc::mutex.lock();
+						serverOrders.clear();
 
-					auto orders = doc.FindMember("orders");
-					if (orders != doc.MemberEnd()) {
-						for (auto itr = orders->value.Begin(); itr != orders->value.End(); ++itr) {
-							serverOrders.push_back(AccountOrder{ itr->GetInt(), 0, 0, 0 });
+						auto orders = doc.FindMember("orders");
+						if (orders != doc.MemberEnd()) {
+							for (auto itr = orders->value.Begin(); itr != orders->value.End(); ++itr) {
+								serverOrders.push_back(AccountOrder{ itr->GetInt(), 0, 0, 0 });
 
-							for (auto openItr = openedOrders.begin(); openItr != openedOrders.end(); ++openItr) {
-								if (openItr->ticket == itr->GetInt()) {
-									openedOrders.erase(openItr);
-									break;
+								for (auto openItr = openedOrders.begin(); openItr != openedOrders.end(); ++openItr) {
+									if (openItr->ticket == itr->GetInt()) {
+										openedOrders.erase(openItr);
+										break;
+									}
 								}
 							}
 						}
-					}
-					fxc::mutex.unlock();
+						fxc::mutex.unlock();
 
-					rapidjson::Value::MemberIterator message = doc.FindMember("message");
-					if (message != doc.MemberEnd()) {
-						std::wstring_convert< std::codecvt_utf8_utf16<wchar_t> > converter;
+						rapidjson::Value::MemberIterator message = doc.FindMember("message");
+						if (message != doc.MemberEnd()) {
+							std::wstring_convert< std::codecvt_utf8_utf16<wchar_t> > converter;
 
-						auto text = message->value["text"].GetString();
-						auto url  = message->value.FindMember("url");
+							auto text = message->value["text"].GetString();
+							auto url  = message->value.FindMember("url");
 
-						if (IDOK == MessageBox(0, 
-							converter.from_bytes(text).c_str(), 
-							converter.from_bytes(EXPERT_NAME).c_str(), 
-							url != message->value.MemberEnd() ? MB_OKCANCEL : MB_OK
-						) && url != message->value.MemberEnd()) {
-							ShellExecute(NULL, L"open", converter.from_bytes(url->value.GetString()).c_str(), NULL, NULL, SW_SHOWNORMAL);
+							if (IDOK == MessageBox(0, 
+								converter.from_bytes(text).c_str(), 
+								converter.from_bytes(EXPERT_NAME).c_str(), 
+								url != message->value.MemberEnd() ? MB_OKCANCEL : MB_OK
+							) && url != message->value.MemberEnd()) {
+								ShellExecute(NULL, L"open", converter.from_bytes(url->value.GetString()).c_str(), NULL, NULL, SW_SHOWNORMAL);
+							}
+
+							(void) url;
 						}
+						(void) message;
 
-						(void) url;
+					#pragma endregion
 					}
-					(void) message;
-
-				#pragma endregion
+					else {
+						work_status = STATUS_SOFT_BREAK;
+						reason      = "invalid response";
+						fxc::msg << "!> can't parse response: [" << connection.getResponse() << "]\r\n" << fxc::msg_box;
+					}
 				}
 				else {
-					work_status = STATUS_SOFT_BREAK;
-					reason      = "invalid response";
-					fxc::msg << "!> can't parse response\r\n" << fxc::msg_box;
-				}
-			}
-			else {
-				switch (connection.getErrType()) {
-					case CONN_ERRT_SOCK:
-						work_status = STATUS_SOFT_BREAK;
-						reason      = "invalid socket";
-						break;
-					case CONN_ERRT_SEND:
-						work_status = STATUS_SOFT_BREAK;
-						reason      = "server is not accessible";
-						break;
-					case CONN_ERRT_RECV:
-						work_status = STATUS_SOFT_BREAK;
-						reason      = "server is not accessible";
-						break;
-					default:
-						work_status = STATUS_SOFT_BREAK;
-						reason      = "network error";
-						break;
+					switch (connection.getErrType()) {
+						case CONN_ERRT_SOCK:
+							work_status = STATUS_SOFT_BREAK;
+							reason      = "invalid socket";
+							break;
+						case CONN_ERRT_SEND:
+							work_status = STATUS_SOFT_BREAK;
+							reason      = "server is not accessible";
+							break;
+						case CONN_ERRT_RECV:
+							work_status = STATUS_SOFT_BREAK;
+							reason      = "server is not accessible";
+							break;
+						default:
+							work_status = STATUS_SOFT_BREAK;
+							reason      = "network error";
+							break;
+					}
 				}
 			}
 

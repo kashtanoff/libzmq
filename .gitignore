@@ -1,3 +1,4 @@
+*.ipch
 *.opensdf
 *.sdf
 *.suo
@@ -10,5 +11,6 @@
 /fxconf3/fxconf3/mq4/Expert.compile.mq4
 /fxconf3/fxcbuild/bin/
 /fxconf3/fxcbuild/obj/
+/fxconf3/Build
 /fxconf3/Release
 /fxconf3/StaticRelease/libzmq.lib

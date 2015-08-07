@@ -1,6 +1,7 @@
 #pragma once
 
 #include "zmq.h"
+#include "zmq_utils.h"
 #include "fxc.h"
 
 #define CONN_ERRT_SOCK  1
@@ -16,15 +17,24 @@ namespace fxc {
 		public:
 
 			ConnectionAdapter(const char* addr) {
-				_context = zmq_ctx_new();
-				_socket  = zmq_socket(_context, ZMQ_REQ);
+				init();
 				_connerr = zmq_connect(_socket, addr);
-
-				zmq_setsockopt(_socket, ZMQ_LINGER,        &linger,     sizeof(linger));
-				zmq_setsockopt(_socket, ZMQ_SNDTIMEO,      &sndTimeout, sizeof(sndTimeout));
-				zmq_setsockopt(_socket, ZMQ_RCVTIMEO,      &rcvTimeout, sizeof(rcvTimeout));
-				zmq_setsockopt(_socket, ZMQ_REQ_CORRELATE, &correlate,  sizeof(correlate));
 			}
+
+			ConnectionAdapter(const char* addr, const std::string serverKey) {
+				init();
+
+				char pkey[41];
+				char skey[41];
+				zmq_curve_keypair(pkey, skey);
+
+				zmq_setsockopt(_socket, ZMQ_CURVE_SERVERKEY, serverKey.c_str(), serverKey.length());
+				zmq_setsockopt(_socket, ZMQ_CURVE_PUBLICKEY, pkey, sizeof(pkey) - 1);
+				zmq_setsockopt(_socket, ZMQ_CURVE_SECRETKEY, skey, sizeof(skey) - 1);
+
+				_connerr = zmq_connect(_socket, addr);
+			}
+
 			~ConnectionAdapter() {
 				destroyConnection();
 			}
@@ -65,6 +75,7 @@ namespace fxc {
 				destroyConnection();
 				return true;
 			}
+
 			const int& getErrNo() {
 				return _errno;
 			}
@@ -91,6 +102,16 @@ namespace fxc {
 			int   _errno   = 0;
 
 			std::string _response;
+
+			void init() {
+				_context = zmq_ctx_new();
+				_socket  = zmq_socket(_context, ZMQ_REQ);
+
+				zmq_setsockopt(_socket, ZMQ_LINGER,        &linger,     sizeof(linger));
+				zmq_setsockopt(_socket, ZMQ_SNDTIMEO,      &sndTimeout, sizeof(sndTimeout));
+				zmq_setsockopt(_socket, ZMQ_RCVTIMEO,      &rcvTimeout, sizeof(rcvTimeout));
+				zmq_setsockopt(_socket, ZMQ_REQ_CORRELATE, &correlate,  sizeof(correlate));
+			}
 
 			void destroyConnection() {
 				if (-1 == zmq_close(_socket)) {
