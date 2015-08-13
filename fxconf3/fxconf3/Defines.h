@@ -1,14 +1,20 @@
 #pragma once
 
-#define DEBUG          1
+#define DEBUG          0
 #define CHECK_ACCESS   1 // Включена ли сетевая проверка пользователя
 #define LOCAL          0 // Определяет сервер проверки пользователя, как локальный
-#define LIB_VERSION    1.0.19
+#define LIB_VERSION    1.0.20
 #define PARTNER_ID     0
 #define SERVER_KEY     0
 
-#define MAGIC_OC     0x75000000
-#define MAGIC_MASK   0xFFFF00FF
+#define MAGIC_OC       0x75000000
+#define MAGIC_MASK_OC  0xFF000000
+#define MAGIC_MASK_EA  0x00FF0000
+#define MAGIC_MASK_CFG 0x0000FF00
+#define MAGIC_MASK_USR 0x000000FF
+#define MAGIC_MASK     MAGIC_MASK_OC | MAGIC_MASK_EA | MAGIC_MASK_USR
+
+#define OBSOLETE_MAGIC_OC 0x7ED80000
 
 #define OP_BUY       0
 #define OP_SELL      1

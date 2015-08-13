@@ -48,7 +48,10 @@ namespace fxc {
 			for (int i = 0; i < length; i++) {
 				auto order = ptr + i;
 
-				if ((order->magic & MAGIC_MASK) != (expertMagic & MAGIC_MASK)) {
+				if (
+					(order->magic == OBSOLETE_MAGIC_OC | ((expertMagic & MAGIC_MASK_EA) >> 8) | (expertMagic & MAGIC_MASK_USR)) ||
+					((order->magic & MAGIC_MASK) != (expertMagic & MAGIC_MASK))
+				) {
 					offset++;
 				}
 				else if (offset > 0) {
