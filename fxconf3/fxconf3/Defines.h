@@ -3,7 +3,7 @@
 #define DEBUG          0
 #define CHECK_ACCESS   1 // Включена ли сетевая проверка пользователя
 #define LOCAL          0 // Определяет сервер проверки пользователя, как локальный
-#define LIB_VERSION    1.0.20
+#define LIB_VERSION    1.0.21
 #define PARTNER_ID     0
 #define SERVER_KEY     0
 

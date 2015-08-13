@@ -101,11 +101,13 @@ namespace fxc {
 				open_reason = "";
 				trail_in_mode = 0;
 			}
+
 			~Diller() {
 				if (c_rule != nullptr) {
 					delete c_rule;
 				}
 			}
+			
 			//—брос диллеров в начале тика
 			void reset() {
 				if (level) {
@@ -137,7 +139,7 @@ namespace fxc {
 
 			inline void addOrder(Order* order) {
 				orders.push_back(order);
-				open_dd += order->profit;
+				open_dd    += order->profit;
 				total_lots += order->lots;
 			}
 
@@ -146,9 +148,9 @@ namespace fxc {
 			}
 			inline void trail_in_init(double delta) {
 				trail_in_delta = delta;
-				trail_in_peak = 0;
+				trail_in_peak  = 0;
 			}
-			inline void trail_in_reset(){
+			inline void trail_in_reset() {
 				trail_in_peak = 0;
 			}
 			inline void trail_in_start() {

@@ -108,6 +108,7 @@ namespace strategy {
 				}
 				MARK_FUNC_OUT
 			}
+
 			virtual void onOrderClose(int ticket) {
 				drawOrder(ticket);
 			}
@@ -292,7 +293,7 @@ namespace strategy {
 
 			inline void openNextOrder() {
 				MARK_FUNC_IN
-					using namespace fxc::utils;
+				using namespace fxc::utils;
 				double openprice = curdil->mpo;
 
 				//Расстояние до будущего ордера, если отрицательное, то проехали
@@ -309,7 +310,6 @@ namespace strategy {
 				double lots = (nextProfit * curdil->base_lot - curdil->basketWeight(tpprice, inputAveragingLevel)) / deltaTP;
 
 				lots = max(lots, curdil->base_lot);
-
 				lots = min(lots, inputMaxLot);
 				createOrder(curdil->type, lots, openprice, slprice, tpprice, Format::decimal(curdil->level+1, 0) + "-" + inputCommentText);
 				//curdil->open_reason = "";
@@ -320,20 +320,20 @@ namespace strategy {
 				MARK_FUNC_IN
 				bool flag = false;
 				switch (inputCloseMode) {
-				case 0: break; //Не закрывать оппозитно
-				case 1: if (curdil->opposite->level == 1 && curdil->opposite->basketCost() > 0) {//Закрывать если один ордер
+					case 0: break; //Не закрывать оппозитно
+					case 1: if (curdil->opposite->level == 1 && curdil->opposite->basketCost() > 0) {//Закрывать если один ордер
 							flag = true;
 						}
 						break;
-				case 2: if (curdil->opposite->basketCost() > 0) {//Закрывать если сетка в плюс
+					case 2: if (curdil->opposite->basketCost() > 0) {//Закрывать если сетка в плюс
 							flag = true;
 						}
 						break;
-				case 3: flag = true; //Закрывать сетку даже в убыток
-						}
-						if (flag) {
-							closeAll(curdil->opposite);
-						}
+					case 3: flag = true; //Закрывать сетку даже в убыток
+				}
+				if (flag) {
+					closeAll(curdil->opposite);
+				}
 				MARK_FUNC_OUT
 			}
 

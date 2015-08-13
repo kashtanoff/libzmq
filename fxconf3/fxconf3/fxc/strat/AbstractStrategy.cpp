@@ -90,6 +90,7 @@ namespace fxc {
 			MARK_FUNC_IN
 			resetActionManager();
 			filterOrders();
+			fillDillers();
 			sortOrders();
 			
 
@@ -126,7 +127,7 @@ namespace fxc {
 			MARK_FUNC_IN
 			ask = _ask;
 			bid = _bid;
-			equity = _equity;
+			equity  = _equity;
 			balance = _balance;
 
 			dillers[0]->mpo = dillers[1]->mpc = ask;

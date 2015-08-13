@@ -17,17 +17,17 @@ namespace fxc {
 		OrdersManager() :
 			TerminalInfo(){
 			MARK_FUNC_IN
-				dillers[0] = new Diller(OP_BUY);
+			dillers[0] = new Diller(OP_BUY);
 			dillers[1] = new Diller(OP_SELL);
 
-			dillers[OP_BUY]->opposite = dillers[OP_SELL];
+			dillers[OP_BUY]->opposite  = dillers[OP_SELL];
 			dillers[OP_SELL]->opposite = dillers[OP_BUY];
 			MARK_FUNC_OUT
 		}
 
 		~OrdersManager() {
 			MARK_FUNC_IN
-				delete dillers[0];
+			delete dillers[0];
 			delete dillers[1];
 			//msg << "OrdersManager: delete dillers\r\n" << msg_box;
 			MARK_FUNC_OUT
@@ -77,33 +77,39 @@ namespace fxc {
 		//3.1 Добавляет новый ордер в цикле скана ордеров, в будущем возвращает код изменения
 		int addOrder(int _ticket, int _magic, int _type, double _lots, double _openprice, double _tp, double _sl, double _profit = 0) {
 			auto order = &current_orders[current_length++];
-			order->ticket = _ticket;
-			order->magic = _magic;
-			order->type = _type;
-			order->lots = _lots;
+			order->ticket    = _ticket;
+			order->magic     = _magic;
+			order->type      = _type;
+			order->lots      = _lots;
 			order->openprice = _openprice;
-			order->tpprice = _tp;
-			order->slprice = _sl;
-
-			switch (_type) {
-			case OP_BUY:
-			case OP_SELL:
-				order->profit = _profit;
-				dillers[_type]->addOrder(order);
-				break;
-
-			case OP_BUYLIMIT:
-			case OP_SELLLIMIT:
-				dillers[_type % 2]->ord_limit = order;
-				break;
-
-			case OP_BUYSTOP:
-			case OP_SELLSTOP:
-				dillers[_type % 2]->ord_stop = order;
-				break;
-			}
+			order->tpprice   = _tp;
+			order->slprice   = _sl;
+			order->profit    = _profit;
 
 			return 0;
+		}
+
+		virtual void fillDillers() {
+			for (int i = 0; i < current_length; i++) {
+				auto order = &current_orders[i];
+
+				switch (order->type) {
+					case OP_BUY:
+					case OP_SELL:
+						dillers[order->type]->addOrder(order);
+						break;
+
+					case OP_BUYLIMIT:
+					case OP_SELLLIMIT:
+						dillers[order->type % 2]->ord_limit = order;
+						break;
+
+					case OP_BUYSTOP:
+					case OP_SELLSTOP:
+						dillers[order->type % 2]->ord_stop = order;
+						break;
+				}
+			}
 		}
 
 		inline fxc::Diller* const getDillers() {
