@@ -474,7 +474,7 @@ void UpdateAccountInfo() {
 	while (ticket) {
 		if (OrderSelect(ticket, SELECT_BY_TICKET)) {
 			datetime close = OrderCloseTime();
-			ticket = c_updateOrder(ticket, OrderOpenTime(), close, close ? OrderProfit() + OrderCommission() + OrderSwap() : 0);
+			ticket = c_updateOrder(ticket, OrderOpenTime(), close, OrderProfit() + OrderCommission() + OrderSwap());
 		}
 		else {
 			ticket = c_updateOrder(ticket, 0, 0, 0);

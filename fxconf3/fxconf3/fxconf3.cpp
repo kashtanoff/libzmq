@@ -644,7 +644,7 @@ _DLLAPI int __stdcall c_updateOrder(int ticket, __time64_t opentime, __time64_t 
 
 _DLLAPI void __stdcall c_onOrderOpen(int ticket, __time64_t opentime) {
 	fxc::mutex.lock();
-	openedOrders.push_back(AccountOrder{ ticket, opentime });
+	openedOrders.push_back(AccountOrder { ticket, opentime, 0, 0 });
 	fxc::mutex.unlock();
 }
 
